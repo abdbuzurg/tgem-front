@@ -1,5 +1,6 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { MutationCache, QueryCache, QueryClient, QueryClientProvider } from '@tanstack/react-query'
 import { ReactNode, useState } from 'react'
+import toast from 'react-hot-toast'
 
 interface Props{
   children: ReactNode
@@ -7,6 +8,16 @@ interface Props{
 
 export const ReactQueryProvider = ({children}: Props) => {
   const [queryClient] = useState(() => new QueryClient({
+    queryCache: new QueryCache({
+      onError(error: any, query) {
+        toast.error(error.message)
+      },
+    }),
+    mutationCache: new MutationCache({
+      onError(error: any, variables, context, mutation) {
+        toast.error(error.message)
+      },
+    }),
     defaultOptions: {
       queries: {
         refetchOnWindowFocus: false,
@@ -14,7 +25,8 @@ export const ReactQueryProvider = ({children}: Props) => {
         retry: false,
       },
       mutations: {
-        networkMode: 'always'
+        networkMode: 'always',
+        retry: false,
       }
     },
   }))

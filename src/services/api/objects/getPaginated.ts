@@ -3,7 +3,8 @@ import IAPIResposeFormat from "../IAPIResposeFormat";
 import axiosClient from "../axiosClient";
 import { ENTRY_LIMIT } from "../constants";
 
-export interface IObjectPaginated extends Omit<IObject, "supervisorWorkerID"> {
+export interface IObjectPaginated {
+  object: IObject
   supervisorName: string
 }
 

@@ -5,4 +5,6 @@ export default interface Material {
   name: string
   unit: string
   notes: string
+  article: string
+  hasSerialNumber: boolean
 }

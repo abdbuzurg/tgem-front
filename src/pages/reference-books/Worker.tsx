@@ -11,6 +11,8 @@ import updateWorker from "../../services/api/worker/update";
 import DeleteModal from "../../components/deleteModal";
 import Modal from "../../components/Modal";
 import Input from "../../components/UI/Input";
+import Select from 'react-select'
+import IReactSelectOptions from "../../services/interfaces/react-select";
 
 export default function Worker() {
   //fetching data logic
@@ -62,9 +64,67 @@ export default function Worker() {
   }
 
   //mutation CREATE AND EDIT logic
+  const jobTitles: string[] = [
+    "Администратор",
+    "Менеджер проекта", 
+    "Инженер Проекта", 
+    "Инженер ТБ и ОТ",
+    "Заместитель Менеджера",
+    "Ассистент Менеджера",
+    "Мастер",
+    "Бригадир",
+    "Электрик",
+    "Электроварщик ручной сварки",
+    "Подсобный рабочий",
+    "Начальник группы",
+    "Оператор биллинга",
+    "Оператор ЧЧЮ",
+    "Специалист ОК",
+    "Бухгалтер",
+    "Снабженец",
+    "Заведующий складом",
+    "Снабженец",
+    "Кладовщик",
+    "Повар",
+    "Пекарь",
+    "Уборщица",
+    "Машинист крана-манипулятора",
+    "Водитель легкового автомобиля",
+    "Машинист автогидроподъемника",
+    "Системный Инженер",
+    "Бухгалтер Проекта",
+    "Юрист Проекта",
+    "Региональный Менеджер Проекта",
+    "Заместитель (по совместительству кассир и снабженец)",
+    "Посудамойщица",
+    "Инженер лабор.",
+    "Спецалист по подготовке документации",
+    "Руководитель группы МЖД",
+    "Руководитель группы ВЛ и КЛ",
+    "Руководитель группы ПС/ТП/Комм. Абонт.",
+    "Руководитель группы ПТО (контроль качества и подсчета материалов)",
+    "Медецинский персонал",
+    "Проектировщик",
+    "Обходчик",
+    "Прораб по организации работа на объекте",
+    "Мастер по организации работа на объекте",
+    "Специалист по контролю качества работ и подсчета материалов",
+    "Супервайзер",
+  ]
+  const [currentJobTitle, setCurrentJobTitle] = useState<IReactSelectOptions<string>>({label: "", value: ""})
+  const onJobTitleSelect = (value: null | IReactSelectOptions<string>) => {
+    if (!value) {
+      setCurrentJobTitle({value: "", label: ""})
+      setWorkerMutationData({...workerMutationData, jobTitle: ""})
+      return
+    }
+
+    setCurrentJobTitle(value)
+    setWorkerMutationData({...workerMutationData, jobTitle: value.value})
+  }
   const [showMutationModal, setShowMutationModal] = useState<boolean>(false)
   const [mutationModalType, setMutationModalType] = useState<null | "update" | "create">()
-  const [materialMutationData, setMaterialMutationData] = useState<IWorker>({
+  const [workerMutationData, setWorkerMutationData] = useState<IWorker>({
     id: 0,
     jobTitle: "",
     mobileNumber:"",
@@ -89,18 +149,18 @@ export default function Worker() {
       setShowMutationModal(false)
     }
   })
-   const onMutationSubmit = () => {
-    if (materialMutationData.jobTitle == "") setMutationModalErrors((prev) => ({...prev, jobTitle: true}))
+  const onMutationSubmit = () => {
+    if (workerMutationData.jobTitle == "") setMutationModalErrors((prev) => ({...prev, jobTitle: true}))
     else setMutationModalErrors((prev) => ({...prev, jobTitle: false}))
     
-    if (materialMutationData.name == "") setMutationModalErrors((prev) => ({...prev, name: true}))
+    if (workerMutationData.name == "") setMutationModalErrors((prev) => ({...prev, name: true}))
     else setMutationModalErrors((prev) => ({...prev, name: false}))
 
-    if (materialMutationData.mobileNumber == "") setMutationModalErrors((prev) => ({...prev, mobileNumber: true}))
+    if (workerMutationData.mobileNumber == "") setMutationModalErrors((prev) => ({...prev, mobileNumber: true}))
     else setMutationModalErrors((prev) => ({...prev, mobileNumber: false}))
     
-    const isThereError = Object.keys(materialMutationData).some((value) => {
-      if (materialMutationData[value as keyof typeof materialMutationData] == "" && value != "id") {
+    const isThereError = Object.keys(workerMutationData).some((value) => {
+      if (workerMutationData[value as keyof typeof workerMutationData] == "" && value != "id") {
         return true
       }
     })
@@ -108,10 +168,10 @@ export default function Worker() {
     
     switch(mutationModalType) {
       case "create":
-        createMaterialMutation.mutate(materialMutationData)
+        createMaterialMutation.mutate(workerMutationData)
         return
       case "update":
-        updateMaterialMutation.mutate(materialMutationData)
+        updateMaterialMutation.mutate(workerMutationData)
         return
       
       default:
@@ -169,7 +229,8 @@ export default function Worker() {
                   <Button text="Изменить" buttonType="default" onClick={() => {
                       setShowMutationModal(true)
                       setMutationModalType("update")
-                      setMaterialMutationData(row)
+                      setWorkerMutationData(row)
+                      setCurrentJobTitle({value: row.jobTitle, label: row.jobTitle})
                     }}
                   />
                   <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)}/>
@@ -197,18 +258,23 @@ export default function Worker() {
                 <Input 
                   name="name"
                   type="text"
-                  value={materialMutationData.name}
-                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: e.target.value})}
+                  value={workerMutationData.name}
+                  onChange={(e) => setWorkerMutationData({...workerMutationData, [e.target.name]: e.target.value})}
                 />
                 {mutationModalErrors.name && <span className="text-red-600 text-sm font-bold">Не указано имя работника</span>}
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="jobTitle">Должность</label>
-                <Input 
-                  name="jobTitle"
-                  type="text"
-                  value={materialMutationData.jobTitle}
-                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: e.target.value})}
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"job-title-select"}
+                  placeholder={""}
+                  value={currentJobTitle}
+                  options={jobTitles.map<IReactSelectOptions<string>>((value) => ({label: value, value: value}))}
+                  onChange={(value) => onJobTitleSelect(value)}
                 />
                 {mutationModalErrors.jobTitle && <span className="text-red-600 text-sm font-bold">Не указана должность работника</span>}
               </div>
@@ -217,8 +283,8 @@ export default function Worker() {
                 <Input 
                   name="mobileNumber"
                   type="text"
-                  value={materialMutationData.mobileNumber}
-                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: e.target.value})}
+                  value={workerMutationData.mobileNumber}
+                  onChange={(e) => setWorkerMutationData({...workerMutationData, [e.target.name]: e.target.value})}
                 />
                 {mutationModalErrors.mobileNumber && <span className="text-red-600 text-sm font-bold">Не указано номер телефона</span>}
               </div>

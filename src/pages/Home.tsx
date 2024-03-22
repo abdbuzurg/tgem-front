@@ -1,17 +1,19 @@
 import { Link } from "react-router-dom";
-import { INVOICE_INPUT, INVOICE_OUTPUT, INVOICE_RETURN, INVOICE_WRITEOFF } from "../URLs";
+import { INVOICE_INPUT, INVOICE_OBJECT, INVOICE_OUTPUT, INVOICE_RETURN, INVOICE_WRITEOFF, REPORT_BALANCE } from "../URLs";
 
 const warehouseFlow = [
   {name: "Приход", url: INVOICE_INPUT}, 
-  {name: "Уход", url: INVOICE_OUTPUT }, 
+  {name: "Отпуск", url: INVOICE_OUTPUT }, 
+  {name: "Объект", url: INVOICE_OBJECT }, 
   {name: "Возврат", url: INVOICE_RETURN}, 
-  {name: "Списание", url: INVOICE_WRITEOFF}]
+  {name: "Списание", url: INVOICE_WRITEOFF}
+]
 
 export default function Home() {
   return (
-    <div>
+    <div className="flex flex-col space-y-2">
       <div className="px-2">
-        <p className="text-3xl font-bold">Склад</p>
+        <p className="text-3xl font-bold">Накладные</p>
         <div className="flex space-x-3 mt-2">
           {warehouseFlow.map((flow, index) => (
             <Link

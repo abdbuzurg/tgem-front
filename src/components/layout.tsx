@@ -2,11 +2,12 @@ import { Link, Navigate, Outlet, useNavigate } from "react-router-dom";
 import useAuth from "../hooks/useAuth";
 import LoadingDots from "./UI/loadingDots";
 import Button from "./UI/button";
+import { Toaster } from "react-hot-toast";
 
 
-export default function Layout() {  
+export default function Layout() {
   const navigate = useNavigate()
-  const {isLoading, auth} = useAuth()
+  const { isLoading, auth } = useAuth()
 
   const logout = () => {
     localStorage.removeItem("token")
@@ -15,13 +16,13 @@ export default function Layout() {
   }
 
   if (isLoading)
-    return( 
+    return (
       <div className="w-screen h-screen text-center">
-        <LoadingDots height={120} width={120}/>
+        <LoadingDots height={120} width={120} />
       </div>
     )
-  else 
-    return ( 
+  else
+    return (
       <>
         <nav className="relative flex w-full justify-normal items-center  bg-gray-800 px-3 py-2 shadow-lg text-gray-400">
           <div className="items-center justify-between w-full">
@@ -32,33 +33,32 @@ export default function Layout() {
                 </Link>
               </li>
               <li>
-                <Link to="/export" className="bloc text-white bg-transparent p-0 hover:text-gray-400">
-                  Экспорт
+                <Link to="/report" className="block text-white bg-transparent p-0 hover:text-gray-400">
+                  Отсчет
                 </Link>
               </li>
-              {auth.username == "superadmin" && 
+              {auth.username == "superadmin" &&
                 <li>
                   <Link to="/users" className="block text-white bg-transparent p-0 hover:text-gray-400">
                     Пользователи
                   </Link>
                 </li>
               }
-              {auth.username == "superadmin" && 
-                <li>
-                  <Link to="/reference-books" className="block text-white bg-transparent p-0 hover:text-gray-400">
-                    Справочник
-                  </Link>
-                </li>
-              }
+              <li>
+                <Link to="/reference-books" className="block text-white bg-transparent p-0 hover:text-gray-400">
+                  Справочник
+                </Link>
+              </li>
             </ul>
           </div>
+          <Toaster />
           <div className="flex items-center space-x-4 font-medium">
-            <Button onClick={logout}  text="Выход"/> 
+            <Button onClick={logout} text="Выход" />
             <p className="text-4xl font-bold">ТГЭМ</p>
           </div>
         </nav>
-        {auth.hasPermission() 
-          ? <Outlet /> 
+        {auth.hasPermission()
+          ? <Outlet />
           : <Navigate to="/permission-denied" />
         }
       </>

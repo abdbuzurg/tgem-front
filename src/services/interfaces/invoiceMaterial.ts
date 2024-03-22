@@ -1,13 +1,9 @@
 export interface InvoiceMaterial {
-  key: number
-  key_delivery: number
-  key_material: number
-  unit: string
+  id: number
+  materialCostID: number
+  invoiceID: number
+  invoiceType: "input" | "output" | "return" | "writeoff"
   amount: number
   notes: string
-  operator_add: string
-  date_add: string
-  operator_edit: string
-  date_edit: string
 }
 

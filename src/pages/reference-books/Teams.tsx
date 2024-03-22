@@ -11,6 +11,8 @@ import createTeam from "../../services/api/teams/create";
 import updateTeam from "../../services/api/teams/update";
 import Modal from "../../components/Modal";
 import Input from "../../components/UI/Input";
+import WorkerSelect from "../../components/WorkerSelect";
+import IReactSelectOptions from "../../services/interfaces/react-select";
 
 export default function Team() {
   //fetching data logic
@@ -65,7 +67,8 @@ export default function Team() {
   //mutation CREATE AND EDIT logic
   const [showMutationModal, setShowMutationModal] = useState<boolean>(false)
   const [mutationModalType, setMutationModalType] = useState<null | "update" | "create">()
-  const [materialMutationData, setMaterialMutationData] = useState<ITeam>({
+  const [selectedTeamLeaderWorkerID, setSelectedTeamLeaderWorkerID] = useState<IReactSelectOptions<number>>({label:"", value: 0})
+  const [mutationData, setMutationData] = useState<ITeam>({
     company: "",
     id: 0,
     leaderWorkerID: 0,
@@ -78,9 +81,23 @@ export default function Team() {
     number: false,
     leaderWorkerID: false,
   })
+
+  useEffect(() => {
+    setMutationData({...mutationData, leaderWorkerID: selectedTeamLeaderWorkerID.value})
+  }, [selectedTeamLeaderWorkerID])
   const createMaterialMutation = useMutation<ITeam, Error, ITeam>({
     mutationFn: createTeam,
-    onSettled: () => {
+    onSettled: () => {  
+
+
+
+
+
+
+
+
+
+      
       queryClient.invalidateQueries(["teams"])
       setShowMutationModal(false)
     }
@@ -92,21 +109,22 @@ export default function Team() {
       setShowMutationModal(false)
     }
   })
-   const onMutationSubmit = () => {
-    if (materialMutationData.company == "") setMutationModalErrors((prev) => ({...prev, company: true}))
+
+  const onMutationSubmit = () => {
+    if (mutationData.company == "") setMutationModalErrors((prev) => ({...prev, company: true}))
     else setMutationModalErrors((prev) => ({...prev, company: false}))
     
-    if (materialMutationData.leaderWorkerID == 0) setMutationModalErrors((prev) => ({...prev, leaderWorkerID: true}))
+    if (mutationData.leaderWorkerID == 0) setMutationModalErrors((prev) => ({...prev, leaderWorkerID: true}))
     else setMutationModalErrors((prev) => ({...prev, leaderWorkerID: false}))
     
-    if (materialMutationData.number == "") setMutationModalErrors((prev) => ({...prev, number: true}))
+    if (mutationData.number == "") setMutationModalErrors((prev) => ({...prev, number: true}))
     else setMutationModalErrors((prev) => ({...prev, number: false}))
 
-    if (materialMutationData.mobileNumber == "") setMutationModalErrors((prev) => ({...prev, mobileNumber: true}))
+    if (mutationData.mobileNumber == "") setMutationModalErrors((prev) => ({...prev, mobileNumber: true}))
     else setMutationModalErrors((prev) => ({...prev, mobileNumber: false}))
     
-    const isThereError = Object.keys(materialMutationData).some((value) => {
-      if (materialMutationData[value as keyof typeof materialMutationData] == "" && value != "id") {
+    const isThereError = Object.keys(mutationData).some((value) => {
+      if (mutationData[value as keyof typeof mutationData] == "" && value != "id") {
         return true
       }
     })
@@ -114,10 +132,10 @@ export default function Team() {
     
     switch(mutationModalType) {
       case "create":
-        createMaterialMutation.mutate(materialMutationData)
+        createMaterialMutation.mutate(mutationData)
         return
       case "update":
-        updateMaterialMutation.mutate(materialMutationData)
+        updateMaterialMutation.mutate(mutationData)
         return
       
       default:
@@ -179,7 +197,7 @@ export default function Team() {
                   <Button text="Изменить" buttonType="default" onClick={() => {
                       setShowMutationModal(true)
                       setMutationModalType("update")
-                      setMaterialMutationData({
+                      setMutationData({
                         company: row.company,
                         id: row.id,
                         mobileNumber: row.mobileNumber,
@@ -213,28 +231,24 @@ export default function Team() {
                 <Input 
                   name="number"
                   type="text"
-                  value={materialMutationData.number}
-                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: e.target.value})}
+                  value={mutationData.number}
+                  onChange={(e) => setMutationData({...mutationData, [e.target.name]: e.target.value})}
                 />
                 {mutationModalErrors.number && <span className="text-red-600 text-sm font-bold">Не указано номер бригады</span>}
               </div>
-              <div className="flex flex-col space-y-1">
-                <label htmlFor="leaderWorkerID">Бригадир</label>
-                <Input 
-                  name="leaderWorkerID"
-                  type="number"
-                  value={materialMutationData.leaderWorkerID}
-                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: Number(e.target.value)})}
-                />
-                {mutationModalErrors.leaderWorkerID && <span className="text-red-600 text-sm font-bold">Не указан бригадир</span>}
-              </div>
+              <WorkerSelect 
+                jobTitle="Бригадир"
+                selectedWorkerID={selectedTeamLeaderWorkerID}
+                setSelectedWorkerID={setSelectedTeamLeaderWorkerID}
+                title="Лидер бригады"
+              />
               <div className="flex flex-col space-y-1">
                 <label htmlFor="mobileNumber">Основной номер телефона бригады</label>
                 <Input 
                   name="mobileNumber"
                   type="text"
-                  value={materialMutationData.mobileNumber}
-                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: e.target.value})}
+                  value={mutationData.mobileNumber}
+                  onChange={(e) => setMutationData({...mutationData, [e.target.name]: e.target.value})}
                 />
                 {mutationModalErrors.mobileNumber && <span className="text-red-600 text-sm font-bold">Не указан номер телефона бригады</span>}
               </div>
@@ -243,8 +257,8 @@ export default function Team() {
                 <Input 
                   name="company"
                   type="text"
-                  value={materialMutationData.company}
-                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: e.target.value})}
+                  value={mutationData.company}
+                  onChange={(e) => setMutationData({...mutationData, [e.target.name]: e.target.value})}
                 />
                 {mutationModalErrors.company && <span className="text-red-600 text-sm font-bold">Не указана компания бригады</span>}
               </div>

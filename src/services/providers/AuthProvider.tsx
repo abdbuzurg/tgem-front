@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { AuthContext } from "../context/authContext";
 import { UserPermissions } from "../api/auth/permissions";
-import { useLocation } from "react-router-dom";
 
 interface Props {
   children: React.ReactNode

@@ -25,7 +25,7 @@ export default function Input({
       value={value} 
       onChange={onChange} 
       disabled={disabled}
-      className={"py-1.5 px-2 rounded border-2 border-gray-800 " + disableStyles()}
+      className={"py-1.5 px-2 rounded border-2 border-gray-800 w-full box-border" + disableStyles()}
     />
   )
 }

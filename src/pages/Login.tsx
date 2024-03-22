@@ -6,6 +6,11 @@ import loginUser from "../services/api/auth/login"
 import { useNavigate } from "react-router-dom"
 import getPermissions, { UserPermissions } from "../services/api/auth/permissions"
 import { AuthContext } from "../services/context/authContext"
+import toast, { Toaster } from "react-hot-toast"
+import IReactSelectOptions from "../services/interfaces/react-select"
+import Select from 'react-select'
+import Project from "../services/interfaces/project"
+import { GetAllProjects } from "../services/api/project"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -18,7 +23,30 @@ export default function Login() {
   const [loginData, setLoginData] = useState({
     username: "",
     password: "",
+    projectID: 0,
   })
+
+  const [selectedProject, setSelectedProject] = useState<IReactSelectOptions<number>>({label: "", value: 0})
+  const [allProjects, setAllProjects] = useState<IReactSelectOptions<number>[]>([])
+  const projectQuery = useQuery<Project[], Error, Project[]>({
+    queryKey: ["all-projects"],
+    queryFn: GetAllProjects,
+  })
+  useEffect(() => {
+    if (projectQuery.isSuccess && projectQuery.data) {
+      setAllProjects(projectQuery.data.map<IReactSelectOptions<number>>((value) => ({label: value.name, value: value.id})))
+    }
+  }, [projectQuery.data])
+  const onSelectedProject = (value: null | IReactSelectOptions<number>) => {
+    if (!value) {
+      setSelectedProject({label: "", value: 0})
+      setLoginData({...loginData, projectID: 0})
+      return
+    }
+
+    setSelectedProject(value)
+    setLoginData({...loginData, projectID: value.value})
+  }
 
   const permissionQuery = useQuery<UserPermissions[], Error>({
     queryKey: ["permissions"],
@@ -29,6 +57,18 @@ export default function Login() {
 
   const loginMutation = useMutation({ mutationFn: loginUser }) 
   const login = () => {
+    if (loginData.username == "") {
+      toast.error("Не указано имя пользователя")
+      return
+    }
+    if (loginData.password == "") {
+      toast.error("Не указан пароль")
+      return
+    }
+    if (loginData.projectID == 0) {
+      toast.error("Не выбран проект") 
+      return
+    }
     loginMutation.mutate(loginData, {
       onSuccess: (data, _, __) => {
         localStorage.setItem("token", data.toString())
@@ -53,7 +93,7 @@ export default function Login() {
           <p className="font-bold text-4xl mb-4 text-center">ТГЭМ</p>
           <div className="basis-1 w-[350px]">
             <div className="flex flex-col justify-start mb-4">
-              <label className="inline-block font-bold text-l mb-2">Имя пользователя</label>
+              <label className="inline-block font-bold text-lg mb-2">Имя пользователя</label>
               <Input
                 type="text" 
                 name="username"
@@ -62,7 +102,7 @@ export default function Login() {
               />
             </div>
             <div className="flex flex-col justify-start mb-3">
-              <label className="inline-block font-bold text-l mb-2">Пароль</label>
+              <label className="inline-block font-bold text-lg mb-2">Пароль</label>
               <Input 
                 type="password"
                 name="password" 
@@ -70,16 +110,29 @@ export default function Login() {
                 onChange={(e) => setLoginData({...loginData, [e.target.name]: e.target.value})} 
               />
             </div>
+            <div className="flex flex-col justify-start mb-3">
+              <label className="inline-block font-bold text-lg mb-2">Проект</label>
+              <div>
+              <Select
+                className="basic-single"
+                classNamePrefix="select"
+                isSearchable={true}
+                isClearable={true}
+                name={"materials"}
+                placeholder={""}
+                value={selectedProject}
+                options={allProjects}
+                onChange={(value) => onSelectedProject(value)}
+              /> 
+              </div>
+            </div>
             <div className="flex justify-center">
               <Button onClick={login} text="Войти"/>
             </div>
-            <span className="flex justify-center">
-              {/* {loginMutation.isLoading && <Loading height={40} />}
-              {loginMutation.isError && <CustomError message={loginMutation.error.message}/>} */}
-            </span>
           </div>
         </div>
       </div>
+      <Toaster/>
     </div>
   )
 }

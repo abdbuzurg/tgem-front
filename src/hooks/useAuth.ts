@@ -6,8 +6,6 @@ import { useNavigate } from "react-router-dom";
 import isAuthenticated from "../services/api/auth/isAuthenticated";
 import IAPIResposeFormat from "../services/api/IAPIResposeFormat";
 
-
-
 export default function useAuth(): {isLoading: boolean, auth:IAuthContext} {
   const auth = useContext(AuthContext)
   const navigate = useNavigate()
@@ -16,7 +14,6 @@ export default function useAuth(): {isLoading: boolean, auth:IAuthContext} {
   const isAuthenticatedQuery = useQuery<IAPIResposeFormat<string>, Error>({
     queryKey: ["is-authenticated"],
     queryFn: isAuthenticated,
-    staleTime: 1000 * 3600,
     enabled: false,
   }) 
   
@@ -24,27 +21,23 @@ export default function useAuth(): {isLoading: boolean, auth:IAuthContext} {
   const permissionQuery = useQuery<UserPermissions[], Error>({
     queryKey: ["permissions"],
     queryFn: () => getPermissions(),
-    staleTime: 1000 * 3600,
     enabled: false
   },)
 
   useEffect(() => {
     const token = localStorage.getItem("token")
-
     if (!token) {
       navigate("/login")
       setIsLoading(false)
       return
     }
 
-    if (isAuthenticatedQuery.isStale) isAuthenticatedQuery.refetch()
-
     const username = localStorage.getItem("username")
     if (!username) {
       navigate("/login")
       setIsLoading(false)
       return
-    } else auth.setUsername(username)
+    } else auth.setUsername(username) 
 
     if (auth.permissions.length == 0) permissionQuery.refetch()
     else setIsLoading(true)
@@ -59,6 +52,7 @@ export default function useAuth(): {isLoading: boolean, auth:IAuthContext} {
       auth.setPermissions([])
       auth.setUsername("")
     }
+
   },[isAuthenticatedQuery.isSuccess])
 
   useEffect(() => {
@@ -67,6 +61,12 @@ export default function useAuth(): {isLoading: boolean, auth:IAuthContext} {
       setIsLoading(false)
     }
   }, [permissionQuery.isSuccess])
+
+  useEffect(() => {
+    if (isAuthenticatedQuery.isError || permissionQuery.isError) {
+      navigate("/login")
+    }
+  }, [isAuthenticatedQuery.isError, permissionQuery.isError])
 
   return {isLoading: isLoading, auth: auth}
 }

@@ -1,5 +1,4 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import LinkBox from "../../components/UI/LinkButton";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { ENTRY_LIMIT } from "../../services/api/constants";
 import getPaginatedMaterials, { MaterialsGetAllResponse } from "../../services/api/materials/getPaginated";
@@ -12,9 +11,13 @@ import Modal from "../../components/Modal";
 import Input from "../../components/UI/Input";
 import createMaterial from "../../services/api/materials/create";
 import updateMaterial from "../../services/api/materials/update";
+import exportMaterials from "../../services/api/materials/export";
+import { MEASUREMENT } from "../../services/lib/measurement";
+import IReactSelectOptions from "../../services/interfaces/react-select";
+import Select from "react-select"
 
 export default function Materials() {
-
+  //FETCHING LOGIC
   const tableDataQuery = useInfiniteQuery<MaterialsGetAllResponse, Error>({
     queryKey: ["materials"],
     queryFn: ({pageParam}) => getPaginatedMaterials({pageParam}),
@@ -39,7 +42,14 @@ export default function Materials() {
     window.addEventListener("scroll", loadDataOnScrollEnd)
     return () => window.removeEventListener("scroll", loadDataOnScrollEnd)
   }, [])
+  //EXPORT LOGIC
+  const exportQuery = useQuery<boolean, Error>({
+    queryKey:["material-export"],
+    queryFn: () => exportMaterials(tableData),
+    enabled: false,
+  })
 
+  //DELETION LOGIC
   const [showModal, setShowModal] = useState(false)
   const queryClient = useQueryClient()
   const deleteMutation = useMutation({
@@ -62,6 +72,7 @@ export default function Materials() {
     })
   }
 
+  // MUTATION LOGIC
   const [showMutationModal, setShowMutationModal] = useState(false)
   const [mutationModalType, setMutationModalType] = useState<null | "update" | "create">()
   const [materialMutationData, setMaterialMutationData] = useState<Material>({
@@ -71,8 +82,22 @@ export default function Materials() {
     name: "",
     notes: "",
     unit: "",
+    article: "",
+    hasSerialNumber: false,
   })
 
+  const measurements = MEASUREMENT.map<IReactSelectOptions<string>>((value) =>({label: value, value: value}))
+  const [selectedMeasurement, setSelectedMeasurement] = useState<IReactSelectOptions<string>>({label: "", value: ""})
+  const onMeasurementSelect = (value: null | IReactSelectOptions<string>) => {
+    if (!value) {
+      setSelectedMeasurement({label: "", value: ""})
+      setMaterialMutationData({...materialMutationData, unit: ""})
+      return
+    }
+
+    setSelectedMeasurement(value)
+    setMaterialMutationData({...materialMutationData, unit: value.value})
+  }
 
   const [mutationModalErrors, setMutationModalErrors] = useState({
     category: false,
@@ -124,19 +149,21 @@ export default function Materials() {
         throw new Error("Неправильная операция была выбрана")
     }
   }
-
-
-
+  
   return (
     <main>
       <div className="mt-2 pl-2 flex space-x-2">
         <span className="text-3xl font-bold">Материалы</span>
+        {/* <Button text="Экспорт" onClick={() => exportQuery.refetch()}/> */}
       </div>
       <table className="table-auto text-sm text-left mt-2 w-full border-box">
         <thead className="shadow-md border-t-2">
           <tr>
             <th className="px-4 py-3 w-[100px]">
               <span>Код</span>
+            </th>
+            <th className="px-4 py-3 w-[100px]">
+              <span>Пункт</span>
             </th>
             <th className="px-4 py-3">
               <span>Категория</span>
@@ -177,6 +204,7 @@ export default function Materials() {
             tableData.map((row, index) => (
               <tr key={index} className="border-b">
                 <td className="px-4 py-3">{row.code}</td>
+                <td className="px-4 py-3">{row.article}</td>
                 <td className="px-4 py-3">{row.category}</td>
                 <td className="px-4 py-3">{row.name}</td>
                 <td className="px-4 py-3">{row.unit}</td>
@@ -229,24 +257,52 @@ export default function Materials() {
                 {mutationModalErrors.name && <span className="text-red-600 text-sm font-bold">Не указано наименование материала</span>}
               </div>
               <div className="flex flex-col space-y-1">
-                <label htmlFor="unit">Еденица изменения</label>
-                <Input 
-                  name="unit"
-                  type="text"
-                  value={materialMutationData.unit}
-                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: e.target.value})}
+                <label htmlFor="unit">Еденица измерения</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"material-cost-material-select"}
+                  placeholder={""}
+                  value={selectedMeasurement}
+                  options={measurements}
+                  onChange={(value) => onMeasurementSelect(value)}
                 />
-                {mutationModalErrors.unit && <span className="text-red-600 text-sm font-bold">Не указана еденица изменения материала</span>}
+                {mutationModalErrors.unit && <span className="text-red-600 text-sm font-bold">Не указана еденица измерения материала</span>}
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="code">Код материала</label>
                 <Input 
                   name="code"
                   type="text"
-                  value={materialMutationData.code != "" ? materialMutationData.code : "Код будет сгенерирован"}
-                  onChange={() => {}}
-                  disabled={true}
+                  value={materialMutationData.code}
+                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: e.target.value})}
                 />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="code">Пункт</label>
+                <Input 
+                  name="article"
+                  type="text"
+                  value={materialMutationData.article}
+                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: e.target.value})}
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <div className="flex space-x-2">
+                  <input type="checkbox" id="hasSerialNumber" value={1} name="hasSerialNumber" onChange={
+                      (e) => {
+                        if (e.target.checked) {
+                          setMaterialMutationData({...materialMutationData, hasSerialNumber: true})
+                        } else {
+                          setMaterialMutationData({...materialMutationData, hasSerialNumber: false})
+                        }
+                      }
+                    }
+                  />
+                  <label htmlFor="hasSerialNumber">Серийный номер</label>
+                </div>
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="notes">Примичание</label>
