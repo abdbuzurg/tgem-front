@@ -1,19 +1,18 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { useState, useEffect } from "react"
 import { ENTRY_LIMIT } from "../../services/api/constants"
-import getPaginatedObjects, { IObjectGetAllResponse, IObjectPaginated } from "../../services/api/objects/getPaginated"
-import deleteObject from "../../services/api/objects/delete"
-import { IObject } from "../../services/interfaces/objects"
-import createObject from "../../services/api/objects/create"
-import updateObject from "../../services/api/objects/update"
+import { IObject, SecondaryObjectData } from "../../services/interfaces/objects"
 import Input from "../../components/UI/Input"
 import Modal from "../../components/Modal"
 import Button from "../../components/UI/button"
 import LoadingDots from "../../components/UI/loadingDots"
 import DeleteModal from "../../components/deleteModal"
-import WorkerSelect from "../../components/WorkerSelect"
 import IReactSelectOptions from "../../services/interfaces/react-select"
 import Select from "react-select"
+import IWorker from "../../services/interfaces/worker"
+import { getWorkerByJobTitle } from "../../services/api/worker"
+import toast from "react-hot-toast"
+import { IObjectGetAllResponse, IObjectPaginated, ObjectCreateShape, createObject, deleteObject, getPaginatedObjects, updateObject } from "../../services/api/object"
 
 const objectTypes = [        
   {label:"КЛ 04 КВ", value: "kl04kv_objects"},
@@ -67,8 +66,8 @@ export default function Objects() {
   const onDeleteButtonClick = (row: IObjectPaginated) => {
     setShowModal(true)
     setModalProps({
-      deleteFunc: () => deleteMutation.mutate(row.object.id),
-      no_delivery: row.object.name,
+      deleteFunc: () => deleteMutation.mutate(row.id),
+      no_delivery: row.name,
       setShowModal: setShowModal,
     })
   }
@@ -77,33 +76,28 @@ export default function Objects() {
   const [showMutationModal, setShowMutationModal] = useState<boolean>(false)
   const [mutationModalType, setMutationModalType] = useState<null | "update" | "create">()
 
-  const [selectedSupervisorWorkerID, setSupervisorWorkerID] = useState<IReactSelectOptions<number>>({label:"", value: 0})
-  const [selectedObjectType, setSelectedObjectType] = useState<IReactSelectOptions<string>>({label: "", value: ""}) 
-
-  const onSelectObjectType = (value: null | IReactSelectOptions<string>) => {
-    if (!value) {
-      setSelectedObjectType({label: "", value: ""})
-      setMutationData({...mutationData, type: ""})
-      return
-    }
-
-    setSelectedObjectType(value)
-    setMutationData({...mutationData, type: value.value})
-  }
-
+  const [selectedSupervisorsWorkerID, setselectedSupervisorsWorkerID] = useState<IReactSelectOptions<number>[]>([])
+  const [avaiableSupervisors, setAvailableSupervisors] = useState<IReactSelectOptions<number>[]>([])
+  const supervisorsQuery = useQuery<IWorker[], Error, IWorker[]>({
+    queryKey: ["worker-supervisors"],
+    queryFn: () => getWorkerByJobTitle("Супервайзер")
+  })
   useEffect(() => {
-      setMutationData({...mutationData, supervisorWorkerID: selectedSupervisorWorkerID.value})
-  }, [selectedSupervisorWorkerID])
+    if (supervisorsQuery.isSuccess && supervisorsQuery.data) {
+      setAvailableSupervisors([
+        ...supervisorsQuery.data.map<IReactSelectOptions<number>>((val) => ({label: val.name, value: val.id}))
+      ])
+    }
+  }, [supervisorsQuery.data])
 
   const [mutationData, setMutationData] = useState<IObject>({
     id: 0,
     name: "",
     objectDetailedID: 0,
     status: "",
-    supervisorWorkerID: 0,
     type: "",
   })
-  const [secondaryMutationData, setSecondaryMutation] = useState({
+  const [secondaryMutationData, setSecondaryMutation] = useState<SecondaryObjectData>({
     model: "",
     amountStores: 0,
     amountEntrances: 0,
@@ -111,23 +105,19 @@ export default function Objects() {
     voltageClass: "",
     nourashes: "",
     ttCoefficient: "",
-    amountFeeders: "",
+    amountFeeders: 0,
     length: 0,
   })
-  const [mutationModalErrors, setMutationModalErrors] = useState({
-    name: false,
-    objectDetailedID: false,
-    status: false,
-    supervisorWorkerID: false,
-    type: false,
-  })
-  const createMaterialMutation = useMutation<IObject, Error, IObject>({
+  const [selectedObjectType, setSelectedObjectType] = useState<IReactSelectOptions<string>>({label: "", value: ""}) 
+
+  const createMaterialMutation = useMutation<IObject, Error, ObjectCreateShape >({
     mutationFn: createObject,
     onSettled: () => {
       queryClient.invalidateQueries(["objects"])
       setShowMutationModal(false)
     }
   })
+
   const updateMaterialMutation = useMutation<IObject, Error, IObject>({
     mutationFn: updateObject,
     onSettled: () => {
@@ -135,30 +125,89 @@ export default function Objects() {
       setShowMutationModal(false)
     }
   })
-   const onMutationSubmit = () => {
-    if (mutationData.name == "") setMutationModalErrors((prev) => ({...prev, name: true}))
-    else setMutationModalErrors((prev) => ({...prev, name: false}))
-    
-    if (mutationData.supervisorWorkerID == 0) setMutationModalErrors((prev) => ({...prev, supervisorWorkerID: true}))
-    else setMutationModalErrors((prev) => ({...prev, supervisorWorkerID: false}))
-    
-    if (mutationData.status == "") setMutationModalErrors((prev) => ({...prev, status: true}))
-    else setMutationModalErrors((prev) => ({...prev, status: false}))
+  
+  const onMutationSubmit = () => {
 
-    if (mutationData.type == "") setMutationModalErrors((prev) => ({...prev, type: true}))
-    else setMutationModalErrors((prev) => ({...prev, type: false}))
+    if (selectedObjectType.value == "") {
+      toast.error("Не указан тип объекта")
+      return
+    }
     
-    const isThereError = Object.keys(mutationData).some((value) => {
-      if (mutationData[value as keyof typeof mutationData] == "" && value != "id" && value != "objectDetailedID") {
-        return true
-      }
-    })
-    console.log(mutationData)
-    if (isThereError) return
-    
+    if (mutationData.name == "") {
+      toast.error("Не указано имя объекта")
+      return
+    }
+
+    if (selectedSupervisorsWorkerID.length == 0) {
+      toast.error("Не указан супервайзер(-ы)") 
+      return
+    }
+
+    if (mutationData.status == "") {
+      toast.error("Не указан статус объекта")
+      return
+    }
+
+    if ((selectedObjectType.value == "mjd_objects" 
+      || selectedObjectType.value == "tp_objects") 
+      && secondaryMutationData.model == "") {
+      toast.error("Не указан тип")
+      return
+    }
+
+    if (selectedObjectType.value == "mjd_objects" && secondaryMutationData.amountStores == 0) {
+      toast.error("Не указано кол-во этажей")
+      return
+    }
+
+    if (selectedObjectType.value == "mjd_objects" && secondaryMutationData.amountEntrances == 0) {
+      toast.error("Не указано кол-во подъездов")
+      return
+    }
+
+    if (selectedObjectType.value == "mjd_objects" && secondaryMutationData.hasBasement) {
+      toast.error("Присутсвие подвала...")
+      return
+    }
+
+    if ((selectedObjectType.value == "tp_objects" 
+      || selectedObjectType.value == "stvt_objects") 
+      && secondaryMutationData.voltageClass == "") {
+      toast.error("Не указан класс напряжения")
+      return
+    }
+
+    if ((selectedObjectType.value == "tp_objects" 
+      || selectedObjectType.value == "kl04kv_objects") 
+      && secondaryMutationData.nourashes == "") {
+      toast.error("Не указано кого питает")
+      return
+    }
+
+    if (selectedObjectType.value =="stvt_objects" && secondaryMutationData.ttCoefficient == "") {
+      toast.error("Не указан коэффицент ТТ")
+      return
+    }
+
+    if (selectedObjectType.value =="sip_objects" && secondaryMutationData.amountFeeders == 0) {
+      toast.error("Не указано количество питающих")
+      return
+    }
+
+    if (selectedObjectType.value =="kl04kv_objects" && secondaryMutationData.length == 0) {
+      toast.error("Не указана длина для КЛ 04 КВ")
+      return
+    }
+
     switch(mutationModalType) {
       case "create":
-        createMaterialMutation.mutate({...mutationData, ...secondaryMutationData})
+        createMaterialMutation.mutate({
+          ...mutationData, 
+          ...secondaryMutationData,
+          supervisors: [...selectedSupervisorsWorkerID.map<number>(val => val.value)],
+          type: selectedObjectType.value,
+        })
+        
         return
       case "update":
         updateMaterialMutation.mutate(mutationData)
@@ -167,6 +216,7 @@ export default function Objects() {
       default:
         throw new Error("Неправильная операция была выбрана")
     }
+
   }
 
   return (
@@ -212,27 +262,24 @@ export default function Objects() {
               </td>
             </tr>
           }
-          {tableDataQuery.isSuccess &&
+          {tableDataQuery.isSuccess && tableData.length != 0 && 
             tableData.map((row, index) => (
               <tr key={index} className="border-b">
-                <td className="px-4 py-3">{row.object.type}</td>
-                <td className="px-4 py-3">{row.object.name}</td>
-                <td className="px-4 py-3">{row.object.status}</td>
-                <td className="px-4 py-3">{row.supervisorName}</td>
+                <td className="px-4 py-3">{row.type}</td>
+                <td className="px-4 py-3">{row.name}</td>
+                <td className="px-4 py-3">{row.status}</td>
+                {/* <td className="px-4 py-3">{row.supervisosName}</td> */}
                 <td className="px-4 py-3 border-box flex space-x-3">
                   <Button text="Изменить" buttonType="default" onClick={() => {
                       setShowMutationModal(true)
                       setMutationModalType("update")
-                      setMutationData({
-                        id: row.object.id,
-                        name: row.object.name,
-                        objectDetailedID: row.object.objectDetailedID,
-                        status: row.object.status,
-                        supervisorWorkerID: row.object.supervisorWorkerID,
-                        type: row.object.type,
-                      })
-                      setSelectedObjectType({label: row.object.type, value: row.object.type})
-                      setSupervisorWorkerID({label: row.supervisorName, value: row.object.supervisorWorkerID})
+                      // setMutationData({
+                      //   id: row.id,
+                      //   name: row.name,
+                      //   status: row.status,
+                      //   type: row.type,
+                      // })
+                      setSelectedObjectType({label: row.type, value: row.type})
                     }}
                   />
                   <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)}/>
@@ -266,9 +313,11 @@ export default function Objects() {
                   placeholder={""}
                   value={selectedObjectType}
                   options={objectTypes}
-                  onChange={(value) => onSelectObjectType(value)}
+                  onChange={(value) => setSelectedObjectType({
+                    label: value?.label ?? "",
+                    value: value?.value ?? "",
+                  })}
                 />
-                {mutationModalErrors.type && <span className="text-red-600 text-sm font-bold">Не указан тип объекта</span>}
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="name">Наименование</label>
@@ -278,15 +327,22 @@ export default function Objects() {
                   value={mutationData.name}
                   onChange={(e) => setMutationData({...mutationData, [e.target.name]: e.target.value})}
                 />
-                {mutationModalErrors.name && <span className="text-red-600 text-sm font-bold">Не указано наименование объекта</span>}
               </div>
-              <WorkerSelect 
-                jobTitle="Супервайзер"
-                title="Супервайзер объекта"
-                selectedWorkerID={selectedSupervisorWorkerID}
-                setSelectedWorkerID={setSupervisorWorkerID}
-              />
-              {mutationModalErrors.supervisorWorkerID && <span className="text-red-600 text-sm font-bold">Не указан указан Супервайзер объекта</span>}
+              <div>
+                <label htmlFor="">Супервайзеры объекта</label>
+                <Select
+                  className="basic-single text-black"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  isMulti
+                  name={"material-cost-material-select"}
+                  placeholder={""}
+                  value={selectedSupervisorsWorkerID}
+                  options={avaiableSupervisors}
+                  onChange={(value) => setselectedSupervisorsWorkerID([...value])}
+                />
+              </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="status">Статус</label>
                 <Input 
@@ -295,7 +351,6 @@ export default function Objects() {
                   value={mutationData.status}
                   onChange={(e) => setMutationData({...mutationData, [e.target.name]: e.target.value})}
                 />
-                {mutationModalErrors.status && <span className="text-red-600 text-sm font-bold">Не указана Статус объекта</span>}
               </div>
               {(selectedObjectType.value == "mjd_objects" || selectedObjectType.value == "tp_objects") && 
                 <div className="flex flex-col space-y-1">
@@ -349,7 +404,7 @@ export default function Objects() {
                       <input 
                         type="radio"
                         name="hasBasement" 
-                        value={"1"}
+                        value={"2"}
                         onChange={() => setSecondaryMutation({...secondaryMutationData, hasBasement: false})}
                         checked={!secondaryMutationData.hasBasement}
                         id="hasBasementFalse"
@@ -394,7 +449,7 @@ export default function Objects() {
               }
               {selectedObjectType.value =="sip_objects" && 
                 <div className="flex flex-col space-y-1">
-                  <label htmlFor="amountFeeders">Количество питащих</label>
+                  <label htmlFor="amountFeeders">Количество питающих</label>
                   <Input 
                     name="amountFeeders"
                     type="number"

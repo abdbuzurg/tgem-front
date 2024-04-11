@@ -5,6 +5,7 @@ interface Props {
   onClick: () => void
   buttonType?: ButtonType
   disabled?: boolean
+  className?: string
 }
 
 function buttonBgColor(buttonType: ButtonType) {
@@ -16,12 +17,12 @@ function buttonBgColor(buttonType: ButtonType) {
   }
 }
 
-export default function Button({text, onClick, buttonType = "default", disabled = false}: Props) {
+export default function Button({text, onClick, buttonType = "default", disabled = false, className = ""}: Props) {
   return (
     <button 
       disabled={disabled}
       onClick={onClick}
-      className={"text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 " + buttonBgColor(buttonType)}>
+      className={"text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 " + className + " " + buttonBgColor(buttonType)}>
       {text}
     </button>
   )

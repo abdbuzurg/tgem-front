@@ -1,11 +1,10 @@
 import fileDownload from "js-file-download"
-import { InvoiceMaterial } from "../interfaces/invoiceMaterial"
 import { IInvoiceOutput, IInvoiceOutputView } from "../interfaces/invoiceOutput"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
 
-const URL = "/invoice/output"
+const URL = "/output"
 
 export interface InvoiceOutputPagianted {
   data: IInvoiceOutputView[]
@@ -189,7 +188,7 @@ export interface InvoiceOutputReportFilter {
 }
 
 export async function buildReport(filter: InvoiceOutputReportFilter): Promise<boolean> {
-  const responseRaw = await axiosClient.post(`http://127.0.0.1:8080${URL}/report/`, filter, { responseType: "blob", })
+  const responseRaw = await axiosClient.post(`http://127.0.0.1:8080${URL}/report`, filter, { responseType: "blob", })
   if (responseRaw.status == 200) {
     const fileName = "Отчет"
     fileDownload(responseRaw.data, `${fileName}.xlsx`)

@@ -5,6 +5,7 @@ import axiosClient from "../axiosClient"
 export interface LoginRequestData{
   username: string
   password: string
+  projectID: number
 }
 
 export interface LoginResponseData {

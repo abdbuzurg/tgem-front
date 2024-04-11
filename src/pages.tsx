@@ -1,4 +1,4 @@
-import { LOGIN, PAGE_NOT_FOUND, PERMISSION_DENIED, HOME, INVOICE_INPUT, INVOICE_OUTPUT, INVOICE_RETURN, INVOICE_WRITEOFF, REFERENCE_BOOK_WORKER, REFERENCE_BOOK_OBJECTS, REFERENCE_BOOK_OPERATIONS, REFERENCE_BOOK_MATERIAL_COST, REFERENCE_BOOK_DISTRICT, INVOICE_OBJECT, REPORT,  } from "./URLs"
+import { LOGIN, PAGE_NOT_FOUND, PERMISSION_DENIED, HOME, INVOICE_INPUT, INVOICE_OUTPUT, INVOICE_RETURN, INVOICE_WRITEOFF, REFERENCE_BOOK_WORKER, REFERENCE_BOOK_OBJECTS, REFERENCE_BOOK_OPERATIONS, REFERENCE_BOOK_MATERIAL_COST, REFERENCE_BOOK_DISTRICT, INVOICE_OBJECT, REPORT, ADMIN_USERS_PAGE, REFERENCE_BOOK_TEAM, REFERENCE_BOOK_MATERIAL, INVOICE_OBJECT_MUTATION_ADD, } from "./URLs"
 import Home from "./pages/Home"
 import Login from "./pages/Login"
 import PermissionDenied from "./pages/PermissionDenied"
@@ -17,6 +17,8 @@ import Operatons from "./pages/reference-books/Operations"
 import Team from "./pages/reference-books/Teams"
 import Worker from "./pages/reference-books/Worker"
 import Report from "./pages/Report"
+import AdminUserPage from "./pages/AdminUserPage"
+import InvoiceObjectMutationAdd from "./pages/invoice/InvoiceObjectMutationMobile"
 
 export const PAGES_WITHOUT_LAYOUT = [
   {
@@ -39,6 +41,10 @@ export const PAGES_WITH_LAYOUT = [
     element: <Home />
   },
   {
+    path: ADMIN_USERS_PAGE,
+    element: <AdminUserPage />
+  },
+  {
     path: INVOICE_INPUT,
     element: <InvoiceInput />
   },
@@ -55,8 +61,12 @@ export const PAGES_WITH_LAYOUT = [
     element: <InvoiceObject />
   },
   {
+    path: INVOICE_OBJECT_MUTATION_ADD,
+    element: <InvoiceObjectMutationAdd />
+  },
+  {
     path: INVOICE_WRITEOFF,
-    element: <InvoiceWriteOff/>
+    element: <InvoiceWriteOff />
   },
   {
     path: REFERENCE_BOOK_WORKER,
@@ -67,11 +77,11 @@ export const PAGES_WITH_LAYOUT = [
     element: <ReferenceBooks />
   },
   {
-    path:"/reference-books/materials",
+    path: REFERENCE_BOOK_MATERIAL, 
     element: <Materials />
   },
   {
-    path:"/reference-books/teams",
+    path: REFERENCE_BOOK_TEAM,
     element: <Team />
   },
   {

@@ -99,7 +99,8 @@ export default function InvoiceOutput() {
 
   const invoiceInputDetailsMaterialsQuery = useQuery<InvoiceMaterialView[], Error>({
     queryKey: ["invoice-materials", "output", detailModalData.id],
-    queryFn: () => getInvoiceMaterialsByInvoice("output", detailModalData.id)
+    queryFn: () => getInvoiceMaterialsByInvoice("output", detailModalData.id),
+    enabled: false,
   })
 
   //Report Modal

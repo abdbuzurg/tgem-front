@@ -3,6 +3,7 @@ interface Props {
   name: string
   value: any
   disabled?: boolean
+  id?: string
   onChange: (event: React.ChangeEvent<HTMLInputElement>) => void
 }
 
@@ -10,6 +11,7 @@ export default function Input({
   type, 
   name, 
   value, 
+  id = "",
   disabled = false,
   onChange, 
 }: Props) {
@@ -19,7 +21,8 @@ export default function Input({
   }
 
   return (
-    <input 
+    <input
+      id={id}
       type={type} 
       name={name}
       value={value} 

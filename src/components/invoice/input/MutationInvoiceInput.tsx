@@ -15,7 +15,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { IMaterialCost } from "../../../services/interfaces/materialCost";
 import getMaterailCostByMaterialID from "../../../services/api/materialscosts/getByMaterailID";
 import { InvoiceInputMaterial, InvoiceInputMutation, createInvoiceInput } from "../../../services/api/invoiceInput";
-import ErrorModal from "../../errorModal";
 import SerialNumberAddModal from "./SerialNumerAddModal";
 import toast from "react-hot-toast";
 
@@ -88,7 +87,10 @@ export default function MutationInvoiceInput({
   useEffect(() => {
     if (materialQuery.isSuccess && materialQuery.data) {
       setAllMaterialData([
-        ...materialQuery.data.map<IReactSelectOptions<number>>((value) => ({ value: value.id, label: value.name }))
+        ...materialQuery
+          .data
+          .map<IReactSelectOptions<number>>((value) => ({ value: value.id, label: value.name })),
+      ])
     }
   }, [materialQuery.data])
   const onMaterialSelect = (value: IReactSelectOptions<number> | null) => {
@@ -129,7 +131,6 @@ export default function MutationInvoiceInput({
       setAllMaterialCostData([...materailCostQuery.data.map<IReactSelectOptions<number>>((value) => ({ label: value.costM19.toString(), value: value.id }))])
       if (materailCostQuery.data.length == 1) {
         setSelectedMaterialCost({ label: materailCostQuery.data[0].costM19.toString(), value: materailCostQuery.data[0].id })
-        setInvoiceMaterailErrors({ ...invoiceMaterialErrors, materialCostID: false })
         setInvoiceMaterial({
           ...invoiceMaterial,
           materialCost: materailCostQuery.data[0].costM19,
@@ -184,7 +185,7 @@ export default function MutationInvoiceInput({
       return
     }
 
-    if (invoiceMaterial.serialNumbers.length !== invoiceMaterial.amount) {
+    if (invoiceMaterial.hasSerialNumber && invoiceMaterial.serialNumbers.length !== invoiceMaterial.amount) {
       toast("Количство материала не совпадает с количеством серийных намеров")
       return
     }
@@ -420,7 +421,7 @@ export default function MutationInvoiceInput({
             availableSerialNumber={invoiceMaterial.serialNumbers} 
             addSerialNumbersToInvoice={addSerialNumbersToInvoice} 
           />}
-      </divf>
+      </div>
     </Modal>
   )
 }

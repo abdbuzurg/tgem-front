@@ -1,0 +1,280 @@
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import IReactSelectOptions from "../../../services/interfaces/react-select";
+import Modal from "../../Modal";
+import Select, { MultiValue } from 'react-select'
+import IWorker from "../../../services/interfaces/worker";
+import { useEffect, useState } from "react";
+import Button from "../../UI/button";
+import Input from "../../UI/Input";
+import { getAllRoles } from "../../../services/api/role";
+import AddNewWorkerModal from "./AddNewWorkerModal";
+import AddNewRoleModal from "./AddNewRoleModal";
+import toast from "react-hot-toast";
+import { NewUserData, createUser } from "../../../services/api/user";
+import { GetAllProjects } from "../../../services/api/project";
+import Project from "../../../services/interfaces/project";
+import { getAllWorkers } from "../../../services/api/worker";
+
+interface Props {
+  setShowModal: React.Dispatch<React.SetStateAction<boolean>> 
+}
+
+export default function MutationUserModal({
+  setShowModal
+}: Props) {
+
+  //Worker Select logic
+  const [selectedWorkerID, setSelectedWorkerID] = useState<IReactSelectOptions<number>>({
+    value: 0,
+    label: ""
+  })
+  const [availableWorkers, setAvailableWorkers] = useState<IReactSelectOptions<number>[]>([])
+  const allWorkersQuery = useQuery<IWorker[], Error, IWorker[]>({
+    queryKey: ["all-workers"],
+    queryFn: getAllWorkers,
+  })
+  useEffect(() => {
+
+    if (allWorkersQuery.isSuccess && allWorkersQuery.data) {
+      setAvailableWorkers([
+        ...allWorkersQuery.data.map<IReactSelectOptions<number>>(value => ({
+          label: value.name,
+          value: value.id,
+        }))
+      ])
+    }
+
+  }, [allWorkersQuery.data])
+  // Adding new worker modal logic
+  const [showAddNewWorkerModal, setShowAddNewWorkerModal] = useState(false)
+
+  //Username Logic
+  const [username, setUsername] = useState("")
+
+  //Password Logic
+  const [password, setPassword] = useState("")
+
+  //Select Role logic
+  const [selectedRoleID, setSelectedRoleID] = useState<IReactSelectOptions<number>>({
+    label: "",
+    value: 0,
+  })
+  const [availableRoles, setAvailableRoles] = useState<IReactSelectOptions<number>[]>([])
+  const allRolesQuery = useQuery<IRole[], Error, IRole[]>({
+    queryKey: ["all-roles"],
+    queryFn: getAllRoles,
+  }) 
+
+  useEffect(() => {
+
+    if (allRolesQuery.isSuccess && allRolesQuery.data) {
+
+      setAvailableRoles([
+        ...allRolesQuery.data.map<IReactSelectOptions<number>>((value) => ({
+          value: value.id,
+          label: value.name,
+        }))
+      ])
+    }
+
+  }, [allRolesQuery.data])
+
+  // Adding new role logic
+  const [showAddNewRoleModal, setShowAddNewRoleModal] = useState(false)
+
+  //Selecting projects logic
+  const [selectedProjects, setSelectedProjects] = useState<IReactSelectOptions<number>[]>([])
+  const [availableProjects, setAvailableProjects] = useState<IReactSelectOptions<number>[]>([])
+  const allProjectsQuery = useQuery<Project[], Error, Project[]>({
+    queryKey: ["all-projects"],
+    queryFn: GetAllProjects,
+  })
+  
+  useEffect(() => {
+    if (allProjectsQuery.isSuccess && allProjectsQuery.data) {
+      setAvailableProjects([
+        ...allProjectsQuery.data.map<IReactSelectOptions<number>>((value) => ({
+          value: value.id,
+          label: value.name,
+        }))
+      ])
+    }
+  }, [allProjectsQuery.data])
+  
+  const onProjectSelect = (value: MultiValue<IReactSelectOptions<number>>) => {
+    setSelectedProjects([...value])
+  }
+
+  // Submiting new user Data
+  const queryClient = useQueryClient()
+
+  const createUserMutation = useMutation<boolean, Error, NewUserData>({
+    mutationFn: createUser,
+  })
+
+  const onSubmitUser = () => {
+
+    if (selectedWorkerID.value == 0) {
+      toast.error("Сотрудник не выбран")
+      return
+    }
+
+    if (username == "") {
+      toast.error("Лоин пользователя не был указан")
+      return
+    }
+
+    if (password == "") {
+      toast.error("Пароль не был указан")
+      return
+    }
+
+    if (selectedRoleID.value == 0) {
+      toast.error("Не выбрана роль для пользователя")
+      return
+    }
+  
+    if (selectedProjects.length == 0) {
+      toast.error("Не выбран проект(-ы) для пользователя")
+      return
+    }
+
+    const loadingToast = toast.loading("Сохранение новых данных...")
+    createUserMutation.mutate({
+        userData: {
+          id: 0,
+          workerID: selectedWorkerID.value,
+          roleID: selectedRoleID.value,
+          username: username,
+          password: password,
+        },
+        projects: [...selectedProjects.map<number>(value => value.value)],
+      }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["users"])
+        toast.success("Сохранение данных прошло успешно")
+        setShowModal(false)
+      },
+      onSettled: () => {
+        toast.dismiss(loadingToast) 
+      }
+    })
+
+  }
+
+  return (
+    <Modal setShowModal={setShowModal} >
+      <div className="flex flex-col space-y-2">
+        <div>
+          <span className="text-2xl font-bold">Добавление нового пользователя</span>
+        </div>
+        <div className="flex flex-col space-y-3">
+          <span className="text-xl font-semibold">Информация пользователя</span>
+          <label htmlFor="worker">Выберите соотрудника</label>
+          <div className="flex space-x-2 align-middle items-center">
+            <div className="flex flex-col space-y-1">
+              <div id="worker" className="w-[250px]">
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"teams"}
+                  placeholder={""}
+                  value={selectedWorkerID}
+                  options={availableWorkers}
+                  onChange={(value) => setSelectedWorkerID({
+                    value: value?.value ?? 0,
+                    label: value?.label ?? "",
+                  })}
+                />
+              </div>
+            </div>
+            <Button
+              text="Добавить сотрудрика"
+              onClick={() => setShowAddNewWorkerModal(true)}
+            />
+          </div>
+          <div className="flex space-x-2 items-center">
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="username">Логин пользователя</label>
+              <Input 
+                id="username"
+                value={username}
+                name="username"
+                type="text"
+                onChange={(e:React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
+              />
+            </div>
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="password">Пароль</label>
+              <Input 
+                id="password"
+                value={password}
+                name="password"
+                type="password"
+                onChange={(e:React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+              />
+            </div>
+          </div>
+        </div>
+        <div className="flex flex-col space-y-2">
+          <span className="text-xl font-semibold">Доступы пользователя</span>
+          <div className="flex space-x-2 align-middle items-center">
+            <div className="flex flex-col space-y-1">
+              <div id="worker" className="w-[250px]">
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"teams"}
+                  placeholder={""}
+                  value={selectedRoleID}
+                  options={availableRoles}
+                  onChange={(value) => setSelectedRoleID({
+                    value: value?.value ?? 0,
+                    label: value?.label ?? "",
+                  })}
+                />
+              </div>
+            </div>
+            <Button
+              text="Добавить роль"
+              onClick={() => setShowAddNewRoleModal(true)}
+            />
+          </div>
+        </div>
+        <div className="flex flex-col space-y-2">
+          <span className="text-xl font-semibold">Доступы в проекты для пользователя</span>
+          <div className="flex space-x-2 align-middle items-center">
+            <div className="flex flex-col space-y-1">
+              <div id="projects" className="w-[300px]">
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  isMulti
+                  name={"projects"}
+                  placeholder={""}
+                  value={selectedProjects}
+                  options={availableProjects}
+                  onChange={onProjectSelect}
+                />
+              </div>
+            </div>
+         </div>
+        </div>
+        <div>
+          <Button 
+            text="Созать пользователя" 
+            onClick={() => onSubmitUser()}
+          />
+        </div>
+      </div>
+      {showAddNewWorkerModal && <AddNewWorkerModal setShowModal={setShowAddNewWorkerModal}/>}
+      {showAddNewRoleModal && <AddNewRoleModal setShowModal={setShowAddNewRoleModal} />}
+    </Modal>
+  )
+}

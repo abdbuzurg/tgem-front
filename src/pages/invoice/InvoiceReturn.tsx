@@ -100,7 +100,8 @@ const tableDataQuery = useInfiniteQuery<InvoiceReturnPagianted, Error>({
 
   const invoiceInputDetailsMaterialsQuery = useQuery<InvoiceMaterialView[], Error>({
     queryKey: ["invoice-materials", "return", detailModalData.id],
-    queryFn: () => getInvoiceMaterialsByInvoice("return", detailModalData.id)
+    queryFn: () => getInvoiceMaterialsByInvoice("return", detailModalData.id),
+    enabled: false,
   })
 
   return (

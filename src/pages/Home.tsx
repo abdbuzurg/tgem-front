@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { INVOICE_INPUT, INVOICE_OBJECT, INVOICE_OUTPUT, INVOICE_RETURN, INVOICE_WRITEOFF, REPORT_BALANCE } from "../URLs";
+import { INVOICE_INPUT, INVOICE_OBJECT, INVOICE_OUTPUT, INVOICE_RETURN, INVOICE_WRITEOFF,  } from "../URLs";
 
 const warehouseFlow = [
   {name: "Приход", url: INVOICE_INPUT}, 
@@ -14,7 +14,7 @@ export default function Home() {
     <div className="flex flex-col space-y-2">
       <div className="px-2">
         <p className="text-3xl font-bold">Накладные</p>
-        <div className="flex space-x-3 mt-2">
+        <div className="grid grid-cols-2 gap-3 md:flex md:space-x-1 mt-2">
           {warehouseFlow.map((flow, index) => (
             <Link
               key={index} 

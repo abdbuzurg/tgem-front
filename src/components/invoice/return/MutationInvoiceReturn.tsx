@@ -45,11 +45,6 @@ export default function MutationInvoiceReturn({
     returnerType: "objects",
     confirmation: false,
   })
-  const [mutationModalErrors, setMutationModalErrors] = useState({
-    returnerID: false,
-    district: false,
-    invoiceMaterials: false,
-  })
 
   // Object, Team and District select logic
   const [selectedObjectID, setSelectedObjectID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
@@ -105,10 +100,13 @@ export default function MutationInvoiceReturn({
   })
 
   useEffect(() => {
-    if (allMaterialInALocation.isSuccess && allMaterialInALocation.data) {
-      setAllAvailableMaterails([
-        ...allMaterialInALocation.data.map<IReactSelectOptions<number>>((value) => ({ label: value.name, value: value.id }))
-      ])
+    if (allMaterialInALocation.isSuccess) {
+      if (allMaterialInALocation.data) 
+        setAllAvailableMaterails([
+          ...allMaterialInALocation.data.map<IReactSelectOptions<number>>((value) => ({ label: value.name, value: value.id }))
+        ]) 
+      else 
+        setAllAvailableMaterails([]);
     }
   }, [allMaterialInALocation.data])
 

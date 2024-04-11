@@ -15,7 +15,6 @@ import { getAmountInWarehouse } from "../../../services/api/materialLocation";
 import getAllMaterials from "../../../services/api/materials/getAll";
 import Material from "../../../services/interfaces/material";
 import { InvoiceOutputItem, InvoiceOutputMutation, createInvoiceOutput } from "../../../services/api/invoiceOutput";
-import ErrorModal from "../../errorModal";
 import Input from '../../UI/Input'
 import SerialNumberSelectModal from "./SerialNumberSelectModal";
 import toast from "react-hot-toast";
@@ -181,7 +180,7 @@ export default function MutationInvoiceOutput({mutationType, setShowMutationModa
       return
     }
 
-    if (invoiceMaterial.amount != invoiceMaterial.serialNumbers.length) {
+    if (invoiceMaterial.hasSerialNumber && invoiceMaterial.amount != invoiceMaterial.serialNumbers.length) {
       toast.error("Указанное количество материалов и количество добавленных серийных номеров не совпадают")
       return
     }
@@ -350,8 +349,7 @@ export default function MutationInvoiceOutput({mutationType, setShowMutationModa
               />
             </div>
             <div className="px-4 py-3">{invoiceMaterial.unit}</div>
-            <div className="px-4 py-3">
-            </div>
+            <div className="px-4 py-3">{invoiceMaterial.warehouseAmount}</div>
             <div className="px-4 py-3">
               <Input 
                 name="amount"
@@ -373,21 +371,20 @@ export default function MutationInvoiceOutput({mutationType, setShowMutationModa
               <Button onClick={() => onAddClick()} text="Добавить"/>
             </div>
           </div>
-            <div className="grid grid-cols-6 text-sm text-left mt-2 w-full border-box overflow-y-auto max-h-[30vh]">
-              {invoiceMaterials.map((value, index) => 
-                <Fragment key={index}>
-                  <div className="px-4 py-3">{value.materialName}</div>
-                  <div className="px-4 py-3">{value.unit}</div>
-                  <div className="px-4 py-3">{value.warehouseAmount}</div>
-                  <div className="px-4 py-3">{value.amount}</div>
-                  <div className="px-4 py-3">{value.notes}</div>
-                  <div className="px-4 py-3 flex items-center">
-                    <Button buttonType="delete" onClick={() => onDeleteClick(index)} text="Удалить"/>
-                  </div>
-                </Fragment>
-              )}
-            </div>
-          }
+          <div className="grid grid-cols-6 text-sm text-left mt-2 w-full border-box overflow-y-auto max-h-[30vh]">
+            {invoiceMaterials.map((value, index) => 
+              <Fragment key={index}>
+                <div className="px-4 py-3">{value.materialName}</div>
+                <div className="px-4 py-3">{value.unit}</div>
+                <div className="px-4 py-3">{value.warehouseAmount}</div>
+                <div className="px-4 py-3">{value.amount}</div>
+                <div className="px-4 py-3">{value.notes}</div>
+                <div className="px-4 py-3 flex items-center">
+                  <Button buttonType="delete" onClick={() => onDeleteClick(index)} text="Удалить"/>
+                </div>
+              </Fragment>
+            )}
+          </div>
         </div>
       </div>
       {showSerialNumberSelectModal &&  <SerialNumberSelectModal 

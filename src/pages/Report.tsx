@@ -6,13 +6,11 @@ import ReportInvoiceOutput from "../components/invoice/output/ReportInvoiceOutpu
 import ReportInvoiceReturn from "../components/invoice/return/ReportInvoiceReturn"
 
 const report = [
-  {name: "Баланс", type: REPORT_BALANCE},
+  {name: "Остатка", type: REPORT_BALANCE},
   {name: "Отсчет приход", type: REPORT_INVOICE_INPUT},
   {name: "Отсчет отпуск", type: REPORT_INVOICE_OUTPUT},
   {name: "Отсчет возврат", type: REPORT_INVOICE_RETURN},
 ]
-
-
 
 export default function Report() {
 

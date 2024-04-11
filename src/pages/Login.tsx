@@ -4,7 +4,6 @@ import Button from "../components/UI/button"
 import { useMutation, useQuery } from "@tanstack/react-query"
 import loginUser from "../services/api/auth/login"
 import { useNavigate } from "react-router-dom"
-import getPermissions, { UserPermissions } from "../services/api/auth/permissions"
 import { AuthContext } from "../services/context/authContext"
 import toast, { Toaster } from "react-hot-toast"
 import IReactSelectOptions from "../services/interfaces/react-select"
@@ -48,43 +47,44 @@ export default function Login() {
     setLoginData({...loginData, projectID: value.value})
   }
 
-  const permissionQuery = useQuery<UserPermissions[], Error>({
-    queryKey: ["permissions"],
-    queryFn: () => getPermissions(),
-    enabled: false,
-    staleTime: 1000 * 3600
-  })
-
   const loginMutation = useMutation({ mutationFn: loginUser }) 
   const login = () => {
+
     if (loginData.username == "") {
       toast.error("Не указано имя пользователя")
       return
     }
+
     if (loginData.password == "") {
       toast.error("Не указан пароль")
       return
     }
+
     if (loginData.projectID == 0) {
       toast.error("Не выбран проект") 
       return
     }
+
+    const loadingToast = toast.loading("Выполняется вход.....")
     loginMutation.mutate(loginData, {
       onSuccess: (data, _, __) => {
+
         localStorage.setItem("token", data.toString())
         localStorage.setItem("username", loginData.username)
+
         authContext.setUsername(loginData.username)
-        permissionQuery.refetch()
+
+        toast.success("Вход прошел успешно.")
+        
+        // browser does not save token localStorage immediately
+        setTimeout(() => navigate("/"), 1500)
+
+      }, 
+      onSettled: () => {
+        toast.dismiss(loadingToast)
       }
     })
   }
-
-  useEffect(() => {
-    if (permissionQuery.isSuccess) {
-      authContext.setPermissions(permissionQuery.data)
-      navigate("/")
-    }
-  }, [permissionQuery.data])
 
   return (
     <div className="h-screen w-screen bg-gray-800">

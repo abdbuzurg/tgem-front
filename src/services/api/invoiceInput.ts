@@ -5,7 +5,7 @@ import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
 
-const URL = "/invoice/input"
+const URL = "/input"
 
 export interface InvoiceInputPagianted {
   data: IInvoiceInputView[]
@@ -127,7 +127,7 @@ export interface InvoiceInputReportFilter{
 }
 
 export async function buildReport(filter: InvoiceInputReportFilter): Promise<boolean> {
-  const responseRaw = await axiosClient.post(`http://127.0.0.1:8080${URL}/report/`, filter, { responseType: "blob", })
+  const responseRaw = await axiosClient.post(`http://127.0.0.1:8080${URL}/report`, filter, { responseType: "blob", })
   if (responseRaw.status == 200) {
     const fileName = "Отчет"
     fileDownload(responseRaw.data, `${fileName}.xlsx`)

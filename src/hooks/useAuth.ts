@@ -1,7 +1,6 @@
 import { useContext, useEffect, useState } from "react";
 import { AuthContext, IAuthContext } from "../services/context/authContext";
 import { useQuery } from "@tanstack/react-query";
-import getPermissions, { UserPermissions } from "../services/api/auth/permissions";
 import { useNavigate } from "react-router-dom";
 import isAuthenticated from "../services/api/auth/isAuthenticated";
 import IAPIResposeFormat from "../services/api/IAPIResposeFormat";
@@ -16,13 +15,6 @@ export default function useAuth(): {isLoading: boolean, auth:IAuthContext} {
     queryFn: isAuthenticated,
     enabled: false,
   }) 
-  
-
-  const permissionQuery = useQuery<UserPermissions[], Error>({
-    queryKey: ["permissions"],
-    queryFn: () => getPermissions(),
-    enabled: false
-  },)
 
   useEffect(() => {
     const token = localStorage.getItem("token")
@@ -32,41 +24,21 @@ export default function useAuth(): {isLoading: boolean, auth:IAuthContext} {
       return
     }
 
-    const username = localStorage.getItem("username")
-    if (!username) {
-      navigate("/login")
-      setIsLoading(false)
-      return
-    } else auth.setUsername(username) 
+    isAuthenticatedQuery.refetch()
 
-    if (auth.permissions.length == 0) permissionQuery.refetch()
-    else setIsLoading(true)
   }, [])
 
   useEffect(() => {
     if (isAuthenticatedQuery.isSuccess && !isAuthenticatedQuery.data.success) {
-      navigate("/login")
-      setIsLoading(false)
       localStorage.removeItem("token")
       localStorage.removeItem("username")
       auth.setPermissions([])
       auth.setUsername("")
-    }
-
-  },[isAuthenticatedQuery.isSuccess])
-
-  useEffect(() => {
-    if (permissionQuery.isSuccess) {
-      auth.setPermissions(permissionQuery.data)
-      setIsLoading(false)
-    }
-  }, [permissionQuery.isSuccess])
-
-  useEffect(() => {
-    if (isAuthenticatedQuery.isError || permissionQuery.isError) {
       navigate("/login")
     }
-  }, [isAuthenticatedQuery.isError, permissionQuery.isError])
+
+    setIsLoading(false)
+  },[isAuthenticatedQuery.isSuccess])
 
   return {isLoading: isLoading, auth: auth}
 }

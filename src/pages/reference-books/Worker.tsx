@@ -1,24 +1,22 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import getPaginatedWorker, { WorkerPaginatedData } from "../../services/api/worker/getPaginated";
 import { ENTRY_LIMIT } from "../../services/api/constants";
 import IWorker from "../../services/interfaces/worker";
 import { useEffect, useState } from "react";
 import Button from "../../components/UI/button";
 import LoadingDots from "../../components/UI/loadingDots";
-import deleteWorker from "../../services/api/worker/delete";
-import createWorker from "../../services/api/worker/create";
-import updateWorker from "../../services/api/worker/update";
 import DeleteModal from "../../components/deleteModal";
 import Modal from "../../components/Modal";
 import Input from "../../components/UI/Input";
 import Select from 'react-select'
 import IReactSelectOptions from "../../services/interfaces/react-select";
+import { JOB_TITLES } from "../../services/lib/jobTitles";
+import { WorkerPaginatedData, createWorker, deleteWorker, getPaginatedWorker, updateWorker } from "../../services/api/worker";
 
 export default function Worker() {
   //fetching data logic
   const tableDataQuery = useInfiniteQuery<WorkerPaginatedData, Error>({
     queryKey: ["workers"],
-    queryFn: ({ pageParam }) => getPaginatedWorker({pageParam}),
+    queryFn: ({ pageParam }) => getPaginatedWorker({ pageParam }),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
@@ -52,7 +50,7 @@ export default function Worker() {
   const [modalProps, setModalProps] = useState({
     setShowModal: setShowDeleteModal,
     no_delivery: "",
-    deleteFunc: () => {}
+    deleteFunc: () => { }
   })
   const onDeleteButtonClick = (row: IWorker) => {
     setShowDeleteModal(true)
@@ -64,71 +62,25 @@ export default function Worker() {
   }
 
   //mutation CREATE AND EDIT logic
-  const jobTitles: string[] = [
-    "Администратор",
-    "Менеджер проекта", 
-    "Инженер Проекта", 
-    "Инженер ТБ и ОТ",
-    "Заместитель Менеджера",
-    "Ассистент Менеджера",
-    "Мастер",
-    "Бригадир",
-    "Электрик",
-    "Электроварщик ручной сварки",
-    "Подсобный рабочий",
-    "Начальник группы",
-    "Оператор биллинга",
-    "Оператор ЧЧЮ",
-    "Специалист ОК",
-    "Бухгалтер",
-    "Снабженец",
-    "Заведующий складом",
-    "Снабженец",
-    "Кладовщик",
-    "Повар",
-    "Пекарь",
-    "Уборщица",
-    "Машинист крана-манипулятора",
-    "Водитель легкового автомобиля",
-    "Машинист автогидроподъемника",
-    "Системный Инженер",
-    "Бухгалтер Проекта",
-    "Юрист Проекта",
-    "Региональный Менеджер Проекта",
-    "Заместитель (по совместительству кассир и снабженец)",
-    "Посудамойщица",
-    "Инженер лабор.",
-    "Спецалист по подготовке документации",
-    "Руководитель группы МЖД",
-    "Руководитель группы ВЛ и КЛ",
-    "Руководитель группы ПС/ТП/Комм. Абонт.",
-    "Руководитель группы ПТО (контроль качества и подсчета материалов)",
-    "Медецинский персонал",
-    "Проектировщик",
-    "Обходчик",
-    "Прораб по организации работа на объекте",
-    "Мастер по организации работа на объекте",
-    "Специалист по контролю качества работ и подсчета материалов",
-    "Супервайзер",
-  ]
-  const [currentJobTitle, setCurrentJobTitle] = useState<IReactSelectOptions<string>>({label: "", value: ""})
+
+  const [currentJobTitle, setCurrentJobTitle] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
   const onJobTitleSelect = (value: null | IReactSelectOptions<string>) => {
     if (!value) {
-      setCurrentJobTitle({value: "", label: ""})
-      setWorkerMutationData({...workerMutationData, jobTitle: ""})
+      setCurrentJobTitle({ value: "", label: "" })
+      setWorkerMutationData({ ...workerMutationData, jobTitle: "" })
       return
     }
 
     setCurrentJobTitle(value)
-    setWorkerMutationData({...workerMutationData, jobTitle: value.value})
+    setWorkerMutationData({ ...workerMutationData, jobTitle: value.value })
   }
   const [showMutationModal, setShowMutationModal] = useState<boolean>(false)
   const [mutationModalType, setMutationModalType] = useState<null | "update" | "create">()
   const [workerMutationData, setWorkerMutationData] = useState<IWorker>({
     id: 0,
     jobTitle: "",
-    mobileNumber:"",
-    name:"",
+    mobileNumber: "",
+    name: "",
   })
   const [mutationModalErrors, setMutationModalErrors] = useState({
     jobTitle: false,
@@ -150,30 +102,30 @@ export default function Worker() {
     }
   })
   const onMutationSubmit = () => {
-    if (workerMutationData.jobTitle == "") setMutationModalErrors((prev) => ({...prev, jobTitle: true}))
-    else setMutationModalErrors((prev) => ({...prev, jobTitle: false}))
-    
-    if (workerMutationData.name == "") setMutationModalErrors((prev) => ({...prev, name: true}))
-    else setMutationModalErrors((prev) => ({...prev, name: false}))
+    if (workerMutationData.jobTitle == "") setMutationModalErrors((prev) => ({ ...prev, jobTitle: true }))
+    else setMutationModalErrors((prev) => ({ ...prev, jobTitle: false }))
 
-    if (workerMutationData.mobileNumber == "") setMutationModalErrors((prev) => ({...prev, mobileNumber: true}))
-    else setMutationModalErrors((prev) => ({...prev, mobileNumber: false}))
-    
+    if (workerMutationData.name == "") setMutationModalErrors((prev) => ({ ...prev, name: true }))
+    else setMutationModalErrors((prev) => ({ ...prev, name: false }))
+
+    if (workerMutationData.mobileNumber == "") setMutationModalErrors((prev) => ({ ...prev, mobileNumber: true }))
+    else setMutationModalErrors((prev) => ({ ...prev, mobileNumber: false }))
+
     const isThereError = Object.keys(workerMutationData).some((value) => {
       if (workerMutationData[value as keyof typeof workerMutationData] == "" && value != "id") {
         return true
       }
     })
     if (isThereError) return
-    
-    switch(mutationModalType) {
+
+    switch (mutationModalType) {
       case "create":
         createMaterialMutation.mutate(workerMutationData)
         return
       case "update":
         updateMaterialMutation.mutate(workerMutationData)
         return
-      
+
       default:
         throw new Error("Неправильная операция была выбрана")
     }
@@ -200,19 +152,19 @@ export default function Worker() {
               <Button text="Добавить" onClick={() => {
                 setMutationModalType("create")
                 setShowMutationModal(true)
-              }}/>
+              }} />
             </th>
           </tr>
         </thead>
         <tbody>
-          {tableDataQuery.isLoading && 
+          {tableDataQuery.isLoading &&
             <tr>
               <td colSpan={6}>
                 <LoadingDots />
               </td>
             </tr>
           }
-          {tableDataQuery.isError && 
+          {tableDataQuery.isError &&
             <tr>
               <td colSpan={6} className="text-red font-bold text-center">
                 {tableDataQuery.error.message}
@@ -227,21 +179,21 @@ export default function Worker() {
                 <td className="px-4 py-3">{row.mobileNumber}</td>
                 <td className="px-4 py-3 border-box flex space-x-3">
                   <Button text="Изменить" buttonType="default" onClick={() => {
-                      setShowMutationModal(true)
-                      setMutationModalType("update")
-                      setWorkerMutationData(row)
-                      setCurrentJobTitle({value: row.jobTitle, label: row.jobTitle})
-                    }}
+                    setShowMutationModal(true)
+                    setMutationModalType("update")
+                    setWorkerMutationData(row)
+                    setCurrentJobTitle({ value: row.jobTitle, label: row.jobTitle })
+                  }}
                   />
-                  <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)}/>
+                  <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)} />
                 </td>
               </tr>
             ))
           }
         </tbody>
       </table>
-      {showDeleteModal && 
-        <DeleteModal {...modalProps}> 
+      {showDeleteModal &&
+        <DeleteModal {...modalProps}>
           <span>При подтверждении материал под именем {modalProps.no_delivery} и все его данные в ней будут удалены</span>
         </DeleteModal>
       }
@@ -255,11 +207,11 @@ export default function Worker() {
             <div className="flex flex-col space-y-3 mt-2">
               <div className="flex flex-col space-y-1">
                 <label htmlFor="name">Фамилия Имя</label>
-                <Input 
+                <Input
                   name="name"
                   type="text"
                   value={workerMutationData.name}
-                  onChange={(e) => setWorkerMutationData({...workerMutationData, [e.target.name]: e.target.value})}
+                  onChange={(e) => setWorkerMutationData({ ...workerMutationData, [e.target.name]: e.target.value })}
                 />
                 {mutationModalErrors.name && <span className="text-red-600 text-sm font-bold">Не указано имя работника</span>}
               </div>
@@ -273,24 +225,24 @@ export default function Worker() {
                   name={"job-title-select"}
                   placeholder={""}
                   value={currentJobTitle}
-                  options={jobTitles.map<IReactSelectOptions<string>>((value) => ({label: value, value: value}))}
+                  options={JOB_TITLES.map<IReactSelectOptions<string>>((value) => ({ label: value, value: value }))}
                   onChange={(value) => onJobTitleSelect(value)}
                 />
                 {mutationModalErrors.jobTitle && <span className="text-red-600 text-sm font-bold">Не указана должность работника</span>}
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="mobileNumber">Номера телефона</label>
-                <Input 
+                <Input
                   name="mobileNumber"
                   type="text"
                   value={workerMutationData.mobileNumber}
-                  onChange={(e) => setWorkerMutationData({...workerMutationData, [e.target.name]: e.target.value})}
+                  onChange={(e) => setWorkerMutationData({ ...workerMutationData, [e.target.name]: e.target.value })}
                 />
                 {mutationModalErrors.mobileNumber && <span className="text-red-600 text-sm font-bold">Не указано номер телефона</span>}
               </div>
               <div>
-                <Button 
-                  text={mutationModalType=="create" ? "Добавить" : "Подтвердить изменения"}
+                <Button
+                  text={mutationModalType == "create" ? "Добавить" : "Подтвердить изменения"}
                   onClick={onMutationSubmit}
                 />
               </div>
