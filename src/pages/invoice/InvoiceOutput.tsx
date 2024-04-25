@@ -117,7 +117,7 @@ export default function InvoiceOutput() {
       <table className="table-auto text-sm text-left mt-2 w-full border-box">
         <thead className="shadow-md border-t-2">
           <tr>
-            <th className="px-4 py-3 w-[100px]">
+            <th className="px-4 py-3 w-[110px]">
               <span>Код</span>
             </th>
             <th className="px-4 py-3">
@@ -129,13 +129,13 @@ export default function InvoiceOutput() {
             <th className="px-4 py-3">
               <span>Бригада</span>
             </th>
-            <th className="px-4 py-3">
+            <th className="px-4 py-3 min-w-[110px]">
               <span>Зав. Склад</span>
             </th>
             <th className="px-4 py-3">
               <span>Отпустил</span>
             </th>
-            <th className="px-4 py-3 w-[150px]">
+            <th className="px-4 py-3 w-[110px]">
               <span>Дата</span>
             </th>
             <th className="px-4 py-3">
@@ -148,19 +148,19 @@ export default function InvoiceOutput() {
         </thead>
         <tbody>
           {tableData.map((value, index) => 
-            <tr key={index}>
-              <td>{value.deliveryCode}</td>
-              <td>{value.districtName}</td>
-              <td>{value.objectName}</td>
-              <td>{value.teamName}</td>
-              <td>{value.warehouseManagerName}</td>
-              <td>{value.releasedName}</td>
-              <td>{value.dateOfInvoice.toString().substring(0, 10)}</td>
-              <td className="px-4 py-3 border-box flex space-x-3">
+            <tr key={index} className="text-sm">
+              <td className="px-4 py-3">{value.deliveryCode}</td>
+              <td className="px-4 py-3">{value.districtName}</td>
+              <td className="px-4 py-3">{value.objectName}</td>
+              <td className="px-4 py-3">{value.teamName}</td>
+              <td className="px-4 py-3">{value.warehouseManagerName}</td>
+              <td className="px-4 py-3">{value.releasedName}</td>
+              <td className="px-4 py-3">{value.dateOfInvoice.toString().substring(0, 10)}</td>
+              <td className="px-1 py-1.5 border-box grid grid-cols-2 gap-2">
                 {!value.confirmation && 
                   <>
-                    <label htmlFor="file" className="m-0 cursor-pointer text-white py-2.5 px-5 rounded-lg border-red-700 bg-red-800 hover:bg-red-700 hover:border-red-700">Подтвердить</label>
-                    <input 
+                    <label htmlFor="file" className="text-center m-0 cursor-pointer text-white py-2.5 px-5 rounded-lg border-red-700 bg-red-800 hover:bg-red-700 hover:border-red-700">Подтвердить</label>
+                    <input  
                       name="file" 
                       type="file"
                       id="file"

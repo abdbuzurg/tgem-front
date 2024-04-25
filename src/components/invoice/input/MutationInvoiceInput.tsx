@@ -46,15 +46,13 @@ export default function MutationInvoiceInput({
 
   // SELECT LOGIC FOR MAIN INFORMATION IN INVOICE
   const [selectedWarehouseManagerWorkerID, setSelectedWarehouseManagerWorkerID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
-  const [selectedReleasedWorkerID, setSelectedReleasedWorkerID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
 
   useEffect(() => {
     setMutationData({
       ...mutationData,
-      releasedWorkerID: selectedReleasedWorkerID.value,
       warehouseManagerWorkerID: selectedWarehouseManagerWorkerID.value
     })
-  }, [selectedReleasedWorkerID, selectedWarehouseManagerWorkerID])
+  }, [selectedWarehouseManagerWorkerID])
 
   // Invoice materials information
   const [invoiceMaterials, setInvoiceMaterials] = useState<IInvoiceInputMaterials[]>([])
@@ -166,31 +164,34 @@ export default function MutationInvoiceInput({
   const onAddClick = () => {
 
     if (invoiceMaterial.materialID == 0) {
-      toast("Не выбран материал")
+      toast.error("Не выбран материал")
       return
     }
 
-    if (invoiceMaterials.findIndex((value) => value.materialID == invoiceMaterial.materialID) != -1) {
-      toast("Такой материал уже был выбран")
-      return
+    const index = invoiceMaterials.findIndex((value) => value.materialID == invoiceMaterial.materialID)  
+    if (index != -1) {
+      if (invoiceMaterial.materialCost == invoiceMaterials[index].materialCost) {
+        toast.error("Такой материал с такой ценой уже был выбран. Выберите другой ценник или же другой материл")
+        return
+      }
     }
 
     if (invoiceMaterial.materialCostID == 0) {
-      toast("Не выбрана цена материала")
+      toast.error("Не выбрана цена материала")
       return
     }
 
     if (invoiceMaterial.amount <= 0) {
-      toast("Неправильно указано количество")
+      toast.error("Неправильно указано количество")
       return
     }
 
     if (invoiceMaterial.hasSerialNumber && invoiceMaterial.serialNumbers.length !== invoiceMaterial.amount) {
-      toast("Количство материала не совпадает с количеством серийных намеров")
+      toast.error("Количство материала не совпадает с количеством серийных намеров")
       return
     }
 
-    setInvoiceMaterials([...invoiceMaterials, invoiceMaterial])
+    setInvoiceMaterials([invoiceMaterial, ...invoiceMaterials])
     setInvoiceMaterial({
       amount: 0,
       materialCostID: 0,
@@ -232,11 +233,6 @@ export default function MutationInvoiceInput({
 
     if (mutationData.warehouseManagerWorkerID == 0) {
       toast.error("Заведующий складом не выбран")
-      return
-    }
-
-    if (mutationData.releasedWorkerID == 0) {
-      toast.error("Выпускающий накладную не был выбран")
       return
     }
 
@@ -295,12 +291,6 @@ export default function MutationInvoiceInput({
               jobTitle="Заведующий складом"
               selectedWorkerID={selectedWarehouseManagerWorkerID}
               setSelectedWorkerID={setSelectedWarehouseManagerWorkerID}
-            />
-            <WorkerSelect
-              title="Составил"
-              jobTitle="Заведующий складом"
-              selectedWorkerID={selectedReleasedWorkerID}
-              setSelectedWorkerID={setSelectedReleasedWorkerID}
             />
             <div className="flex flex-col space-y-1">
               <label htmlFor="dateOfInvoice">Дата накладной</label>
@@ -392,7 +382,7 @@ export default function MutationInvoiceInput({
                 onChange={(e) => setInvoiceMaterial((prev) => ({ ...prev, notes: e.target.value }))}
               />
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="grid gird-col-1 gap-1">
               {invoiceMaterial.hasSerialNumber && <Button onClick={() => setShowSerialNumberAddModal(true)} text="Серийные номера" />}
               <Button onClick={() => onAddClick()} text="Добавить" />
             </div>

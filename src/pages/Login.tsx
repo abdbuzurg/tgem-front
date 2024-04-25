@@ -74,14 +74,17 @@ export default function Login() {
 
         authContext.setUsername(loginData.username)
 
-        toast.success("Вход прошел успешно.")
+        toast.dismiss(loadingToast)
+        const successToast = toast.success("Вход прошел успешно.")
         
         // browser does not save token localStorage immediately
-        setTimeout(() => navigate("/"), 1500)
+        setTimeout(() => {
+          navigate("/")
+          toast.dismiss(successToast)
+        }, 1500)
 
       }, 
       onSettled: () => {
-        toast.dismiss(loadingToast)
       }
     })
   }
@@ -95,6 +98,7 @@ export default function Login() {
             <div className="flex flex-col justify-start mb-4">
               <label className="inline-block font-bold text-lg mb-2">Имя пользователя</label>
               <Input
+                id="login_username"
                 type="text" 
                 name="username"
                 value={loginData.username} 
@@ -104,6 +108,7 @@ export default function Login() {
             <div className="flex flex-col justify-start mb-3">
               <label className="inline-block font-bold text-lg mb-2">Пароль</label>
               <Input 
+                id="login_password"
                 type="password"
                 name="password" 
                 value={loginData.password} 

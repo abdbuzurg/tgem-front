@@ -4,6 +4,7 @@ import { InvoiceMaterial } from "../interfaces/invoiceMaterial"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
+import { IMaterialCost } from "../interfaces/materialCost"
 
 const URL = "/input"
 
@@ -13,11 +14,11 @@ export interface InvoiceInputPagianted {
   page: number
 }
 
-export async function getPaginatedInvoiceInput({ pageParam = 1}): Promise<InvoiceInputPagianted> {
+export async function getPaginatedInvoiceInput({ pageParam = 1 }): Promise<InvoiceInputPagianted> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceInputPagianted>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
   const response = responseRaw.data
   if (response.success && response.permission) {
-    return {...response.data, page: pageParam}
+    return { ...response.data, page: pageParam }
   } else {
     throw new Error(response.error)
   }
@@ -53,7 +54,7 @@ export async function createInvoiceInput(data: InvoiceInputMutation): Promise<In
   }
 }
 
-export async function updateInvoiceInput(data: InvoiceInputMutation):Promise<InvoiceInputMutation> {
+export async function updateInvoiceInput(data: InvoiceInputMutation): Promise<InvoiceInputMutation> {
   const responseRaw = await axiosClient.patch<IAPIResposeFormat<InvoiceInputMutation>>(`${URL}/`, data)
   const response = responseRaw.data
   if (response.permission && response.success) {
@@ -63,7 +64,7 @@ export async function updateInvoiceInput(data: InvoiceInputMutation):Promise<Inv
   }
 }
 
-export async function getInvoiceInputDocument(deliveryCode: string):Promise<boolean>{
+export async function getInvoiceInputDocument(deliveryCode: string): Promise<boolean> {
   const responseRaw = await axiosClient.get(`http://127.0.0.1:8080${URL}/document/${deliveryCode}`, { responseType: "blob", })
   if (responseRaw.status == 200) {
     fileDownload(responseRaw.data, `${deliveryCode}.xlsx`)
@@ -118,7 +119,7 @@ export async function getAllUniqueReleased(): Promise<string[]> {
   }
 }
 
-export interface InvoiceInputReportFilter{
+export interface InvoiceInputReportFilter {
   code: string
   warehouseManager: string
   released: string
@@ -136,3 +137,37 @@ export async function buildReport(filter: InvoiceInputReportFilter): Promise<boo
     throw new Error(responseRaw.data)
   }
 }
+
+export async function createNewMaterialCostFromInvoiceInput(data: IMaterialCost): Promise<boolean> {
+  const responseRaw = await axiosClient.post<IAPIResposeFormat<string[]>>(`${URL}/material-cost/new`, data)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return true
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export interface CreateFullMaterial {
+  category: string
+  code: string
+  name: string
+  unit: string
+  notes: string
+  article: string
+  hasSerialNumber: boolean
+  costPrime: number
+  costM19: number
+  costWithCustomer: number
+}
+
+export async function createNewMaterialFromInvoiceInput(data: CreateFullMaterial): Promise<boolean> {
+  const responseRaw = await axiosClient.post<IAPIResposeFormat<string[]>>(`${URL}/material/new`, data)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return true
+  } else {
+    throw new Error(response.error)
+  }
+}
+

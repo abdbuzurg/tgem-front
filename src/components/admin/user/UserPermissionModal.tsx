@@ -1,13 +1,12 @@
 import { useQuery } from "@tanstack/react-query"
-import { Permission } from "../../../services/interfaces/permission"
 import Modal from "../../Modal"
-import { getPermissionsByRoleName } from "../../../services/api/permission"
+import { UserPermission, getPermissionsByRoleName } from "../../../services/api/permission"
 import { useState, useEffect, Fragment } from "react"
 import { IoIosCheckmarkCircle } from "react-icons/io";
 import { MdCancel } from "react-icons/md";
 
 interface Props {
-  setShowModal: React.Dispatch<React.SetStateAction<boolean>> 
+  setShowModal: React.Dispatch<React.SetStateAction<boolean>>
   workerName: string
   roleName: string
 }
@@ -19,8 +18,8 @@ export default function UserPermissionModal({
 }: Props) {
 
   //Permission Get Logic
-  const [permissions, setPermissions] = useState<Permission[]>([])
-  const userPermissionQuery = useQuery<Permission[], Error, Permission[]>({
+  const [permissions, setPermissions] = useState<UserPermission[]>([])
+  const userPermissionQuery = useQuery<UserPermission[], Error, UserPermission[]>({
     queryKey: [`permission-by-role-name-${roleName}`],
     queryFn: () => getPermissionsByRoleName(roleName)
   })
@@ -31,7 +30,7 @@ export default function UserPermissionModal({
     }
 
   }, [userPermissionQuery.data])
-  
+
 
   return (
     <Modal setShowModal={setShowModal} bigModal>
@@ -44,23 +43,23 @@ export default function UserPermissionModal({
           <div className="font-semibold">Добавление</div>
           <div className="font-semibold">Изменение</div>
           <div className="font-semibold">Удаление</div>
-          
+
           {/* Content of the table */}
           {permissions.map((permission, index) => (
             <Fragment key={index}>
               <div>{permission.resourceName}</div>
               <div className="flex justify-center">
-                {permission.r ? <IoIosCheckmarkCircle className="text-green-500"/> : <MdCancel className="text-red-500" /> }
+                {permission.r ? <IoIosCheckmarkCircle className="text-green-500" /> : <MdCancel className="text-red-500" />}
               </div>
               <div className="flex justify-center">
-                {permission.w ? <IoIosCheckmarkCircle className="text-green-500"/> : <MdCancel className="text-red-500"/> }
+                {permission.w ? <IoIosCheckmarkCircle className="text-green-500" /> : <MdCancel className="text-red-500" />}
               </div>
               <div className="flex justify-center">
-                {permission.u ? <IoIosCheckmarkCircle className="text-green-500"/> : <MdCancel className="text-red-500"/> }
+                {permission.u ? <IoIosCheckmarkCircle className="text-green-500" /> : <MdCancel className="text-red-500" />}
               </div>
               <div className="flex justify-center">
-                {permission.d ? <IoIosCheckmarkCircle className="text-green-500"/> : <MdCancel className="text-red-500"/> }
-              </div> 
+                {permission.d ? <IoIosCheckmarkCircle className="text-green-500" /> : <MdCancel className="text-red-500" />}
+              </div>
             </Fragment>
           ))}
         </div>

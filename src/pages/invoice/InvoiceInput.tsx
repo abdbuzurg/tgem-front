@@ -24,6 +24,7 @@ export default function InvoiceInput() {
   })
   const [tableData, setTableData] = useState<IInvoiceInputView[]>([])
   useEffect(() => {
+    console.log(tableDataQuery.data)
     if (tableDataQuery.isSuccess && tableDataQuery.data) {
       const data: IInvoiceInputView[] = tableDataQuery.data.pages.reduce<IInvoiceInputView[]>((acc, page) => [...acc, ...page.data], [])
       setTableData(data)
@@ -123,7 +124,7 @@ export default function InvoiceInput() {
               <span>Зав. Склад</span>
             </th>
             <th className="px-4 py-3">
-              <span>Отпустил</span>
+              <span>Составитель</span>
             </th>
             <th className="px-4 py-3 w-[150px]">
               <span>Дата</span>

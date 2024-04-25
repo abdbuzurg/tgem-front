@@ -4,6 +4,7 @@ import Input from "../../UI/Input";
 import Button from "../../UI/button";
 import IReactSelectOptions from "../../../services/interfaces/react-select";
 import Select from 'react-select'
+import { toast } from "react-hot-toast";
 
 
 interface Props {
@@ -14,7 +15,6 @@ interface Props {
 
 export default function SerialNumberAddModal({ setShowModal, addSerialNumbersToInvoice, availableSerialNumber }:Props) {
   const [serialNumber, setSerialNumber] = useState("")
-  const [serialNumberError, setSerialNumberError] = useState(false)
   const [serialNumbers, setSerialNumbers] = useState<IReactSelectOptions<string>[]>(() => {
     if (!availableSerialNumber) return []
     return [
@@ -24,9 +24,15 @@ export default function SerialNumberAddModal({ setShowModal, addSerialNumbersToI
   const [selectedSerialNumber, setSelectedSerialNumber] = useState<IReactSelectOptions<string>>({label:"", value: ""})
 
   const onAddClick = () => {
+  
+    if (serialNumber == "") {
+      toast.error("Укажите серийный номер")
+      return
+    }
+
     const exists = serialNumbers.some((value) => serialNumber == value.value)
     if (exists) {
-      setSerialNumberError(true)
+      toast.error("Такой серийный номер уже добавлен в список")
       return
     }
     setSerialNumbers([
@@ -51,7 +57,7 @@ export default function SerialNumberAddModal({ setShowModal, addSerialNumbersToI
           <span className="text-xl font-semibold">Добавление серийных номеров</span>
         </div>
         <div>
-          <label htmlFor="serialNumberAdd">Добавление {serialNumberError && <p className="text-red-500 text-xs font-semibold">Уже добавлен такой номер</p>}</label>
+          <label htmlFor="serialNumberAdd">Добавление </label>
           <div className="flex space-x-2" id="serialNumberAdd">
             <Input name="serialNumber" type="text" value={serialNumber} onChange={(e) => setSerialNumber(e.target.value)}/>
             <Button text="Добавить" buttonType="default" onClick={onAddClick}/>

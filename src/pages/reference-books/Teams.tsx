@@ -1,41 +1,50 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { ENTRY_LIMIT } from "../../services/api/constants";
 import Button from "../../components/UI/button";
 import LoadingDots from "../../components/UI/loadingDots";
 import DeleteModal from "../../components/deleteModal";
-import getPaginatedTeams, { TeamGetAllResponse, TeamPaginated } from "../../services/api/teams/getAllPaginated";
 import { ITeam } from "../../services/interfaces/teams";
-import deleteTeam from "../../services/api/teams/delete";
-import createTeam from "../../services/api/teams/create";
-import updateTeam from "../../services/api/teams/update";
 import Modal from "../../components/Modal";
 import Input from "../../components/UI/Input";
-import WorkerSelect from "../../components/WorkerSelect";
 import IReactSelectOptions from "../../services/interfaces/react-select";
+import Select from 'react-select'
+import toast from "react-hot-toast";
+import IWorker from "../../services/interfaces/worker";
+import { getWorkerByJobTitle } from "../../services/api/worker";
+import { IObject } from "../../services/interfaces/objects";
+import { getAllObjects } from "../../services/api/object";
+import { TeamMutation, TeamGetAllResponse, TeamPaginated, createTeam, deleteTeam, getPaginatedTeams, updateTeam } from "../../services/api/team";
 
 export default function Team() {
   //fetching data logic
+  const [tableData, setTableData] = useState<TeamPaginated[]>([])
   const tableDataQuery = useInfiniteQuery<TeamGetAllResponse, Error>({
     queryKey: ["teams"],
-    queryFn: ({pageParam}) => getPaginatedTeams({pageParam}),
+    queryFn: ({ pageParam }) => getPaginatedTeams({ pageParam }),
     getNextPageParam: (lastPage) => {
+
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
+
     }
   })
-  const [tableData, setTableData] = useState<TeamPaginated[]>([])
   useEffect(() => {
+
     if (tableDataQuery.isSuccess && tableDataQuery.data) {
+
       const data: TeamPaginated[] = tableDataQuery.data.pages.reduce<TeamPaginated[]>((acc, page) => [...acc, ...page.data], [])
       setTableData(data)
+
     }
+
   }, [tableDataQuery.data])
 
   const loadDataOnScrollEnd = () => {
     if (window.innerHeight + document.documentElement.scrollTop !== document.documentElement.offsetHeight) return;
     tableDataQuery.fetchNextPage()
   }
+
   useEffect(() => {
     window.addEventListener("scroll", loadDataOnScrollEnd)
     return () => window.removeEventListener("scroll", loadDataOnScrollEnd)
@@ -44,65 +53,93 @@ export default function Team() {
   //delete logic
   const [showModal, setShowModal] = useState(false)
   const queryClient = useQueryClient()
+
   const deleteMutation = useMutation({
     mutationFn: deleteTeam,
     onSuccess: () => {
       queryClient.invalidateQueries(["teams"])
     }
   })
+
   const [modalProps, setModalProps] = useState({
     setShowModal: setShowModal,
     no_delivery: "",
-    deleteFunc: () => {}
+    deleteFunc: () => { }
   })
+
   const onDeleteButtonClick = (row: TeamPaginated) => {
+
     setShowModal(true)
     setModalProps({
       deleteFunc: () => deleteMutation.mutate(row.id),
       no_delivery: row.number,
       setShowModal: setShowModal,
     })
+
   }
 
   //mutation CREATE AND EDIT logic
   const [showMutationModal, setShowMutationModal] = useState<boolean>(false)
   const [mutationModalType, setMutationModalType] = useState<null | "update" | "create">()
-  const [selectedTeamLeaderWorkerID, setSelectedTeamLeaderWorkerID] = useState<IReactSelectOptions<number>>({label:"", value: 0})
-  const [mutationData, setMutationData] = useState<ITeam>({
+
+  const [mutationData, setMutationData] = useState<TeamMutation>({
     company: "",
     id: 0,
     leaderWorkerID: 0,
     mobileNumber: "",
     number: "",
+    objects: [],
   })
-  const [mutationModalErrors, setMutationModalErrors] = useState({
-    company: false,
-    mobileNumber: false,
-    number: false,
-    leaderWorkerID: false,
+
+  const [selectedTeamLeaderWorkerID, setSelectedTeamLeaderWorkerID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [availableTeamLeaders, setAvailableTeamLeaders] = useState<IReactSelectOptions<number>[]>([])
+  const allTeamLeadersQuery = useQuery<IWorker[], Error, IWorker[]>({
+    queryKey: ["all-team-leaders"],
+    queryFn: () => getWorkerByJobTitle("Бригадир"),
   })
+  useEffect(() => {
+    if (allTeamLeadersQuery.data && allTeamLeadersQuery.isSuccess) {
+      setAvailableTeamLeaders([
+        ...allTeamLeadersQuery.data.map<IReactSelectOptions<number>>((val) => ({
+          label: val.name,
+          value: val.id,
+        }))
+      ])
+    }
+
+  }, [allTeamLeadersQuery.data])
 
   useEffect(() => {
-    setMutationData({...mutationData, leaderWorkerID: selectedTeamLeaderWorkerID.value})
+    setMutationData({ ...mutationData, leaderWorkerID: selectedTeamLeaderWorkerID.value })
   }, [selectedTeamLeaderWorkerID])
-  const createMaterialMutation = useMutation<ITeam, Error, ITeam>({
+
+  const [selectedObjectIDs, setSelectedObjectIDs] = useState<IReactSelectOptions<number>[]>([])
+  const [availableObjects, setAvailableObjects] = useState<IReactSelectOptions<number>[]>([])
+  const allObjectsQuery = useQuery<IObject[], Error, IObject[]>({
+    queryKey: ["all-objects"],
+    queryFn: getAllObjects,
+  })
+  useEffect(() => {
+    if (allObjectsQuery.isSuccess && allObjectsQuery.data) {
+      setAvailableObjects([
+        ...allObjectsQuery.data.map<IReactSelectOptions<number>>((val) => ({
+          value: val.id,
+          label: val.name,
+        }))
+      ])
+    }
+
+  }, [allObjectsQuery.data])
+
+  const createMaterialMutation = useMutation<ITeam, Error, TeamMutation>({
     mutationFn: createTeam,
-    onSettled: () => {  
-
-
-
-
-
-
-
-
-
-      
+    onSettled: () => {
       queryClient.invalidateQueries(["teams"])
       setShowMutationModal(false)
     }
   })
-  const updateMaterialMutation = useMutation<ITeam, Error, ITeam>({
+
+  const updateMaterialMutation = useMutation<ITeam, Error, TeamMutation>({
     mutationFn: updateTeam,
     onSettled: () => {
       queryClient.invalidateQueries(["teams"])
@@ -111,33 +148,48 @@ export default function Team() {
   })
 
   const onMutationSubmit = () => {
-    if (mutationData.company == "") setMutationModalErrors((prev) => ({...prev, company: true}))
-    else setMutationModalErrors((prev) => ({...prev, company: false}))
-    
-    if (mutationData.leaderWorkerID == 0) setMutationModalErrors((prev) => ({...prev, leaderWorkerID: true}))
-    else setMutationModalErrors((prev) => ({...prev, leaderWorkerID: false}))
-    
-    if (mutationData.number == "") setMutationModalErrors((prev) => ({...prev, number: true}))
-    else setMutationModalErrors((prev) => ({...prev, number: false}))
 
-    if (mutationData.mobileNumber == "") setMutationModalErrors((prev) => ({...prev, mobileNumber: true}))
-    else setMutationModalErrors((prev) => ({...prev, mobileNumber: false}))
-    
-    const isThereError = Object.keys(mutationData).some((value) => {
-      if (mutationData[value as keyof typeof mutationData] == "" && value != "id") {
-        return true
-      }
-    })
-    if (isThereError) return
-    
-    switch(mutationModalType) {
+    if (!mutationData.number) {
+      toast.error("Не указано номер бригады")
+      return
+    }
+
+    if (mutationData.leaderWorkerID == 0) {
+      toast.error("Не указан лидер бригады")
+      return
+    }
+
+    if (!mutationData.mobileNumber) {
+      toast.error("Не указан номер телефона бригады")
+      return
+    }
+
+    if (!mutationData.company) {
+      toast.error("Не указана компания бригады")
+      return
+    }
+
+    if (selectedObjectIDs.length == 0) {
+      toast.error("Не привязаны объекты к бригаде")
+      return
+    }
+
+    switch (mutationModalType) {
       case "create":
-        createMaterialMutation.mutate(mutationData)
+
+        createMaterialMutation.mutate({
+          ...mutationData,
+          objects: [...selectedObjectIDs.map(v => v.value)]
+        })
         return
       case "update":
-        updateMaterialMutation.mutate(mutationData)
+
+        updateMaterialMutation.mutate({
+          ...mutationData,
+          objects: [...selectedObjectIDs.map(v => v.value)]
+        })
         return
-      
+
       default:
         throw new Error("Неправильная операция была выбрана")
     }
@@ -163,23 +215,26 @@ export default function Team() {
             <th className="px-4 py-3 w-[150px]">
               <span>Компания</span>
             </th>
+            <th className="px-4 py-3 w-[150px]">
+              <span>Объекты</span>
+            </th>
             <th className="px-4 py-3">
               <Button text="Добавить" onClick={() => {
-                  setMutationModalType("create")
-                  setShowMutationModal(true)
-              }}/>
+                setMutationModalType("create")
+                setShowMutationModal(true)
+              }} />
             </th>
           </tr>
         </thead>
         <tbody>
-          {tableDataQuery.isLoading && 
+          {tableDataQuery.isLoading &&
             <tr>
               <td colSpan={6}>
                 <LoadingDots />
               </td>
             </tr>
           }
-          {tableDataQuery.isError && 
+          {tableDataQuery.isError &&
             <tr>
               <td colSpan={6} className="text-red font-bold text-center">
                 {tableDataQuery.error.message}
@@ -193,28 +248,30 @@ export default function Team() {
                 <td className="px-4 py-3">{row.leaderName}</td>
                 <td className="px-4 py-3">{row.mobileNumber}</td>
                 <td className="px-4 py-3">{row.company}</td>
+                <td className="px-4 py-3">{row.objects.reduce((acc, val) => acc + ", " + val)}</td>
                 <td className="px-4 py-3 border-box flex space-x-3">
                   <Button text="Изменить" buttonType="default" onClick={() => {
-                      setShowMutationModal(true)
-                      setMutationModalType("update")
-                      setMutationData({
-                        company: row.company,
-                        id: row.id,
-                        mobileNumber: row.mobileNumber,
-                        number: row.number,
-                        leaderWorkerID: row.id,
-                      })
-                    }}
+                    setShowMutationModal(true)
+                    setMutationModalType("update")
+                    setMutationData({
+                      company: row.company,
+                      id: row.id,
+                      mobileNumber: row.mobileNumber,
+                      number: row.number,
+                      leaderWorkerID: row.id,
+                      objects: [],
+                    })
+                  }}
                   />
-                  <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)}/>
+                  <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)} />
                 </td>
               </tr>
             ))
           }
         </tbody>
       </table>
-      {showModal && 
-        <DeleteModal {...modalProps}> 
+      {showModal &&
+        <DeleteModal {...modalProps}>
           <span>При подтверждении бригада под номером {modalProps.no_delivery} и все их данные будут удалены</span>
         </DeleteModal>
       }
@@ -228,43 +285,66 @@ export default function Team() {
             <div className="flex flex-col space-y-3 mt-2">
               <div className="flex flex-col space-y-1">
                 <label htmlFor="number">Номер Бригады</label>
-                <Input 
+                <Input
                   name="number"
                   type="text"
                   value={mutationData.number}
-                  onChange={(e) => setMutationData({...mutationData, [e.target.name]: e.target.value})}
+                  onChange={(e) => setMutationData({ ...mutationData, [e.target.name]: e.target.value })}
                 />
-                {mutationModalErrors.number && <span className="text-red-600 text-sm font-bold">Не указано номер бригады</span>}
               </div>
-              <WorkerSelect 
-                jobTitle="Бригадир"
-                selectedWorkerID={selectedTeamLeaderWorkerID}
-                setSelectedWorkerID={setSelectedTeamLeaderWorkerID}
-                title="Лидер бригады"
-              />
+              <div className="flex flex-col space-y-1">
+                <label>Бригадир</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"job-title"}
+                  placeholder={""}
+                  value={selectedTeamLeaderWorkerID}
+                  options={availableTeamLeaders}
+                  onChange={(value) => setSelectedTeamLeaderWorkerID({
+                    label: value?.label ?? "",
+                    value: value?.value ?? 0,
+                  })}
+                />
+              </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="mobileNumber">Основной номер телефона бригады</label>
-                <Input 
+                <Input
                   name="mobileNumber"
                   type="text"
                   value={mutationData.mobileNumber}
-                  onChange={(e) => setMutationData({...mutationData, [e.target.name]: e.target.value})}
+                  onChange={(e) => setMutationData({ ...mutationData, [e.target.name]: e.target.value })}
                 />
-                {mutationModalErrors.mobileNumber && <span className="text-red-600 text-sm font-bold">Не указан номер телефона бригады</span>}
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="company">Компания</label>
-                <Input 
+                <Input
                   name="company"
                   type="text"
                   value={mutationData.company}
-                  onChange={(e) => setMutationData({...mutationData, [e.target.name]: e.target.value})}
+                  onChange={(e) => setMutationData({ ...mutationData, [e.target.name]: e.target.value })}
                 />
-                {mutationModalErrors.company && <span className="text-red-600 text-sm font-bold">Не указана компания бригады</span>}
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label>Объекты</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  isMulti
+                  name={"team-objects"}
+                  placeholder={""}
+                  value={selectedObjectIDs}
+                  options={availableObjects}
+                  onChange={(value) => setSelectedObjectIDs([...value])}
+                />
               </div>
               <div>
-                <Button 
-                  text={mutationModalType=="create" ? "Добавить" : "Подтвердить изменения"}
+                <Button
+                  text={mutationModalType == "create" ? "Добавить" : "Подтвердить изменения"}
                   onClick={onMutationSubmit}
                 />
               </div>

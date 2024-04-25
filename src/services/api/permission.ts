@@ -14,8 +14,15 @@ export async function getPermissionsByRole(roleID: number):Promise<Permission[]>
   }
 }
 
-export async function getPermissionsByRoleName(roleName: string):Promise<Permission[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<Permission[]>>(`${URL}/role/name/${roleName}`)
+export interface UserPermission{
+  resourceName: string
+  r: boolean
+  w: boolean
+  u: boolean
+  d: boolean
+}
+export async function getPermissionsByRoleName(roleName: string):Promise<UserPermission[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<UserPermission[]>>(`${URL}/role/name/${roleName}`)
   const response = responseRaw.data
   if (response.success && response.permission) {
     return response.data

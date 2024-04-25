@@ -11,10 +11,9 @@ import "react-datepicker/dist/react-datepicker.css";
 import Select from 'react-select'
 import Button from "../../UI/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { getAmountInWarehouse } from "../../../services/api/materialLocation";
 import getAllMaterials from "../../../services/api/materials/getAll";
 import Material from "../../../services/interfaces/material";
-import { InvoiceOutputItem, InvoiceOutputMutation, createInvoiceOutput } from "../../../services/api/invoiceOutput";
+import { InvoiceOutputItem, InvoiceOutputMutation, createInvoiceOutput, getAmountInWarehouse } from "../../../services/api/invoiceOutput";
 import Input from '../../UI/Input'
 import SerialNumberSelectModal from "./SerialNumberSelectModal";
 import toast from "react-hot-toast";
@@ -23,7 +22,7 @@ interface Props {
   setShowMutationModal: React.Dispatch<React.SetStateAction<boolean>>
   mutationType: "create" | "update"
 }
-export default function MutationInvoiceOutput({mutationType, setShowMutationModal}: Props) {
+export default function MutationInvoiceOutput({ mutationType, setShowMutationModal }: Props) {
   const queryClient = useQueryClient()
 
   // MAIN INVOICE INFORMATION
@@ -47,11 +46,11 @@ export default function MutationInvoiceOutput({mutationType, setShowMutationModa
   })
 
   // ALL SELECTABLE IN MAIN INVOICE INFORMATION
-  const [selectedWarehouseManagerWorkerID, setSelectedWarehouseManagerWorkerID] = useState<IReactSelectOptions<number>>({label: "", value: 0})
-  const [selectedRecipientWorkerID, setSelectedRecipientWorkerID] = useState<IReactSelectOptions<number>>({label: "", value: 0})
-  const [selectedObjectID, setSelectedObjectID] = useState<IReactSelectOptions<number>>({label: "", value: 0})
-  const [selectedTeamID, setSelectedTeamID] = useState<IReactSelectOptions<number>>({label: "", value: 0})
-  const [selectedDistrictID, setSelectedDistrictID] = useState<IReactSelectOptions<number>>({label: "", value: 0})
+  const [selectedWarehouseManagerWorkerID, setSelectedWarehouseManagerWorkerID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [selectedRecipientWorkerID, setSelectedRecipientWorkerID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [selectedObjectID, setSelectedObjectID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [selectedTeamID, setSelectedTeamID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [selectedDistrictID, setSelectedDistrictID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   useEffect(() => {
     setMutationData({
       ...mutationData,
@@ -62,10 +61,10 @@ export default function MutationInvoiceOutput({mutationType, setShowMutationModa
       districtID: selectedDistrictID.value,
     })
   }, [
-    selectedDistrictID, 
-    selectedObjectID, 
-    selectedRecipientWorkerID, 
-    selectedTeamID, 
+    selectedDistrictID,
+    selectedObjectID,
+    selectedRecipientWorkerID,
+    selectedTeamID,
     selectedWarehouseManagerWorkerID
   ])
 
@@ -96,20 +95,20 @@ export default function MutationInvoiceOutput({mutationType, setShowMutationModa
   useEffect(() => {
     if (chosenMaterialAmountQuery.isSuccess) {
       setInvoiceMaterial({
-        ...invoiceMaterial, 
+        ...invoiceMaterial,
         warehouseAmount: chosenMaterialAmountQuery.data
       })
     }
   }, [chosenMaterialAmountQuery.data])
 
   const [allMaterialData, setAllMaterialData] = useState<IReactSelectOptions<number>[]>([])
-  const [selectedMaterial, setSelectedMaterial] = useState<IReactSelectOptions<number>>({value: 0, label: ""})
-  
+  const [selectedMaterial, setSelectedMaterial] = useState<IReactSelectOptions<number>>({ value: 0, label: "" })
+
   useEffect(() => {
     if (materialQuery.isSuccess && materialQuery.data) {
       setAllMaterialData([
         ...materialQuery.data.map<IReactSelectOptions<number>>((value) => ({
-          value: value.id, 
+          value: value.id,
           label: value.name
         }))
       ])
@@ -118,12 +117,12 @@ export default function MutationInvoiceOutput({mutationType, setShowMutationModa
 
   const onMaterialSelect = (value: IReactSelectOptions<number> | null) => {
     if (!value) {
-      setSelectedMaterial({label: "", value: 0})
+      setSelectedMaterial({ label: "", value: 0 })
       setInvoiceMaterial({
-        ...invoiceMaterial, 
-        unit: "", 
-        materialID: 0, 
-        materialName: "", 
+        ...invoiceMaterial,
+        unit: "",
+        materialID: 0,
+        materialName: "",
         warehouseAmount: 0,
         hasSerialNumber: false,
         serialNumbers: [],
@@ -133,11 +132,11 @@ export default function MutationInvoiceOutput({mutationType, setShowMutationModa
 
     setSelectedMaterial(value)
     if (materialQuery.data && materialQuery.isSuccess) {
-      const material = materialQuery.data.find((material) => material.id == value.value)! 
+      const material = materialQuery.data.find((material) => material.id == value.value)!
       setInvoiceMaterial({
-        ...invoiceMaterial, 
-        unit: material.unit, 
-        materialID: material.id, 
+        ...invoiceMaterial,
+        unit: material.unit,
+        materialID: material.id,
         materialName: material.name,
         hasSerialNumber: material.hasSerialNumber,
         serialNumbers: [],
@@ -157,7 +156,7 @@ export default function MutationInvoiceOutput({mutationType, setShowMutationModa
   //ADD MATERIAL LOGIC
   const onAddClick = () => {
 
-    const materialExistIndex = invoiceMaterials.findIndex((value) => 
+    const materialExistIndex = invoiceMaterials.findIndex((value) =>
       value.materialID == invoiceMaterial.materialID
     )
     if (materialExistIndex !== -1) {
@@ -234,7 +233,7 @@ export default function MutationInvoiceOutput({mutationType, setShowMutationModa
       return
     }
 
-    switch(mutationType) {
+    switch (mutationType) {
       case "create":
         console.log(invoiceMaterials)
         createInvoiceOutputMutation.mutate({
@@ -247,11 +246,11 @@ export default function MutationInvoiceOutput({mutationType, setShowMutationModa
             }))
           ],
         })
-        return   
+        return
       case "update":
         // updateMaterialMutation.mutate(mutationData)
         return
-      
+
       default:
         throw new Error("Неправильная операция была выбрана")
     }
@@ -265,33 +264,33 @@ export default function MutationInvoiceOutput({mutationType, setShowMutationModa
           {mutationType == "update" && "Изменение накладной"}
         </h3>
       </div>
-      <div className="flex flex-col w-full max-h-[70vh]">
+      <div className="flex flex-col w-full max-h-[80vh]">
         <div className="flex flex-col space-y-2">
           <p className="text-xl font-semibold text-gray-800">Детали накладной</p>
           <div className="flex space-x-2 items-center w-full">
-            <DistrictSelect 
+            <DistrictSelect
               selectedDistrictID={selectedDistrictID}
               setSelectedDistrictID={setSelectedDistrictID}
             />
-            <WorkerSelect 
-              title="Зав. Складом" 
-              jobTitle="Заведующий складом" 
-              selectedWorkerID={selectedWarehouseManagerWorkerID} 
+            <WorkerSelect
+              title="Зав. Складом"
+              jobTitle="Заведующий складом"
+              selectedWorkerID={selectedWarehouseManagerWorkerID}
               setSelectedWorkerID={setSelectedWarehouseManagerWorkerID}
             />
-            <WorkerSelect 
-              title="Получатель" 
-              jobTitle="Бригадир" 
-              selectedWorkerID={selectedRecipientWorkerID} 
+            <WorkerSelect
+              title="Получатель"
+              jobTitle="Бригадир"
+              selectedWorkerID={selectedRecipientWorkerID}
               setSelectedWorkerID={setSelectedRecipientWorkerID}
             />
           </div>
           <div className="flex space-x-2 items-center w-full">
-            <ObjectSelect 
+            <ObjectSelect
               selectedObjectID={selectedObjectID}
               setSelectedObjectID={setSelectedObjectID}
             />
-            <TeamSelect 
+            <TeamSelect
               selectedTeamID={selectedTeamID}
               setSelectedTeamID={setSelectedTeamID}
             />
@@ -302,8 +301,8 @@ export default function MutationInvoiceOutput({mutationType, setShowMutationModa
                   name="dateOfInvoice"
                   className="outline-none w-full"
                   dateFormat={"dd-MM-yyyy"}
-                  selected={mutationData.dateOfInvoice} 
-                  onChange={(date) => setMutationData({...mutationData, dateOfInvoice: date ?? new Date(+0)})}
+                  selected={mutationData.dateOfInvoice}
+                  onChange={(date) => setMutationData({ ...mutationData, dateOfInvoice: date ?? new Date(+0) })}
                 />
               </div>
             </div>
@@ -333,7 +332,7 @@ export default function MutationInvoiceOutput({mutationType, setShowMutationModa
             <div className="px-4 py-3"></div>
             {/* table head END */}
           </div>
-          <div className="grid grid-cols-6 text-sm text-left mt-2 w-full border-box">
+          <div className="grid grid-cols-6 text-sm text-left mt-2 w-full border-box ">
             <div className="px-4 py-3">
               <Select
                 className="basic-single"
@@ -351,11 +350,11 @@ export default function MutationInvoiceOutput({mutationType, setShowMutationModa
             <div className="px-4 py-3">{invoiceMaterial.unit}</div>
             <div className="px-4 py-3">{invoiceMaterial.warehouseAmount}</div>
             <div className="px-4 py-3">
-              <Input 
+              <Input
                 name="amount"
                 value={invoiceMaterial.amount}
-                type="number" 
-                onChange={(e) => setInvoiceMaterial((prev) => ({...prev, amount: +e.target.value}))}
+                type="number"
+                onChange={(e) => setInvoiceMaterial((prev) => ({ ...prev, amount: +e.target.value }))}
               />
             </div>
 
@@ -364,15 +363,16 @@ export default function MutationInvoiceOutput({mutationType, setShowMutationModa
                 name="notes"
                 value={invoiceMaterial.notes}
                 type="text"
-                onChange={(e) => setInvoiceMaterial((prev) => ({...prev, notes: e.target.value}))}
+                onChange={(e) => setInvoiceMaterial((prev) => ({ ...prev, notes: e.target.value }))}
               />
             </div>
-            <div className="flex items-center space-x-2">
-              <Button onClick={() => onAddClick()} text="Добавить"/>
+            <div className="grid grid-cols-1 gap-2">
+              {invoiceMaterial.hasSerialNumber && <Button onClick={() => setShowSerialNumberSelectModal(true)} text="Серийные номера" /> }
+              <Button onClick={() => onAddClick()} text="Добавить" />
             </div>
           </div>
-          <div className="grid grid-cols-6 text-sm text-left mt-2 w-full border-box overflow-y-auto max-h-[30vh]">
-            {invoiceMaterials.map((value, index) => 
+          <div className="grid grid-cols-6 text-sm text-left mt-2 w-full border-box overflow-y-scroll max-h-[30vh]">
+            {invoiceMaterials.map((value, index) =>
               <Fragment key={index}>
                 <div className="px-4 py-3">{value.materialName}</div>
                 <div className="px-4 py-3">{value.unit}</div>
@@ -380,19 +380,19 @@ export default function MutationInvoiceOutput({mutationType, setShowMutationModa
                 <div className="px-4 py-3">{value.amount}</div>
                 <div className="px-4 py-3">{value.notes}</div>
                 <div className="px-4 py-3 flex items-center">
-                  <Button buttonType="delete" onClick={() => onDeleteClick(index)} text="Удалить"/>
+                  <Button buttonType="delete" onClick={() => onDeleteClick(index)} text="Удалить" />
                 </div>
               </Fragment>
             )}
           </div>
         </div>
       </div>
-      {showSerialNumberSelectModal &&  <SerialNumberSelectModal 
-          addSerialNumbersToInvoice={addSerialNumbersToInvoice}
-          materialID={invoiceMaterial.materialID}
-          setShowModal={setShowSerialNumberSelectModal}
-          alreadySelectedSerialNumers={invoiceMaterial.serialNumbers}
-        />
+      {showSerialNumberSelectModal && <SerialNumberSelectModal
+        addSerialNumbersToInvoice={addSerialNumbersToInvoice}
+        materialID={invoiceMaterial.materialID}
+        setShowModal={setShowSerialNumberSelectModal}
+        alreadySelectedSerialNumers={invoiceMaterial.serialNumbers}
+      />
       }
     </Modal>
   )

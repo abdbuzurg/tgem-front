@@ -1,4 +1,4 @@
-import { LOGIN, PAGE_NOT_FOUND, PERMISSION_DENIED, HOME, INVOICE_INPUT, INVOICE_OUTPUT, INVOICE_RETURN, INVOICE_WRITEOFF, REFERENCE_BOOK_WORKER, REFERENCE_BOOK_OBJECTS, REFERENCE_BOOK_OPERATIONS, REFERENCE_BOOK_MATERIAL_COST, REFERENCE_BOOK_DISTRICT, INVOICE_OBJECT, REPORT, ADMIN_USERS_PAGE, REFERENCE_BOOK_TEAM, REFERENCE_BOOK_MATERIAL, INVOICE_OBJECT_MUTATION_ADD, } from "./URLs"
+import { LOGIN, PAGE_NOT_FOUND, PERMISSION_DENIED, HOME, INVOICE_INPUT, INVOICE_OUTPUT, INVOICE_RETURN, INVOICE_WRITEOFF, REFERENCE_BOOK_WORKER, REFERENCE_BOOK_OBJECTS, REFERENCE_BOOK_OPERATIONS, REFERENCE_BOOK_MATERIAL_COST, REFERENCE_BOOK_DISTRICT, INVOICE_OBJECT, REPORT, ADMIN_USERS_PAGE, REFERENCE_BOOK_TEAM, REFERENCE_BOOK_MATERIAL, INVOICE_OBJECT_MUTATION_ADD, INVOICE_OBJECT_DETIALS, INVOICE_CORRECTION, REFERENCE_BOOK_KL04KV_OBJECT, REFERENCE_BOOK_MJD_OBJECT, REFERENCE_BOOK_SIP_OBJECT, REFERENCE_BOOK_STVT_OBJECT, REFERENCE_BOOK_TP_OBJECT, } from "./URLs"
 import Home from "./pages/Home"
 import Login from "./pages/Login"
 import PermissionDenied from "./pages/PermissionDenied"
@@ -19,6 +19,13 @@ import Worker from "./pages/reference-books/Worker"
 import Report from "./pages/Report"
 import AdminUserPage from "./pages/AdminUserPage"
 import InvoiceObjectMutationAdd from "./pages/invoice/InvoiceObjectMutationMobile"
+import InvoiceObjectDetails from "./pages/invoice/InvoiceObjectDetail"
+import InvoiceCorrection from "./pages/invoice/InvoiceCorrection"
+import KL04KVObject from "./pages/reference-books/object/KL04KVObject"
+import MJDObject from "./pages/reference-books/object/MJDObject"
+import SIPObject from "./pages/reference-books/object/SIPObject"
+import STVTObject from "./pages/reference-books/object/STVTObject"
+import TPObject from "./pages/reference-books/object/TPObject"
 
 export const PAGES_WITHOUT_LAYOUT = [
   {
@@ -65,6 +72,14 @@ export const PAGES_WITH_LAYOUT = [
     element: <InvoiceObjectMutationAdd />
   },
   {
+    path: INVOICE_OBJECT_DETIALS,
+    element: <InvoiceObjectDetails />
+  },
+  {
+    path: INVOICE_CORRECTION,
+    element: <InvoiceCorrection />
+  },
+  {
     path: INVOICE_WRITEOFF,
     element: <InvoiceWriteOff />
   },
@@ -77,7 +92,7 @@ export const PAGES_WITH_LAYOUT = [
     element: <ReferenceBooks />
   },
   {
-    path: REFERENCE_BOOK_MATERIAL, 
+    path: REFERENCE_BOOK_MATERIAL,
     element: <Materials />
   },
   {
@@ -87,6 +102,26 @@ export const PAGES_WITH_LAYOUT = [
   {
     path: REFERENCE_BOOK_OBJECTS,
     element: <Objects />
+  },
+  {
+    path: REFERENCE_BOOK_KL04KV_OBJECT,
+    element: <KL04KVObject />
+  },
+  {
+    path: REFERENCE_BOOK_MJD_OBJECT,
+    element: <MJDObject />
+  },
+  {
+    path: REFERENCE_BOOK_SIP_OBJECT,
+    element: <SIPObject />
+  },
+  {
+    path: REFERENCE_BOOK_STVT_OBJECT,
+    element: <STVTObject />
+  },
+  {
+    path: REFERENCE_BOOK_TP_OBJECT,
+    element: <TPObject />
   },
   {
     path: REFERENCE_BOOK_OPERATIONS,

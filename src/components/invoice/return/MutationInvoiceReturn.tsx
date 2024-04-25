@@ -8,15 +8,13 @@ import ObjectSelect from "../../ObjectSelect";
 import TeamSelect from "../../TeamSelect";
 import Button from "../../UI/button";
 import IReactSelectOptions from "../../../services/interfaces/react-select";
-import DistrictSelect from "../../DistrictSelect";
-import { getAllMaterialInALocation, getAmountByCostAndLocation, getMaterailCostsInALocation } from "../../../services/api/materialLocation";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import Material from "../../../services/interfaces/material";
 import { IMaterialCost } from "../../../services/interfaces/materialCost";
-import { InvoiceReturnItem, InvoiceReturnMutation, createInvoiceReturn } from "../../../services/api/invoiceReturn";
+import { InvoiceReturnItem, InvoiceReturnMutation, createInvoiceReturn, getMaterialAmountInLocation, getMaterialCostsInLocation, getUniqueMaterialsInLocation } from "../../../services/api/invoiceReturn";
 import Input from "../../UI/Input";
-import SerialNumberSelectModal from "../output/SerialNumberSelectModal";
 import toast from "react-hot-toast";
+import SerialNumberSelectReturnModal from "./SerialNumberSelectReturn";
 
 interface Props {
   setShowMutationModal: React.Dispatch<React.SetStateAction<boolean>>
@@ -49,13 +47,12 @@ export default function MutationInvoiceReturn({
   // Object, Team and District select logic
   const [selectedObjectID, setSelectedObjectID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   const [selectedTeamID, setSelectedTeamID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
-  const [selectedDistrictID, setSelectedDistrictID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   useEffect(() => {
     if (mutationData.returnerType == "objects") {
-      setMutationData({ ...mutationData, returnerID: selectedObjectID.value, districtID: selectedDistrictID.value })
+      setMutationData({ ...mutationData, returnerID: selectedObjectID.value })
     }
     if (mutationData.returnerType == "teams") {
-      setMutationData({ ...mutationData, returnerID: selectedTeamID.value, districtID: selectedDistrictID.value })
+      setMutationData({ ...mutationData, returnerID: selectedTeamID.value })
     }
     setSelectedMaterial({ label: "", value: 0 })
     setSelectedMaterialCost({ label: "", value: 0 })
@@ -72,7 +69,7 @@ export default function MutationInvoiceReturn({
       isDefective: false,
       notes: "",
     })
-  }, [selectedObjectID, selectedTeamID, selectedDistrictID])
+  }, [selectedObjectID, selectedTeamID])
 
   //Invoice material information
   const [invoiceMaterials, setInvoiceMaterials] = useState<IInvoiceReturnMaterials[]>([])
@@ -96,7 +93,7 @@ export default function MutationInvoiceReturn({
   const [allAvaialableMaterials, setAllAvailableMaterails] = useState<IReactSelectOptions<number>[]>([])
   const allMaterialInALocation = useQuery<Material[], Error, Material[]>({
     queryKey: ["available-materials", mutationData.returnerType, mutationData.returnerID],
-    queryFn: () => getAllMaterialInALocation(mutationData.returnerType, mutationData.returnerID),
+    queryFn: () => getUniqueMaterialsInLocation(mutationData.returnerType, mutationData.returnerID),
   })
 
   useEffect(() => {
@@ -151,7 +148,7 @@ export default function MutationInvoiceReturn({
   const [availableMaterialCosts, setAvailableMaterialCosts] = useState<IReactSelectOptions<number>[]>([])
   const materialCostQuery = useQuery<IMaterialCost[], Error, IMaterialCost[]>({
     queryKey: ["material-cost-in-a-location", selectedMaterial],
-    queryFn: () => getMaterailCostsInALocation(mutationData.returnerType, mutationData.returnerID, selectedMaterial.value),
+    queryFn: () => getMaterialCostsInLocation(selectedMaterial.value, mutationData.returnerType, mutationData.returnerID),
     enabled: selectedMaterial.value != 0,
   })
   useEffect(() => {
@@ -185,7 +182,7 @@ export default function MutationInvoiceReturn({
   // Logic of displaying the amount of material available based on cost and name
   const materialAmountQuery = useQuery<number, Error, number>({
     queryKey: ["materail-amount", selectedMaterial, selectedMaterialCost],
-    queryFn: () => getAmountByCostAndLocation(mutationData.returnerType, mutationData.returnerID, selectedMaterialCost.value),
+    queryFn: () => getMaterialAmountInLocation(selectedMaterialCost.value, mutationData.returnerType, mutationData.returnerID, ),
     enabled: selectedMaterialCost.value != 0 && selectedMaterial.value != 0,
   })
 
@@ -216,7 +213,7 @@ export default function MutationInvoiceReturn({
       return
     }
 
-    if (invoiceMaterial.serialNumbers.length !== invoiceMaterial.amount) {
+    if (invoiceMaterial.hasSerialNumber && invoiceMaterial.serialNumbers.length !== invoiceMaterial.amount) {
       toast.error("Количество материала не совпадает с количеством сирийных номеров")
       return
     }
@@ -231,12 +228,26 @@ export default function MutationInvoiceReturn({
       return
     }
 
-    if (invoiceMaterials.findIndex((value) => value.materialCostID == invoiceMaterial.materialCostID) != -1) {
-      toast.error("Не выбран материал")
-      return
+    const index = invoiceMaterials.findIndex((value) => value.materialCostID == invoiceMaterial.materialCostID) 
+    if (index != -1) {
+      if (invoiceMaterials[index].materialCost == invoiceMaterial.materialCost) {
+        if (invoiceMaterials[index].isDefective == invoiceMaterial.isDefective) {
+          toast.error("Материал с такой ценой и с такими статусом браковоности был указан")
+          return
+        }
+        if (invoiceMaterial.isDefective != !invoiceMaterials[index].isDefective) {
+          toast.error("Данный материал уже указан с такой ценой. Либо укажаите что он бракованный либо помяйте цену материла")
+          return
+        } 
+        if (invoiceMaterial.amount + invoiceMaterials[index].amount > invoiceMaterial.holderAmount) {
+          toast.error("Сумма даннаго материала с выбранной ценой и (не-)браковынным вариантом превышают имееющееся количество")
+          return
+        }
+        
+      }
     }
 
-    setInvoiceMaterials([...invoiceMaterials, invoiceMaterial])
+    setInvoiceMaterials([invoiceMaterial, ...invoiceMaterials])
     setInvoiceMaterial({
       materialID: 0,
       amount: 0,
@@ -270,11 +281,6 @@ export default function MutationInvoiceReturn({
   })
   const onMutationSubmit = () => {
 
-    if (selectedDistrictID.value == 0) {
-      toast.error("Не выбран район")
-      return
-    }
-
     if (selectedTeamID.value == 0 && mutationData.returnerType == "teams") {
       toast.error("Не выбрана бригада")
       return
@@ -291,8 +297,8 @@ export default function MutationInvoiceReturn({
           details: mutationData,
           items: invoiceMaterials.map<InvoiceReturnItem>((value) => ({
             amount: value.amount,
-            materialCostID:
-              value.materialCostID
+            materialCostID: value.materialCostID,
+            isDefected: value.isDefective,
           })),
         })
         return
@@ -313,7 +319,7 @@ export default function MutationInvoiceReturn({
           {mutationType == "update" && "Изменение накладной"}
         </h3>
       </div>
-      <div className="flex flex-col w-full max-h-[60vh] space-y-2">
+      <div className="flex flex-col w-full max-h-[80vh] space-y-2">
         <p className="text-xl font-semibold text-gray-800">Детали накладной</p>
         <div className="flex flex-col space-y-1">
           <p className="text-lg">Откуда возврат</p>
@@ -343,10 +349,6 @@ export default function MutationInvoiceReturn({
           </div>
         </div>
         <div className="flex space-x-2 items-center w-full">
-          <DistrictSelect
-            selectedDistrictID={selectedDistrictID}
-            setSelectedDistrictID={setSelectedDistrictID}
-          />
           {mutationData.returnerType == "objects" &&
             <ObjectSelect
               selectedObjectID={selectedObjectID}
@@ -448,7 +450,7 @@ export default function MutationInvoiceReturn({
               <input
                 type="checkbox"
                 checked={invoiceMaterial.isDefective}
-                onChange={() => setInvoiceMaterial({ ...invoiceMaterial, isDefective: !invoiceMaterial.isDefective })}
+                onChange={(e) => setInvoiceMaterial({ ...invoiceMaterial, isDefective: e.currentTarget.checked})}
               />
             </div>
             <div className="px-4 py-3">
@@ -459,13 +461,13 @@ export default function MutationInvoiceReturn({
                 onChange={(e) => setInvoiceMaterial((prev) => ({ ...prev, notes: e.target.value }))}
               />
             </div>
-            <div className="flex items-center">
+            <div className="grid grid-cols-1 gap-2">
               {invoiceMaterial.hasSerialNumber && <Button onClick={() => setShowSerialNumberModal(true)} text="Серийные номера" />}
               <Button onClick={() => onAddClick()} text="Добавить" />
             </div>
           </div>
           {invoiceMaterials.length > 0 &&
-            <div className="grid grid-cols-7 text-sm text-left mt-2 w-full border-box overflow-y-auto max-h-[30vh]">
+            <div className="grid grid-cols-8 text-sm text-left mt-2 w-full border-box overflow-y-auto max-h-[50vh]">
               {invoiceMaterials.map((value, index) =>
                 <Fragment key={index}>
                   <div className="px-4 py-3">{value.materialName}</div>
@@ -485,9 +487,10 @@ export default function MutationInvoiceReturn({
         </div>
       </div>
       {showSerialNumberModal &&
-        <SerialNumberSelectModal
+        <SerialNumberSelectReturnModal
           setShowModal={setShowSerialNumberModal}
           alreadySelectedSerialNumers={invoiceMaterial.serialNumbers}
+          status={mutationData.returnerType}
           addSerialNumbersToInvoice={addSerialNumberToInvoice}
           materialID={invoiceMaterial.materialID}
         />

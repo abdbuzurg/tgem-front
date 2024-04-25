@@ -1,5 +1,6 @@
 export interface IObject {
   id: number
+  projectID: number
   objectDetailedID: number
   type: string
   name: string

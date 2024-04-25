@@ -11,14 +11,15 @@ import MutationInvoiceReturn from "../../components/invoice/return/MutationInvoi
 import ReportInvoiceReturn from "../../components/invoice/return/ReportInvoiceReturn";
 
 export default function InvoiceReturn() {
+ 
 //FETCHING LOGIC
-const tableDataQuery = useInfiniteQuery<InvoiceReturnPagianted, Error>({
-  queryKey: ["invoice-return"],
-  queryFn: ({pageParam}) => getPaginatedInvoiceReturn({pageParam}),
-  getNextPageParam: (lastPage) => {
-    if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
-    return lastPage.page + 1
-  }
+  const tableDataQuery = useInfiniteQuery<InvoiceReturnPagianted, Error>({
+    queryKey: ["invoice-return"],
+    queryFn: ({pageParam}) => getPaginatedInvoiceReturn({pageParam}),
+    getNextPageParam: (lastPage) => {
+      if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
+      return lastPage.page + 1
+    }
   })
   const [tableData, setTableData] = useState<IInvoiceReturnView[]>([])
   useEffect(() => {

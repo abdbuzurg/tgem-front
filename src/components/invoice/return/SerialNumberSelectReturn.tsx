@@ -4,18 +4,20 @@ import Select from 'react-select'
 import { useEffect, useState } from "react";
 import Button from "../../UI/button";
 import { useQuery } from "@tanstack/react-query";
-import { getSerialNumberCodesByMaterialID } from "../../../services/api/invoiceOutput";
+import { getSerialNumberCodesInLocation } from "../../../services/api/invoiceReturn";
 
 interface Props {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>
   materialID: number
+  status: string
   addSerialNumbersToInvoice: (serailNumbes: string[]) => void
   alreadySelectedSerialNumers: string[]
 }
 
-export default function SerialNumberSelectModal({
+export default function SerialNumberSelectReturnModal({
   setShowModal,
   addSerialNumbersToInvoice,
+  status,
   materialID,
   alreadySelectedSerialNumers,
 }: Props) {
@@ -25,8 +27,8 @@ export default function SerialNumberSelectModal({
   const [selectedAvailableSerialNumber, setSelectedAvailableSerialNumber] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
 
   const codesQuery = useQuery<string[], Error, string[]>({
-    queryKey: [`serial-number-for-${materialID}`],
-    queryFn: () => getSerialNumberCodesByMaterialID(materialID),
+    queryKey: [`serial-number-for-${materialID}-in-${status}`],
+    queryFn: () => getSerialNumberCodesInLocation(materialID, status),
   })
   useEffect(() => {
     if (codesQuery.isSuccess && codesQuery.data) {
@@ -69,6 +71,11 @@ export default function SerialNumberSelectModal({
     ])
 
     setChosenSerialNumber({ label: "", value: "" })
+  }
+
+  const addToInvoiceMaterials = () => {
+    addSerialNumbersToInvoice(pickedSerialNumbers.map<string>(value => value.value))
+    setShowModal(false)
   }
 
   return (
@@ -127,7 +134,7 @@ export default function SerialNumberSelectModal({
           </div>
         </div>
         <div>
-          <Button text="Привязать к материалу" buttonType="default" onClick={() => addSerialNumbersToInvoice(pickedSerialNumbers.map<string>(value => value.value))} />
+          <Button text="Привязать к материалу" buttonType="default" onClick={() => addToInvoiceMaterials()} />
         </div>
       </div>
     </Modal>

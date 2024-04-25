@@ -2,15 +2,17 @@ import { Fragment, useEffect, useState } from "react"
 import IReactSelectOptions from "../../services/interfaces/react-select"
 import Select from 'react-select'
 import Button from "../../components/UI/button"
-import { useQuery } from "@tanstack/react-query"
-import getAllTeams from "../../services/api/teams/getAll"
+import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { ITeam } from "../../services/interfaces/teams"
 import { IObject } from "../../services/interfaces/objects"
 import Material from "../../services/interfaces/material"
-import getAllMaterials from "../../services/api/materials/getAll"
 import { IInvoiceObjectMaterials } from "../../services/interfaces/invoiceObject"
 import toast from "react-hot-toast"
 import { getAllObjects } from "../../services/api/object"
+import { getAllTeams } from "../../services/api/team"
+import { InvoiceObjectCreateItems, createInvoiceObject, getMaterialAmount, getSerialNumbersOfMaterial, getTeamMaterials } from "../../services/api/invoiceObject"
+import { useNavigate } from "react-router-dom"
+import { INVOICE_OBJECT } from "../../URLs"
 
 export default function InvoiceObjectMutationAdd() {
 
@@ -72,24 +74,25 @@ export default function InvoiceObjectMutationAdd() {
     value: 0,
   })
   useEffect(() => {
-    let unit = ""
     if (selectedMaterial.value != 0 && allMaterialsQuery.isSuccess && allMaterialsQuery.data) {
-      unit = allMaterialsQuery.data.find((val) => val.id == selectedMaterial.value)!.unit
+      const material = allMaterialsQuery.data.find((val) => val.id == selectedMaterial.value)!
+      setInvoiceMaterial({
+        ...invoiceMaterial,
+        materialID: selectedMaterial.value,
+        materialName: selectedMaterial.label,
+        hasSerialNumbers: material.hasSerialNumber,
+        unit: material.unit,
+      })
     }
 
-    setInvoiceMaterial({
-      ...invoiceMaterial, 
-      materialID: selectedMaterial.value,
-      materialName: selectedMaterial.label,
-      unit: unit,
-    })
 
   }, [selectedMaterial])
 
   const [availableMaterials, setAvailableMaterials] = useState<IReactSelectOptions<number>[]>([])
   const allMaterialsQuery = useQuery<Material[], Error, Material[]>({
-    queryKey: ["all-materials"],
-    queryFn: getAllMaterials,
+    queryKey: [`materials-in-team-${selectedTeam.value}`],
+    queryFn: () => getTeamMaterials(selectedTeam.value),
+    enabled: selectedTeam.value != 0,
   })
   useEffect(() => {
 
@@ -106,16 +109,67 @@ export default function InvoiceObjectMutationAdd() {
 
   }, [allMaterialsQuery.data])
 
+  //Logic for getting the amount of selected material
+  const materialAmountQuery = useQuery<number, Error, number>({
+    queryKey: [`material-${selectedMaterial.value}-team-${selectedTeam.value}`],
+    queryFn: () => getMaterialAmount(selectedMaterial.value, selectedTeam.value),
+    enabled: selectedMaterial.value != 0 && selectedTeam.value != 0
+  })
+  useEffect(() => {
+    if (materialAmountQuery.isSuccess && materialAmountQuery.data) {
+      setInvoiceMaterial({...invoiceMaterial, availableMaterial: materialAmountQuery.data})
+    }
+  }, [materialAmountQuery.data])
+
   // Material list
   const [invoiceMaterials, setInvoiceMaterials] = useState<IInvoiceObjectMaterials[]>([])
 
   const [invoiceMaterial, setInvoiceMaterial] = useState<IInvoiceObjectMaterials>({
     materialID: 0,
     materialName: "",
+    availableMaterial: 0,
     unit: "",
     amount: 0,
     notes: "",
+    hasSerialNumbers: false,
+    serialNumbers: [],
   })
+
+  // Serial Numbers logic
+  const [availableSerialNumbers, setAvaiableSerialNumbers] = useState<IReactSelectOptions<string>[]>([])
+  const [selectedSerialNumber, setSelectedSerialNumber] = useState<IReactSelectOptions<string>>({label: "", value: ""})
+  const [alreadySelectedSerialNumbers, setAlreadySelectedSerialNumbers] = useState<IReactSelectOptions<string>[]>([])
+  const [toBeDeletedSerialNumber, setToBeDeletedSerialNumber] = useState<IReactSelectOptions<string>>({label: "", value: ""})
+  
+  const availableSerialNumbersQuery = useQuery<string[], Error, string[]>({
+    queryKey: [`serial-numbers-of-material-${selectedMaterial.value}`],
+    queryFn: () => getSerialNumbersOfMaterial(selectedMaterial.value),
+    enabled: selectedMaterial.value != 0,
+  })
+  useEffect(() => {
+
+    if (availableSerialNumbersQuery.isSuccess && availableSerialNumbersQuery.data) {
+      setAvaiableSerialNumbers([
+        ...availableSerialNumbersQuery.data.map<IReactSelectOptions<string>>((val) => ({value: val, label: val}))
+      ])
+    }
+
+  }, [availableSerialNumbersQuery.data])
+
+  const addToSerialNumberList = () => {
+    const index = alreadySelectedSerialNumbers.findIndex((val) => selectedSerialNumber.value == val.value)
+    if (index != -1) {
+      toast.error("Данный серийний код уже в списке")
+      return
+    }
+    setAlreadySelectedSerialNumbers([selectedSerialNumber, ...alreadySelectedSerialNumbers])
+    setSelectedSerialNumber({label: "", value: ""})
+  }
+
+  const deleteSerialNumberFromList = () => {
+    setAlreadySelectedSerialNumbers([...alreadySelectedSerialNumbers.filter((val) => val.value != toBeDeletedSerialNumber.value)])
+    setToBeDeletedSerialNumber({label: "", value: ""})
+  }
 
   // Adding materials to the list
   const addMaterialToTheList = () => {
@@ -135,16 +189,32 @@ export default function InvoiceObjectMutationAdd() {
       return
     }
 
+    if (invoiceMaterial.amount > invoiceMaterial.availableMaterial) {
+      toast.error("Количество материала превышает доступное количество")
+      return
+    }
+
+    if (invoiceMaterial.hasSerialNumbers && alreadySelectedSerialNumbers.length != invoiceMaterial.amount) {
+      toast.error("Количество серийных номеров не совпадает с указанным количеством материла")
+      return
+    }
+
     setInvoiceMaterials([invoiceMaterial, ...invoiceMaterials])
     setInvoiceMaterial({
       materialID: 0,
       materialName: "",
+      availableMaterial: 0,
       unit: "",
       amount: 0,
       notes: "",
+      hasSerialNumbers: false,
+      serialNumbers: [],
     })
-    setSelectedMaterial({label: "", value: 0})
-
+    setSelectedMaterial({ label: "", value: 0 })
+    setSelectedSerialNumber({label: "", value: ""})
+    setAvaiableSerialNumbers([])
+    setToBeDeletedSerialNumber({label: "", value: ""})
+    setAlreadySelectedSerialNumbers([])
   }
 
   // Delete from the list
@@ -152,12 +222,62 @@ export default function InvoiceObjectMutationAdd() {
     setInvoiceMaterials(invoiceMaterials.filter((_, i) => i != index))
   }
 
+  const createInvoiceObjectMutation = useMutation({
+    mutationFn: createInvoiceObject,
+  })
+
+  const queryClient = useQueryClient()
+  const navigate = useNavigate()
+  const submitInvoice = () => {
+
+    if (selectedObject.value == 0) {
+      toast.error("Не выбрана объект")
+      return
+    }
+
+    if (selectedTeam.value == 0) {
+      toast.error("Не выбрана бригада")
+      return
+    }
+
+    if (invoiceMaterials.length == 0) {
+      toast.error("Не указаны материалы для поступления")
+    }
+
+    createInvoiceObjectMutation.mutate({
+      details: {
+        objectID: selectedObject.value,
+        teamID: selectedTeam.value,
+        id: 0,
+        deliveryCode: "", 
+        projectID: 0,
+        supervisorWorkerID: 0,
+      },
+      items: [
+        ...invoiceMaterials.map<InvoiceObjectCreateItems>((val) => ({
+          materialID: val.materialID,
+          amount: val.amount,
+          serialNumbers: val.serialNumbers,
+          notes: val.notes,
+        }))
+      ]
+    }, {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["invoice-objects-paginated"])
+        navigate(INVOICE_OBJECT)
+      }
+    })
+  }
+
   return (
     <main>
       <div className="px-2 py-1">
-        <span className="font-bold text-xl">Добавление материалов на объект</span>
+        <span className="font-bold text-xl">Поступление материалов на объект</span>
       </div>
       <div className="px-2 py-1">
+        <div className="w-full">
+          <Button onClick={() => submitInvoice()} text="Опубликовать"/>
+        </div>
         <span className="font-semibold text-lg">Основная информация</span>
         <div className="px-3 py-4 bg-gray-800 text-white rounded-md ">
           <div className="flex flex-col space-y-1">
@@ -229,12 +349,56 @@ export default function InvoiceObjectMutationAdd() {
                   })}
                   className="text-black rounded-sm px-2 py-1.5"
                 />
-                <span>{invoiceMaterial.unit}</span>
+                <span>Доступно: {invoiceMaterial.availableMaterial}{invoiceMaterial.unit}</span>
               </div>
             </div>
+            {invoiceMaterial.hasSerialNumbers &&
+              <div className="flex flex-col space-y-4">
+                <div className="flex space-x-2">
+                  <div className="flex flex-col space-y-1">
+                    <label>Доступные серийные номера</label>
+                    <Select
+                      className="basic-single text-black"
+                      classNamePrefix="select"
+                      isSearchable={true}
+                      isClearable={true}
+                      name={"material-cost-material-select"}
+                      placeholder={""}
+                      value={selectedSerialNumber}
+                      options={availableSerialNumbers}
+                      onChange={(value) => setSelectedSerialNumber({
+                        label: value?.label ?? "",
+                        value: value?.value ?? "",
+                      })}
+                    />
+                  </div>
+                  <Button onClick={() => addToSerialNumberList()} text="Выбрать"/>
+                </div>
+                <div className="flex space-x-2">
+                  <div className="flex flex-col space-y-1">
+                    <label>Выбранные серийные номера</label>
+                    <Select
+                      className="basic-single text-black"
+                      classNamePrefix="select"
+                      isSearchable={true}
+                      isClearable={true}
+                      name={"material-cost-material-select"}
+                      placeholder={""}
+                      value={toBeDeletedSerialNumber}
+                      options={alreadySelectedSerialNumbers}
+                      onChange={(value) => setToBeDeletedSerialNumber({
+                        label: value?.label ?? "",
+                        value: value?.value ?? "",
+                      })}
+                    />
+                  </div>
+                  <Button onClick={() => deleteSerialNumberFromList()} text="Удалить" buttonType="delete"/>
+                </div>
+              </div>
+            }
             <div className="flex flex-col space-y-1">
               <span className="font-semibold">Примичание</span>
-              <textarea 
+              <textarea
                 className="w-full text-black"
                 value={invoiceMaterial.notes}
                 onChange={(e) => setInvoiceMaterial({
@@ -261,22 +425,22 @@ export default function InvoiceObjectMutationAdd() {
             </div>
           }
           {invoiceMaterials.map((value, index) => (
-            <div className="grid grid-cols-2 gap-3 px-3 py-2 bg-gray-800 text-white rounded-md overflow-auto">
+            <div key={index} className="grid grid-cols-2 gap-3 px-3 py-2 bg-gray-800 text-white rounded-md overflow-auto">
               <div className="font-bold">Материал:</div>
               <div>{value.materialName}</div>
               <div className="font-bold">Количество:</div>
               <div>{value.amount} {value.unit}</div>
-              {value.notes == "" 
-                ? 
-                  <Fragment>
-                   <div className="font-bold">Примичание:</div>
-                    <div className="font-light italic">Отсутсвует</div>
-                  </Fragment>
+              {value.notes == ""
+                ?
+                <Fragment>
+                  <div className="font-bold">Примичание:</div>
+                  <div className="font-light italic">Отсутсвует</div>
+                </Fragment>
                 :
-                  <Fragment>
-                    <div className="font-bold col-span-2">Примичание:</div>
-                    <div className="col-span-2">{value.notes}</div>
-                  </Fragment>
+                <Fragment>
+                  <div className="font-bold col-span-2">Примичание:</div>
+                  <div className="col-span-2">{value.notes}</div>
+                </Fragment>
               }
               <div className="col-span-2 flex space-x-2">
                 <Button
@@ -286,7 +450,7 @@ export default function InvoiceObjectMutationAdd() {
                 />
               </div>
             </div>
-          ))} 
+          ))}
         </div>
       </div>
     </main>

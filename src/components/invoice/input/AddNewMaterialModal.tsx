@@ -7,10 +7,9 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import getAllMaterials from "../../../services/api/materials/getAll"
 import IReactSelectOptions from "../../../services/interfaces/react-select"
 import Select from 'react-select'
-import createMaterialCost from "../../../services/api/materialscosts/create"
-import createFullMaterial, { FullMaterailData } from "../../../services/api/materialscosts/createFullMaterial"
 import { MEASUREMENT } from "../../../services/lib/measurement"
 import { toast } from 'react-hot-toast'
+import { CreateFullMaterial, createNewMaterialCostFromInvoiceInput, createNewMaterialFromInvoiceInput } from "../../../services/api/invoiceInput"
 
 
 interface Props{
@@ -82,17 +81,17 @@ export default function AddNewMaterialModal({ setShowModal }: Props) {
   }
 
   const queryClient = useQueryClient()
-  const newMaterailCostMutation = useMutation<IMaterialCost, Error, IMaterialCost>({
-    mutationFn: createMaterialCost,
+  const newMaterailCostMutation = useMutation<boolean, Error, IMaterialCost>({
+    mutationFn: createNewMaterialCostFromInvoiceInput,
     onSettled: () => {
       queryClient.invalidateQueries(["material-cost", materialCostData.materialID])
     }
   })
 
-  const newFullMaterialMutation = useMutation<boolean, Error, FullMaterailData>({
-    mutationFn: createFullMaterial,
+  const newFullMaterialMutation = useMutation<boolean, Error, CreateFullMaterial>({
+    mutationFn: createNewMaterialFromInvoiceInput,
     onSettled: () => {
-      queryClient.invalidateQueries(["material-cost", materialCostData.materialID])
+      queryClient.invalidateQueries(["all-materials"])
     }
   })
 
@@ -150,8 +149,8 @@ export default function AddNewMaterialModal({ setShowModal }: Props) {
 
     if (addType == "newMaterial") { 
       newFullMaterialMutation.mutate({
-        cost: materialCostData,
-        details: materialData,
+        ...materialData,
+        ...materialCostData,
       })      
       setShowModal(false)
     }

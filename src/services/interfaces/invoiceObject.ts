@@ -10,7 +10,10 @@ export interface IInvoiceObject {
 export interface IInvoiceObjectMaterials {
   materialID: number
   materialName: string
+  availableMaterial: number
   unit: string
   amount: number
   notes: string
+  hasSerialNumbers: boolean
+  serialNumbers: string[]
 }

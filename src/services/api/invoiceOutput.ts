@@ -197,3 +197,27 @@ export async function buildReport(filter: InvoiceOutputReportFilter): Promise<bo
     throw new Error(responseRaw.data)
   }
 }
+
+
+export async function getAmountInWarehouse(materialID: number):Promise<number> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<number>>(`${URL}/material/${materialID}/total-amount`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export async function getSerialNumberCodesByMaterialID(materialID: number):Promise<string[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/serial-number/material/${materialID}`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+
+

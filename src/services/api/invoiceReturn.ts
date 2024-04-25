@@ -3,6 +3,8 @@ import { IInvoiceReturn, IInvoiceReturnView } from "../interfaces/invoiceReturn"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
+import Material from "../interfaces/material"
+import { IMaterialCost } from "../interfaces/materialCost"
 
 const URL = "/return"
 
@@ -12,11 +14,11 @@ export interface InvoiceReturnPagianted {
   page: number
 }
 
-export async function getPaginatedInvoiceReturn({ pageParam = 1}): Promise<InvoiceReturnPagianted> {
+export async function getPaginatedInvoiceReturn({ pageParam = 1 }): Promise<InvoiceReturnPagianted> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceReturnPagianted>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
   const response = responseRaw.data
   if (response.success && response.permission) {
-    return {...response.data, page: pageParam}
+    return { ...response.data, page: pageParam }
   } else {
     throw new Error(response.error)
   }
@@ -35,6 +37,7 @@ export async function deleteInvoiceReturn(id: number): Promise<boolean> {
 export interface InvoiceReturnItem {
   materialCostID: number
   amount: number
+  isDefected: boolean
 }
 
 export interface InvoiceReturnMutation {
@@ -52,7 +55,7 @@ export async function createInvoiceReturn(data: InvoiceReturnMutation): Promise<
   }
 }
 
-export async function updateInvoiceReturn(data: InvoiceReturnMutation):Promise<InvoiceReturnMutation> {
+export async function updateInvoiceReturn(data: InvoiceReturnMutation): Promise<InvoiceReturnMutation> {
   const responseRaw = await axiosClient.patch<IAPIResposeFormat<InvoiceReturnMutation>>(`${URL}/`, data)
   const response = responseRaw.data
   if (response.permission && response.success) {
@@ -62,7 +65,7 @@ export async function updateInvoiceReturn(data: InvoiceReturnMutation):Promise<I
   }
 }
 
-export async function getInvoiceReturnDocument(deliveryCode: string):Promise<boolean>{
+export async function getInvoiceReturnDocument(deliveryCode: string): Promise<boolean> {
   const responseRaw = await axiosClient.get(`http://127.0.0.1:8080${URL}/document/${deliveryCode}`, { responseType: "blob" })
   if (responseRaw.status == 200) {
     fileDownload(responseRaw.data, `${deliveryCode}.xlsx`)
@@ -87,7 +90,7 @@ export async function sendInvoiceReturnConfirmationExcel(id: number, data: File)
   }
 }
 
-export async function getUniqueCode(): Promise<string[]>{
+export async function getUniqueCode(): Promise<string[]> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/unique/code`)
   const response = responseRaw.data
   if (response.permission && response.success) {
@@ -97,7 +100,7 @@ export async function getUniqueCode(): Promise<string[]>{
   }
 }
 
-export async function getUniqueTeam(): Promise<string[]>{
+export async function getUniqueTeam(): Promise<string[]> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/unique/team`)
   const response = responseRaw.data
   if (response.permission && response.success) {
@@ -107,7 +110,7 @@ export async function getUniqueTeam(): Promise<string[]>{
   }
 }
 
-export async function getUniqueObject(): Promise<string[]>{
+export async function getUniqueObject(): Promise<string[]> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/unique/object`)
   const response = responseRaw.data
   if (response.permission && response.success) {
@@ -133,5 +136,45 @@ export async function buildReport(filter: InvoiceReturnReportFilter): Promise<bo
     return true
   } else {
     throw new Error(responseRaw.data)
+  }
+}
+
+export async function getUniqueMaterialsInLocation(locationType: string, locationID: number): Promise<Material[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<Material[]>>(`${URL}/material/${locationType}/${locationID}`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export async function getMaterialCostsInLocation(materialID: number, locationType: string, locationID: number): Promise<IMaterialCost[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IMaterialCost[]>>(`${URL}/material-cost/${materialID}/${locationType}/${locationID}`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export async function getMaterialAmountInLocation(materialCostID: number, locationType: string, locationID: number): Promise<number> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<number>>(`${URL}/material-amount/${materialCostID}/${locationType}/${locationID}`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export async function getSerialNumberCodesInLocation(materialID: number, status: string): Promise<string[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/serial-number/${status}/${materialID}`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
   }
 }

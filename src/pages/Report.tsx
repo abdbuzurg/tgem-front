@@ -7,9 +7,9 @@ import ReportInvoiceReturn from "../components/invoice/return/ReportInvoiceRetur
 
 const report = [
   {name: "Остатка", type: REPORT_BALANCE},
-  {name: "Отсчет приход", type: REPORT_INVOICE_INPUT},
-  {name: "Отсчет отпуск", type: REPORT_INVOICE_OUTPUT},
-  {name: "Отсчет возврат", type: REPORT_INVOICE_RETURN},
+  {name: "Отчет приход", type: REPORT_INVOICE_INPUT},
+  {name: "Отчет отпуск", type: REPORT_INVOICE_OUTPUT},
+  {name: "Отчет возврат", type: REPORT_INVOICE_RETURN},
 ]
 
 export default function Report() {
@@ -25,7 +25,7 @@ export default function Report() {
   return (
     <div className="flex flex-col space-y-2">
       <div className="px-2">
-        <p className="text-3xl font-bold">Отсчёт</p>
+        <p className="text-3xl font-bold">Отчёт</p>
         <div className="flex space-x-3 mt-2">
           {report.map((flow, index) => (
             <div

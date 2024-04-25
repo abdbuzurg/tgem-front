@@ -1,8 +1,7 @@
 export interface Permission {
   id: number
   roleID: number
-  resourceName: string
-  resourceURL: string
+  resourceID: number
   r: boolean
   w: boolean
   u: boolean

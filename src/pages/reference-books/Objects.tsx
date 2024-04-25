@@ -91,6 +91,7 @@ export default function Objects() {
   }, [supervisorsQuery.data])
 
   const [mutationData, setMutationData] = useState<IObject>({
+    projectID: 1,
     id: 0,
     name: "",
     objectDetailedID: 0,
@@ -162,11 +163,6 @@ export default function Objects() {
 
     if (selectedObjectType.value == "mjd_objects" && secondaryMutationData.amountEntrances == 0) {
       toast.error("Не указано кол-во подъездов")
-      return
-    }
-
-    if (selectedObjectType.value == "mjd_objects" && secondaryMutationData.hasBasement) {
-      toast.error("Присутсвие подвала...")
       return
     }
 
@@ -268,7 +264,9 @@ export default function Objects() {
                 <td className="px-4 py-3">{row.type}</td>
                 <td className="px-4 py-3">{row.name}</td>
                 <td className="px-4 py-3">{row.status}</td>
-                {/* <td className="px-4 py-3">{row.supervisosName}</td> */}
+                <td className="px-4 py-3">
+                  {row.supervisors.reduce((acc, value) => acc + ", " + value, "")}
+                </td>
                 <td className="px-4 py-3 border-box flex space-x-3">
                   <Button text="Изменить" buttonType="default" onClick={() => {
                       setShowMutationModal(true)
