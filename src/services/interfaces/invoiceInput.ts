@@ -3,21 +3,15 @@ export interface IInvoiceInput {
   projectID: number
   warehouseManagerWorkerID: number
   releasedWorkerID: number
-  operatorAddWorkerID: number
-  operatorEditWorkerID: number
   deliveryCode: string
   notes: string
   dateOfInvoice: Date
-  dateOfAdd: Date
-  dateOfEdit: Date
   confirmation: boolean,
 }
 
-export interface IInvoiceInputView extends Omit<IInvoiceInput, "warehouseManagerWorkerID" | "releasedWorkerID" | "operatorAddWorkerID" | "operatorEditWorkerID"> {
+export interface IInvoiceInputView extends Omit<IInvoiceInput, "warehouseManagerWorkerID" | "releasedWorkerID"> {
   warehouseManagerName: string
   releasedName: string
-  operatorAddName: string
-  operatorEditName: string
 }
 
 export interface IInvoiceInputMaterials {

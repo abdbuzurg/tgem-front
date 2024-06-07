@@ -68,10 +68,11 @@ export interface IObjectGetAllResponse {
 }
 
 export async function getPaginatedObjects({ pageParam = 1 }): Promise<IObjectGetAllResponse> {
+  console.log(pageParam)
   const responseRaw = await axiosClient.get<IAPIResposeFormat<IObjectGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
-    return response.data
+    return {...response.data, page: pageParam}
   } else {
     throw new Error(response.error)
   }

@@ -1,16 +1,15 @@
 export interface IInvoiceReturn {
   id: number
   projectID: number
-  operatorAddWorkerID: number
-  operatorEditWorkerID: number
   returnerID: number
   districtID: number
-  returnerType: "objects" | "teams"
+  returnerType: "object" | "team"
+  acceptorID: number
+  acceptorType: "team" | "warehouse"
+  acceptedByWorkerID: number
   deliveryCode: string
   notes: string
   dateOfInvoice: Date
-  dateOfAdd: Date
-  dateOfEdit: Date
   confirmation: boolean
 }
 
@@ -28,16 +27,14 @@ export interface IInvoiceReturnMaterials {
   notes: string
 }
 
-export interface IInvoiceReturnView extends Omit<IInvoiceReturn,
-  "operatorAddWorkerID" |
-  "operatorEditWorkerID" |
-  "returnerID" |
-  "returnerType" |
-  "districtID"
-> {
-  districtName: string
-  operatorAddName: string
-  operatorEditName: string
-  returnerName: string
-  returnerType: string
+export interface IInvoiceReturnView {
+  id: number
+  projectID: number
+  deliveryCode: string
+  teamNumber: string
+  teamLeaderNames: string[]
+  objectName: string
+  objectSupervisorNames: string[]
+  dateOfInvoice: Date
+  confirmation: boolean
 }

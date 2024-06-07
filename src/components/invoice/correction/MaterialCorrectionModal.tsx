@@ -1,5 +1,4 @@
 import { useEffect, useState } from "react";
-import { InvoiceObjectFullDataItem, getSerialNumbersOfMaterial } from "../../../services/api/invoiceObject";
 import IReactSelectOptions from "../../../services/interfaces/react-select";
 import Modal from "../../Modal";
 import Select from 'react-select'
@@ -8,23 +7,23 @@ import getAllMaterials from "../../../services/api/materials/getAll";
 import Material from "../../../services/interfaces/material";
 import Input from "../../UI/Input";
 import { IInvoiceObjectMaterials } from "../../../services/interfaces/invoiceObject";
-import { getTotalAmounByTeamNumber } from "../../../services/api/invoiceCorrection";
+import { InvoiceCorrectionMaterial, getSerialNumbersOfMaterialInTeam, getTotalAmounByTeamNumber } from "../../../services/api/invoiceCorrection";
 import toast from "react-hot-toast";
 import Button from "../../UI/button";
 
 interface Props {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>
   teamNumber: string
-  materialData: InvoiceObjectFullDataItem
+  materialData: InvoiceCorrectionMaterial
 }
 
 export default function MaterialCorrectionModal({
-  setShowModal, 
+  setShowModal,
   materialData,
   teamNumber,
 }: Props) {
 
-  const [selectedMaterial, setSelectedMaterial] = useState<IReactSelectOptions<number>>({label: "", value: 0})
+  const [selectedMaterial, setSelectedMaterial] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   const [availableMaterials, setAvailableMaterials] = useState<IReactSelectOptions<number>[]>([])
   const materialQuery = useQuery<Material[], Error, Material[]>({
     queryKey: ["all-materials"],
@@ -53,22 +52,25 @@ export default function MaterialCorrectionModal({
   }, [materialQuery.data])
 
   useEffect(() => {
-    const material = materialQuery.data.find((val) => val.name == materialData.materialName)!
-    setCorrection({
-      ...correction,
-      materialID: material.id,
-      hasSerialNumbers: material.hasSerialNumber,
-      unit: material.unit,
-    })
+    if (materialQuery.isSuccess && materialQuery.data) {
+      const material = materialQuery.data.find((val) => val.name == materialData.materialName)!
+      setCorrection({
+        ...correction,
+        materialID: material.id,
+        hasSerialNumbers: material.hasSerialNumber,
+        unit: material.unit,
+      })
+    }
+
   }, [selectedMaterial])
 
   // 
   const [correction, setCorrection] = useState<IInvoiceObjectMaterials>({
     materialID: 0,
     materialName: materialData.materialName,
-    unit: "",
-    amount: materialData.amount,
     availableMaterial: 0,
+    unit: "",
+    amount: 0,
     notes: "",
     hasSerialNumbers: false,
     serialNumbers: [],
@@ -76,7 +78,7 @@ export default function MaterialCorrectionModal({
 
   const materialAmountQuery = useQuery<number, Error, number>({
     queryKey: [`total-amount-material-${selectedMaterial.value}-team-number-${teamNumber}`],
-    queryFn: () => getTotalAmounByTeamNumber(selectedMaterial.value, teamNumber), 
+    queryFn: () => getTotalAmounByTeamNumber(selectedMaterial.value, teamNumber),
     enabled: selectedMaterial.value != 0,
   })
   useEffect(() => {
@@ -89,20 +91,20 @@ export default function MaterialCorrectionModal({
   }, [])
 
   const [availableSerialNumbers, setAvaiableSerialNumbers] = useState<IReactSelectOptions<string>[]>([])
-  const [selectedSerialNumber, setSelectedSerialNumber] = useState<IReactSelectOptions<string>>({label: "", value: ""})
+  const [selectedSerialNumber, setSelectedSerialNumber] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
   const [alreadySelectedSerialNumbers, setAlreadySelectedSerialNumbers] = useState<IReactSelectOptions<string>[]>([])
-  const [toBeDeletedSerialNumber, setToBeDeletedSerialNumber] = useState<IReactSelectOptions<string>>({label: "", value: ""})
-  
+  const [toBeDeletedSerialNumber, setToBeDeletedSerialNumber] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
+
   const availableSerialNumbersQuery = useQuery<string[], Error, string[]>({
     queryKey: [`serial-numbers-of-material-${selectedMaterial.value}`],
-    queryFn: () => getSerialNumbersOfMaterial(selectedMaterial.value),
+    queryFn: () => getSerialNumbersOfMaterialInTeam(selectedMaterial.value, teamNumber),
     enabled: selectedMaterial.value != 0,
   })
   useEffect(() => {
 
     if (availableSerialNumbersQuery.isSuccess && availableSerialNumbersQuery.data) {
       setAvaiableSerialNumbers([
-        ...availableSerialNumbersQuery.data.map<IReactSelectOptions<string>>((val) => ({value: val, label: val}))
+        ...availableSerialNumbersQuery.data.map<IReactSelectOptions<string>>((val) => ({ value: val, label: val }))
       ])
     }
 
@@ -115,12 +117,12 @@ export default function MaterialCorrectionModal({
       return
     }
     setAlreadySelectedSerialNumbers([selectedSerialNumber, ...alreadySelectedSerialNumbers])
-    setSelectedSerialNumber({label: "", value: ""})
+    setSelectedSerialNumber({ label: "", value: "" })
   }
 
   const deleteSerialNumberFromList = () => {
     setAlreadySelectedSerialNumbers([...alreadySelectedSerialNumbers.filter((val) => val.value != toBeDeletedSerialNumber.value)])
-    setToBeDeletedSerialNumber({label: "", value: ""})
+    setToBeDeletedSerialNumber({ label: "", value: "" })
   }
 
   return (
@@ -142,17 +144,17 @@ export default function MaterialCorrectionModal({
               value: value?.value ?? 0,
               label: value?.label ?? "",
             })}
-          />                                     
+          />
         </div>
         <div className="flex space-x-2 items-end">
           <div className="flex flex-col space-y-1">
             <label className="font-bold">Количество</label>
-            <Input 
+            <Input
               name="amount"
               type="number"
               value={correction.amount}
               onChange={(e) => setCorrection({
-                ...correction, 
+                ...correction,
                 amount: e.target.valueAsNumber
               })}
             />
@@ -179,7 +181,7 @@ export default function MaterialCorrectionModal({
                   })}
                 />
               </div>
-              <Button onClick={() => addToSerialNumberList()} text="Выбрать"/>
+              <Button onClick={() => addToSerialNumberList()} text="Выбрать" />
             </div>
             <div className="flex space-x-2">
               <div className="flex flex-col space-y-1">
@@ -199,16 +201,16 @@ export default function MaterialCorrectionModal({
                   })}
                 />
               </div>
-              <Button onClick={() => deleteSerialNumberFromList()} text="Удалить" buttonType="delete"/>
+              <Button onClick={() => deleteSerialNumberFromList()} text="Удалить" buttonType="delete" />
             </div>
           </div>
         }
         <div>
           <label className="font-bold">Примичание</label>
-          <textarea 
+          <textarea
             className="w-full"
-            value={correction.notes} 
-            onChange={(e) => setCorrection({...correction, notes: e.target.value})}
+            value={correction.notes}
+            onChange={(e) => setCorrection({ ...correction, notes: e.target.value })}
           />
         </div>
       </div>

@@ -73,20 +73,7 @@ export default function InvoiceObjectMutationAdd() {
     label: "",
     value: 0,
   })
-  useEffect(() => {
-    if (selectedMaterial.value != 0 && allMaterialsQuery.isSuccess && allMaterialsQuery.data) {
-      const material = allMaterialsQuery.data.find((val) => val.id == selectedMaterial.value)!
-      setInvoiceMaterial({
-        ...invoiceMaterial,
-        materialID: selectedMaterial.value,
-        materialName: selectedMaterial.label,
-        hasSerialNumbers: material.hasSerialNumber,
-        unit: material.unit,
-      })
-    }
 
-
-  }, [selectedMaterial])
 
   const [availableMaterials, setAvailableMaterials] = useState<IReactSelectOptions<number>[]>([])
   const allMaterialsQuery = useQuery<Material[], Error, Material[]>({
@@ -109,15 +96,47 @@ export default function InvoiceObjectMutationAdd() {
 
   }, [allMaterialsQuery.data])
 
+  const onMaterialSelect = (value: IReactSelectOptions<number> | null) => {
+    if (!value) {
+      setSelectedMaterial({ label: "", value: 0 })
+      setInvoiceMaterial({
+        materialID: 0,
+        materialName: "",
+        availableMaterial: 0,
+        unit: "",
+        amount: 0,
+        notes: "",
+        hasSerialNumbers: false,
+        serialNumbers: [],
+      })
+
+      return
+    }
+    
+    setSelectedMaterial(value)
+    if (allMaterialsQuery.isSuccess && allMaterialsQuery.data) {
+      const material = allMaterialsQuery.data.find((val) => val.id == value.value)!
+      console.log(material)
+      setInvoiceMaterial({
+        ...invoiceMaterial,
+        materialID: material.id,
+        materialName: material.name,
+        hasSerialNumbers: material.hasSerialNumber,
+        unit: material.unit,
+      })
+    }
+  }  
+
   //Logic for getting the amount of selected material
   const materialAmountQuery = useQuery<number, Error, number>({
     queryKey: [`material-${selectedMaterial.value}-team-${selectedTeam.value}`],
     queryFn: () => getMaterialAmount(selectedMaterial.value, selectedTeam.value),
     enabled: selectedMaterial.value != 0 && selectedTeam.value != 0
   })
+
   useEffect(() => {
     if (materialAmountQuery.isSuccess && materialAmountQuery.data) {
-      setInvoiceMaterial({...invoiceMaterial, availableMaterial: materialAmountQuery.data})
+      setInvoiceMaterial({ ...invoiceMaterial, availableMaterial: materialAmountQuery.data })
     }
   }, [materialAmountQuery.data])
 
@@ -137,44 +156,60 @@ export default function InvoiceObjectMutationAdd() {
 
   // Serial Numbers logic
   const [availableSerialNumbers, setAvaiableSerialNumbers] = useState<IReactSelectOptions<string>[]>([])
-  const [selectedSerialNumber, setSelectedSerialNumber] = useState<IReactSelectOptions<string>>({label: "", value: ""})
+  const [selectedSerialNumber, setSelectedSerialNumber] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
   const [alreadySelectedSerialNumbers, setAlreadySelectedSerialNumbers] = useState<IReactSelectOptions<string>[]>([])
-  const [toBeDeletedSerialNumber, setToBeDeletedSerialNumber] = useState<IReactSelectOptions<string>>({label: "", value: ""})
-  
+  const [toBeDeletedSerialNumber, setToBeDeletedSerialNumber] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
+
   const availableSerialNumbersQuery = useQuery<string[], Error, string[]>({
     queryKey: [`serial-numbers-of-material-${selectedMaterial.value}`],
-    queryFn: () => getSerialNumbersOfMaterial(selectedMaterial.value),
-    enabled: selectedMaterial.value != 0,
+    queryFn: () => getSerialNumbersOfMaterial(selectedMaterial.value, selectedTeam.value),
+    enabled: selectedMaterial.value != 0 && selectedTeam.value != 0,
   })
   useEffect(() => {
 
     if (availableSerialNumbersQuery.isSuccess && availableSerialNumbersQuery.data) {
       setAvaiableSerialNumbers([
-        ...availableSerialNumbersQuery.data.map<IReactSelectOptions<string>>((val) => ({value: val, label: val}))
+        ...availableSerialNumbersQuery.data.map<IReactSelectOptions<string>>((val) => ({ value: val, label: val }))
       ])
     }
 
   }, [availableSerialNumbersQuery.data])
 
   const addToSerialNumberList = () => {
-    const index = alreadySelectedSerialNumbers.findIndex((val) => selectedSerialNumber.value == val.value)
-    if (index != -1) {
-      toast.error("Данный серийний код уже в списке")
-      return
-    }
-    setAlreadySelectedSerialNumbers([selectedSerialNumber, ...alreadySelectedSerialNumbers])
-    setSelectedSerialNumber({label: "", value: ""})
+    const list = [...alreadySelectedSerialNumbers, selectedSerialNumber]
+    setAlreadySelectedSerialNumbers(list)
+
+    setAvaiableSerialNumbers(
+      availableSerialNumbers.filter((value) => value.value != selectedSerialNumber.value)
+    )
+
+    setSelectedSerialNumber({ label: "", value: "" })
+    setInvoiceMaterial({
+      ...invoiceMaterial,
+      serialNumbers: list.map((val) => val.value)
+    })
   }
 
   const deleteSerialNumberFromList = () => {
-    setAlreadySelectedSerialNumbers([...alreadySelectedSerialNumbers.filter((val) => val.value != toBeDeletedSerialNumber.value)])
-    setToBeDeletedSerialNumber({label: "", value: ""})
+    const list = alreadySelectedSerialNumbers.filter((value) => value.value != toBeDeletedSerialNumber.value)
+    setAlreadySelectedSerialNumbers(list)
+
+    setAvaiableSerialNumbers([
+      toBeDeletedSerialNumber,
+      ...availableSerialNumbers,
+    ])
+
+    setToBeDeletedSerialNumber({ label: "", value: "" })
+    setInvoiceMaterial({
+      ...invoiceMaterial,
+      serialNumbers: list.map((val) => val.value)
+    })
   }
 
   // Adding materials to the list
   const addMaterialToTheList = () => {
 
-    if (invoiceMaterial.materialID == 0) {
+    if (selectedMaterial.value == 0) {
       toast.error("Не был выбран материал")
       return
     }
@@ -211,9 +246,9 @@ export default function InvoiceObjectMutationAdd() {
       serialNumbers: [],
     })
     setSelectedMaterial({ label: "", value: 0 })
-    setSelectedSerialNumber({label: "", value: ""})
+    setSelectedSerialNumber({ label: "", value: "" })
     setAvaiableSerialNumbers([])
-    setToBeDeletedSerialNumber({label: "", value: ""})
+    setToBeDeletedSerialNumber({ label: "", value: "" })
     setAlreadySelectedSerialNumbers([])
   }
 
@@ -249,7 +284,7 @@ export default function InvoiceObjectMutationAdd() {
         objectID: selectedObject.value,
         teamID: selectedTeam.value,
         id: 0,
-        deliveryCode: "", 
+        deliveryCode: "",
         projectID: 0,
         supervisorWorkerID: 0,
       },
@@ -276,7 +311,7 @@ export default function InvoiceObjectMutationAdd() {
       </div>
       <div className="px-2 py-1">
         <div className="w-full">
-          <Button onClick={() => submitInvoice()} text="Опубликовать"/>
+          <Button onClick={() => submitInvoice()} text="Опубликовать" />
         </div>
         <span className="font-semibold text-lg">Основная информация</span>
         <div className="px-3 py-4 bg-gray-800 text-white rounded-md ">
@@ -331,10 +366,7 @@ export default function InvoiceObjectMutationAdd() {
                 placeholder={""}
                 value={selectedMaterial}
                 options={availableMaterials}
-                onChange={(value) => setSelectedMaterial({
-                  label: value?.label ?? "",
-                  value: value?.value ?? 0,
-                })}
+                onChange={(value) => onMaterialSelect(value)}
               />
             </div>
             <div className="flex flex-col space-y-1">
@@ -345,7 +377,7 @@ export default function InvoiceObjectMutationAdd() {
                   value={invoiceMaterial.amount}
                   onChange={(e) => setInvoiceMaterial({
                     ...invoiceMaterial,
-                    amount: +e.target.value
+                    amount: e.target.valueAsNumber
                   })}
                   className="text-black rounded-sm px-2 py-1.5"
                 />
@@ -372,7 +404,7 @@ export default function InvoiceObjectMutationAdd() {
                       })}
                     />
                   </div>
-                  <Button onClick={() => addToSerialNumberList()} text="Выбрать"/>
+                  <Button onClick={() => addToSerialNumberList()} text="Выбрать" />
                 </div>
                 <div className="flex space-x-2">
                   <div className="flex flex-col space-y-1">
@@ -392,7 +424,7 @@ export default function InvoiceObjectMutationAdd() {
                       })}
                     />
                   </div>
-                  <Button onClick={() => deleteSerialNumberFromList()} text="Удалить" buttonType="delete"/>
+                  <Button onClick={() => deleteSerialNumberFromList()} text="Удалить" buttonType="delete" />
                 </div>
               </div>
             }

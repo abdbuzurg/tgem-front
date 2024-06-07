@@ -1,6 +1,6 @@
 import fileDownload from "js-file-download"
 import { IInvoiceInput, IInvoiceInputView } from "../interfaces/invoiceInput"
-import { InvoiceMaterial } from "../interfaces/invoiceMaterial"
+import { InvoiceMaterial, InvoiceMaterialViewWithSerialNumbers, InvoiceMaterialViewWithoutSerialNumbers, } from "../interfaces/invoiceMaterial"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
@@ -171,3 +171,22 @@ export async function createNewMaterialFromInvoiceInput(data: CreateFullMaterial
   }
 }
 
+export async function getInvoiceInputMaterilsWithoutSerialNumbersByID(id: number): Promise<InvoiceMaterialViewWithoutSerialNumbers[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceMaterialViewWithoutSerialNumbers[]>>(`${URL}/${id}/materials/without-serial-number`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export async function getInvoiceInputMaterilsWithSerialNumbersByID(id: number): Promise<InvoiceMaterialViewWithSerialNumbers[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceMaterialViewWithSerialNumbers[]>>(`${URL}/${id}/materials/with-serial-number`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}

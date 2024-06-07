@@ -3,6 +3,7 @@ import { IInvoiceOutput, IInvoiceOutputView } from "../interfaces/invoiceOutput"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
+import { InvoiceMaterialViewWithSerialNumbers, InvoiceMaterialViewWithoutSerialNumbers } from "../interfaces/invoiceMaterial"
 
 const URL = "/output"
 
@@ -64,7 +65,6 @@ export async function updateInvoiceOutput(data: InvoiceOutputMutation):Promise<I
 }
 
 export async function getInvoiceOutputDocument(deliveryCode: string):Promise<boolean>{
-  console.log("kek")
   const responseRaw = await axiosClient.get(`http://127.0.0.1:8080${URL}/document/${deliveryCode}`, { responseType: "blob" })
   if (responseRaw.status == 200) {
     fileDownload(responseRaw.data, `${deliveryCode}.xlsx`)
@@ -198,17 +198,6 @@ export async function buildReport(filter: InvoiceOutputReportFilter): Promise<bo
   }
 }
 
-
-export async function getAmountInWarehouse(materialID: number):Promise<number> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<number>>(`${URL}/material/${materialID}/total-amount`)
-  const response = responseRaw.data
-  if (response.permission && response.success) {
-    return response.data
-  } else {
-    throw new Error(response.error)
-  }
-}
-
 export async function getSerialNumberCodesByMaterialID(materialID: number):Promise<string[]> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/serial-number/material/${materialID}`)
   const response = responseRaw.data
@@ -219,5 +208,40 @@ export async function getSerialNumberCodesByMaterialID(materialID: number):Promi
   }
 }
 
+export interface AvailableMaterial{
+	id: number
+	name: string
+	unit: string
+	hasSerialNumber: boolean
+	amount: number
+}
 
+export async function getAvailableMaterialsInWarehouse():Promise<AvailableMaterial[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<AvailableMaterial[]>>(`${URL}/material/available-in-warehouse`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
 
+export async function getInvoiceOutputMaterilsWithoutSerialNumbersByID(id: number): Promise<InvoiceMaterialViewWithoutSerialNumbers[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceMaterialViewWithoutSerialNumbers[]>>(`${URL}/${id}/materials/without-serial-number`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export async function getInvoiceOutputMaterilsWithSerialNumbersByID(id: number): Promise<InvoiceMaterialViewWithSerialNumbers[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceMaterialViewWithSerialNumbers[]>>(`${URL}/${id}/materials/with-serial-number`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}

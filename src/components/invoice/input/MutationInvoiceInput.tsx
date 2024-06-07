@@ -17,6 +17,9 @@ import getMaterailCostByMaterialID from "../../../services/api/materialscosts/ge
 import { InvoiceInputMaterial, InvoiceInputMutation, createInvoiceInput } from "../../../services/api/invoiceInput";
 import SerialNumberAddModal from "./SerialNumerAddModal";
 import toast from "react-hot-toast";
+import IconButton from "../../IconButtons";
+import { FaBarcode } from "react-icons/fa";
+import { IoIosAddCircleOutline } from "react-icons/io";
 
 interface Props {
   setShowMutationModal: React.Dispatch<React.SetStateAction<boolean>>
@@ -31,14 +34,10 @@ export default function MutationInvoiceInput({
   // Main invoice information
   const [mutationData, setMutationData] = useState<IInvoiceInput>({
     projectID: 1,
-    dateOfAdd: new Date(),
-    dateOfEdit: new Date(),
     dateOfInvoice: new Date(),
     deliveryCode: "",
     id: 0,
     notes: "",
-    operatorAddWorkerID: 0,
-    operatorEditWorkerID: 0,
     releasedWorkerID: 0,
     warehouseManagerWorkerID: 0,
     confirmation: false,
@@ -67,7 +66,7 @@ export default function MutationInvoiceInput({
     hasSerialNumber: false,
     serialNumbers: []
   })
-  
+
   // LOGIC OF ADDING NEW MATERIAL
   const [showAddNewMaterialDetaisModal, setShowAddNewMaterialDetailsModal] = useState(false)
   useEffect(() => {
@@ -168,7 +167,7 @@ export default function MutationInvoiceInput({
       return
     }
 
-    const index = invoiceMaterials.findIndex((value) => value.materialID == invoiceMaterial.materialID)  
+    const index = invoiceMaterials.findIndex((value) => value.materialID == invoiceMaterial.materialID)
     if (index != -1) {
       if (invoiceMaterial.materialCost == invoiceMaterials[index].materialCost) {
         toast.error("Такой материал с такой ценой уже был выбран. Выберите другой ценник или же другой материл")
@@ -336,7 +335,7 @@ export default function MutationInvoiceInput({
             <div className="px-4 py-3"></div>
             {/* table head END */}
           </div>
-          <div className="grid grid-cols-6 text-sm text-left mt-2 w-full border-box">
+          <div className="grid grid-cols-6 text-sm text-left mt-2 w-full border-box items-center">
             <div className="px-4 py-3">
               <Select
                 className="basic-single"
@@ -357,7 +356,7 @@ export default function MutationInvoiceInput({
                 name="amount"
                 value={invoiceMaterial.amount}
                 type="number"
-                onChange={(e) => setInvoiceMaterial((prev) => ({ ...prev, amount: +e.target.value }))}
+                onChange={(e) => setInvoiceMaterial((prev) => ({ ...prev, amount: e.target.valueAsNumber }))}
               />
             </div>
             <div className="px-4 py-3">
@@ -382,9 +381,25 @@ export default function MutationInvoiceInput({
                 onChange={(e) => setInvoiceMaterial((prev) => ({ ...prev, notes: e.target.value }))}
               />
             </div>
-            <div className="grid gird-col-1 gap-1">
-              {invoiceMaterial.hasSerialNumber && <Button onClick={() => setShowSerialNumberAddModal(true)} text="Серийные номера" />}
-              <Button onClick={() => onAddClick()} text="Добавить" />
+            <div className="grid grid-cols-2 gap-2 text-center justify-items-center">
+              {invoiceMaterial.hasSerialNumber &&
+                <div>
+                  <IconButton
+                    icon={<FaBarcode
+                      size="25px"
+                      title={`Привязать серийные номера`} />}
+                    onClick={() => setShowSerialNumberAddModal(true)}
+                  />
+                </div>
+              }
+              <div className="text-center">
+                <IconButton
+                  icon={<IoIosAddCircleOutline
+                    size="25px"
+                    title={`Привязать серийные номера`} />}
+                  onClick={() => onAddClick()}
+                />
+              </div>
             </div>
           </div>
           {invoiceMaterials.length > 0 &&
@@ -404,12 +419,12 @@ export default function MutationInvoiceInput({
             </div>
           }
         </div>
-        {showAddNewMaterialDetaisModal && <AddNewMaterialModal setShowModal={setShowAddNewMaterialDetailsModal} />}        
-        {showSerialNumberAddModal && 
-          <SerialNumberAddModal 
-            setShowModal={setShowSerialNumberAddModal} 
-            availableSerialNumber={invoiceMaterial.serialNumbers} 
-            addSerialNumbersToInvoice={addSerialNumbersToInvoice} 
+        {showAddNewMaterialDetaisModal && <AddNewMaterialModal setShowModal={setShowAddNewMaterialDetailsModal} />}
+        {showSerialNumberAddModal &&
+          <SerialNumberAddModal
+            setShowModal={setShowSerialNumberAddModal}
+            availableSerialNumber={invoiceMaterial.serialNumbers}
+            addSerialNumbersToInvoice={addSerialNumbersToInvoice}
           />}
       </div>
     </Modal>

@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import Select from "react-select"
-import { ISTVTObjectCreate, ISTVTObjectGetAllResponse, ISTVTObjectPaginated, createSTVTObject, deleteSTVTObject, getPaginatedSTVTObjects, updateSTVTObject } from "../../../services/api/stvt_object"
+import { ISTVTObjectCreate, ISTVTObjectGetAllResponse, ISTVTObjectPaginated, createSTVTObject, deleteSTVTObject, getPaginatedSTVTObjects, getSTVTTemplateDocument, importSTVT, updateSTVTObject } from "../../../services/api/stvt_object"
 import { ENTRY_LIMIT } from "../../../services/api/constants"
 import { useEffect, useState } from "react"
 import DeleteModal from "../../../components/deleteModal"
@@ -178,10 +178,32 @@ export default function STVTObject() {
     setMutationType("update")
   }
 
+  const [showImportModal, setShowImportModal] = useState(false)
+
+  const importMutation = useMutation<boolean, Error, File>({
+    mutationFn: importSTVT,
+  })
+
+  const acceptExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return
+    importMutation.mutate(e.target.files[0], {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["stvt-object"])
+        setShowImportModal(false)
+      },
+      onSettled: () => {
+        e.target.value = ""
+      },
+      onError: (error) => { toast.error(`Импортированный файл имеет неправильные данные: ${error.message}`)
+      }
+    })
+  }
+
   return (
     <main>
       <div className="mt-2 pl-2 flex space-x-2">
         <span className="text-3xl font-bold">Объекты - СТВТ</span>
+        <Button text="Импорт" onClick={() => setShowImportModal(true)} />
       </div>
       <table className="table-auto text-sm text-left mt-2 w-full border-box">
         <thead className="shadow-md border-t-2">
@@ -364,6 +386,30 @@ export default function STVTObject() {
           <div>
             <Button text="Опубликовать" onClick={() => onMutationSubmitClick()} />
           </div>
+        </Modal>
+      }
+      {showImportModal &&
+        <Modal setShowModal={setShowImportModal}>
+          <span className="font-bold text-xl px-2 py-1">Импорт данных в Справочник - СТВТ</span>
+          <div className="grid grid-cols-2 gap-2 items-center px-2 pt-2">
+            <Button text="Скачать шаблон" onClick={() => getSTVTTemplateDocument()} />
+            <div className="w-full">
+              <label
+                htmlFor="file"
+                className="w-full text-white py-3 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+              >
+                Импортировать данные
+              </label>
+              <input
+                name="file"
+                type="file"
+                id="file"
+                onChange={(e) => acceptExcel(e)}
+                className="hidden"
+              />
+            </div>
+          </div>
+          <span className="text-sm italic px-2 w-full text-center">При импортировке система будет следовать правилам шаблона</span>
         </Modal>
       }
     </main>

@@ -1,8 +1,8 @@
 import {  useEffect, useState } from "react";
-import { InvoiceObjectFullDataItem, InvoiceObjectPaginatedView } from "../../../services/api/invoiceObject";
+import { InvoiceObjectPaginatedView } from "../../../services/api/invoiceObject";
 import Modal from "../../Modal";
 import { useQuery } from "@tanstack/react-query";
-import { getInvoiceMaterialsForCorrect } from "../../../services/api/invoiceCorrection";
+import { InvoiceCorrectionMaterial, getInvoiceMaterialsForCorrect } from "../../../services/api/invoiceCorrection";
 import Button from "../../UI/button";
 import MaterialCorrectionModal from "./MaterialCorrectionModal";
 
@@ -16,8 +16,8 @@ export default function CorrectionModal({
   invoiceObject,
 }: Props) {
 
-  const [invoiceMaterialsForCorrection, setInvoiceMaterialsForCorrections] = useState<InvoiceObjectFullDataItem[]>([])
-  const materialsForCorrectionQuery = useQuery<InvoiceObjectFullDataItem[], Error, InvoiceObjectFullDataItem[]>({
+  const [invoiceMaterialsForCorrection, setInvoiceMaterialsForCorrections] = useState<InvoiceCorrectionMaterial[]>([])
+  const materialsForCorrectionQuery = useQuery<InvoiceCorrectionMaterial[], Error, InvoiceCorrectionMaterial[]>({
     queryKey: [`invoice-correction-materials-${invoiceObject.id}`],
     queryFn: () => getInvoiceMaterialsForCorrect(invoiceObject.id),
   })
@@ -28,8 +28,8 @@ export default function CorrectionModal({
   }, [materialsForCorrectionQuery.data])
 
   const [showCorrectionMaterialModal, setShowCorrectionMaterialModal] = useState(false)
-  const [selectedMaterial, setSelectedMaterial] = useState<InvoiceObjectFullDataItem>()
-  const onModalToggle = (materialData: InvoiceObjectFullDataItem) => {
+  const [selectedMaterial, setSelectedMaterial] = useState<InvoiceCorrectionMaterial>()
+  const onModalToggle = (materialData: InvoiceCorrectionMaterial) => {
     setSelectedMaterial(materialData)
     setShowCorrectionMaterialModal(true)
   }
@@ -58,16 +58,16 @@ export default function CorrectionModal({
         </div>
         <div className="grid grid-cols-4 gap-2 border-b-2 border-b-black font-bold text-l">
           <div className="px-2 py-1">Наименование</div>
-          <div className="px-2 py-1">Количество</div>
-          <div className="px-2 py-1">Примичание</div>
-          <div className="px-2 py-1 invisible">Наименование</div>
+          <div className="px-2 py-1">Цена</div>
+          <div className="px-2 py-1">Кол-во</div>
+          <div className="px-2 py-1 invisible">Корректировка</div>
         </div>
 
         {invoiceMaterialsForCorrection.map((row, index) =>
           <div className="grid grid-cols-4 gap-2 border-b-2 border-b-black" key={index}>
             <div className="px-2 py-1">{row.materialName}</div>
-            <div className="px-2 py-1">{row.amount}</div>
-            <div className="px-2 py-1">{row.notes}</div>
+            <div className="px-2 py-1">{row.materialCost}</div>
+            <div className="px-2 py-1">{row.materialAmount}</div>
             <div className="px-2 py-1">
               <Button onClick={() =>  onModalToggle(row)} text="Изменить" />
             </div>

@@ -21,7 +21,7 @@ const referenceBooksCategorized = [
     ]
   },
   {
-    category: "Материлы",
+    category: "Материалы",
     pages: [
       { name: "Материалы", url: REFERENCE_BOOK_MATERIAL },
       { name: "Поставщики", url: REFERENCE_BOOK_WORKER },

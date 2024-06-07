@@ -1,3 +1,4 @@
+import { InvoiceMaterialViewWithSerialNumbers,  InvoiceMaterialViewWithoutSerialNumbers } from "../interfaces/invoiceMaterial"
 import { IInvoiceObject } from "../interfaces/invoiceObject"
 import Material from "../interfaces/material"
 import IAPIResposeFormat from "./IAPIResposeFormat"
@@ -6,7 +7,7 @@ import { ENTRY_LIMIT } from "./constants"
 
 const URL = "/invoice-object"
 
-export async function getTeamMaterials(teamID: number):Promise<Material[]> {
+export async function getTeamMaterials(teamID: number): Promise<Material[]> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<Material[]>>(`${URL}/materials/team/${teamID}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
@@ -16,8 +17,8 @@ export async function getTeamMaterials(teamID: number):Promise<Material[]> {
   }
 }
 
-export async function getSerialNumbersOfMaterial(materialID: number):Promise<string[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/serial-number/material/${materialID}`)
+export async function getSerialNumbersOfMaterial(materialID: number, teamID: number): Promise<string[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/serial-number/material/${materialID}/teams/${teamID}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
     return response.data
@@ -27,13 +28,13 @@ export async function getSerialNumbersOfMaterial(materialID: number):Promise<str
 }
 
 export interface InvoiceObjectCreateItems {
-	materialID: number
-	amount: number
-	serialNumbers: string[] 
+  materialID: number
+  amount: number
+  serialNumbers: string[]
   notes: string
 }
 
-export interface InvoiceObjectCreate{
+export interface InvoiceObjectCreate {
   details: IInvoiceObject
   items: InvoiceObjectCreateItems[]
 }
@@ -48,7 +49,7 @@ export async function createInvoiceObject(data: InvoiceObjectCreate): Promise<bo
   }
 }
 
-export async function getMaterialAmount(materialID: number, teamID: number):Promise<number> {
+export async function getMaterialAmount(materialID: number, teamID: number): Promise<number> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<number>>(`${URL}/material/${materialID}/team/${teamID}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
@@ -59,12 +60,12 @@ export async function getMaterialAmount(materialID: number, teamID: number):Prom
 }
 
 export interface InvoiceObjectPaginatedView {
-	id:number
-	deliveryCode: string
-	supervisorName: string
-	objectName: string
-	teamNumber: string
-	dateOfInvoice: Date
+  id: number
+  deliveryCode: string
+  supervisorName: string
+  objectName: string
+  teamNumber: string
+  dateOfInvoice: Date
 }
 
 export interface InvoiceObjectPaginated {
@@ -83,20 +84,26 @@ export async function getInvoiceObjectPaginated({ pageParam = 1 }): Promise<Invo
   }
 }
 
-export interface InvoiceObjectFullDataItem{
-	id: number
-	materialName: string 
-	amount: number
+export interface InvoiceObjectFullDataItem {
+  id: number
+  materialName: string
+  amount: number
   notes: string
 }
 
-export interface InvoiceObjectFullData{
+export interface InvoiceObjectFullData {
   details: InvoiceObjectPaginatedView
   items: InvoiceObjectFullDataItem[]
 }
 
-export async function getFullDataByID(id: number): Promise<InvoiceObjectFullData> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceObjectFullData>>(`${URL}/${id}`)
+export interface InvoiceObjectDescriptiveData {
+  invoiceData: InvoiceObjectPaginatedView
+  materialsWithSN: InvoiceMaterialViewWithSerialNumbers[],
+  materialsWithoutSN: InvoiceMaterialViewWithoutSerialNumbers[]
+}
+
+export async function getInvoiceObjectDescriptiveDataByID(id: number): Promise<InvoiceObjectDescriptiveData> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceObjectDescriptiveData>>(`${URL}/${id}`)
   const response = responseRaw.data
   if (response.success && response.permission) {
     return response.data

@@ -22,7 +22,8 @@ export default function Button({text, onClick, buttonType = "default", disabled 
     <button 
       disabled={disabled}
       onClick={onClick}
-      className={"text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 " + className + " " + buttonBgColor(buttonType)}>
+      className={"text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 " + className + " " + buttonBgColor(buttonType)}
+    >
       {text}
     </button>
   )

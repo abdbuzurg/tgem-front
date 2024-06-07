@@ -1,30 +1,31 @@
 import { useEffect, useState } from "react";
 import Button from "../../components/UI/button";
-import { IInvoiceOutputView } from "../../services/interfaces/invoiceOutput";
+import { IInvoiceReturnView } from "../../services/interfaces/invoiceReturn";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { InvoiceOutputPagianted, deleteInvoiceOutput, getInvoiceOutputDocument, getPaginatedInvoiceOutput, sendInvoiceOutputConfirmationExcel } from "../../services/api/invoiceOutput";
+import { InvoiceReturnPagianted, deleteInvoiceReturn, getInvoiceReturnDocument, getPaginatedInvoiceReturn, sendInvoiceReturnConfirmationExcel } from "../../services/api/invoiceReturn";
 import { ENTRY_LIMIT } from "../../services/api/constants";
 import DeleteModal from "../../components/deleteModal";
-import MutationInvoiceOutput from "../../components/invoice/output/MutationInvoiceOutput";
-import ReportInvoiceOutput from "../../components/invoice/output/ReportInvoiceOutput";
+import MutationInvoiceReturnObject from "../../components/invoice/return/MutationInvoiceReturnObject";
+import ReportInvoiceReturn from "../../components/invoice/return/ReportInvoiceReturn";
 import IconButton from "../../components/IconButtons";
 import { FaDownload, FaRegListAlt, FaRegTrashAlt, FaUpload } from "react-icons/fa";
-import ShowInvoiceOutputDetails from "../../components/invoice/output/ShowInvoiceOutputDetails";
+import ShowInvoiceReturnDetails from "../../components/invoice/return/ShowInvoiceReturnDetails";
 
-export default function InvoiceOutput() {
+export default function InvoiceReturnObject() {
+
   //FETCHING LOGIC
-  const tableDataQuery = useInfiniteQuery<InvoiceOutputPagianted, Error>({
-    queryKey: ["invoice-output"],
-    queryFn: ({ pageParam }) => getPaginatedInvoiceOutput({ pageParam }),
+  const tableDataQuery = useInfiniteQuery<InvoiceReturnPagianted, Error>({
+    queryKey: ["invoice-return-object"],
+    queryFn: ({ pageParam }) => getPaginatedInvoiceReturn({ pageParam }, "object"),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
     }
   })
-  const [tableData, setTableData] = useState<IInvoiceOutputView[]>([])
+  const [tableData, setTableData] = useState<IInvoiceReturnView[]>([])
   useEffect(() => {
     if (tableDataQuery.isSuccess && tableDataQuery.data) {
-      const data: IInvoiceOutputView[] = tableDataQuery.data.pages.reduce<IInvoiceOutputView[]>((acc, page) => [...acc, ...page.data], [])
+      const data: IInvoiceReturnView[] = tableDataQuery.data.pages.reduce<IInvoiceReturnView[]>((acc, page) => [...acc, ...page.data], [])
       setTableData(data)
     }
   }, [tableDataQuery.data])
@@ -41,8 +42,8 @@ export default function InvoiceOutput() {
   //Confirmation logic
   const [confirmationData, setConfirmationData] = useState<{ id: number, data: File | null }>({ id: 0, data: null })
   const confirmationFileMutation = useMutation<boolean, Error, void>({
-    mutationFn: () => sendInvoiceOutputConfirmationExcel(confirmationData.id, confirmationData.data!),
-    onSuccess: () => queryClient.invalidateQueries(["invoice-output"])
+    mutationFn: () => sendInvoiceReturnConfirmationExcel(confirmationData.id, confirmationData.data!),
+    onSuccess: () => queryClient.invalidateQueries(["invoice-return-object"])
   })
   const acceptExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return
@@ -57,13 +58,14 @@ export default function InvoiceOutput() {
     }
   }, [confirmationData])
 
+
   //DELETE LOGIC
   const [showModal, setShowModal] = useState(false)
   const queryClient = useQueryClient()
   const deleteMutation = useMutation({
-    mutationFn: deleteInvoiceOutput,
+    mutationFn: deleteInvoiceReturn,
     onSuccess: () => {
-      queryClient.invalidateQueries(["invoice-output"])
+      queryClient.invalidateQueries(["invoice-return-object"])
     }
   })
   const [modalProps, setModalProps] = useState({
@@ -71,7 +73,7 @@ export default function InvoiceOutput() {
     no_delivery: "",
     deleteFunc: () => { }
   })
-  const onDeleteButtonClick = (row: IInvoiceOutputView) => {
+  const onDeleteButtonClick = (row: IInvoiceReturnView) => {
     setShowModal(true)
     setModalProps({
       deleteFunc: () => deleteMutation.mutate(row.id),
@@ -80,24 +82,25 @@ export default function InvoiceOutput() {
     })
   }
 
-  //Mutation LOGIC
+  //MUTATION LOGIC
   const [mutationModalType, setMutationModalType] = useState<"update" | "create">("create")
   const [showMutationModal, setShowMutationModal] = useState(false)
 
-  //Details logic
+  //Report Modal
+  const [showReportModal, setShowReportModal] = useState(false)
+
+  //DETAIL MODAL DATA
   const [showDetailsModal, setShowDetailsModal] = useState(false)
-  const [detailModalData, setDetailModalData] = useState<IInvoiceOutputView>({
+  const [detailModalData, setDetailModalData] = useState<IInvoiceReturnView>({
     dateOfInvoice: new Date(),
     deliveryCode: "",
     id: 0,
-    notes: "",
-    releasedName: "",
-    warehouseManagerName: "",
-    teamName: "",
-    objectName: "",
     confirmation: false,
-    districtName: "",
-    recipientName: "",
+    projectID: 1,
+    teamNumber: "",
+    teamLeaderNames: [],
+    objectName: "",
+    objectSupervisorNames: [],
   })
 
   const showDetails = (index: number) => {
@@ -105,13 +108,10 @@ export default function InvoiceOutput() {
     setShowDetailsModal(true)
   }
 
-  //Report Modal
-  const [showReportModal, setShowReportModal] = useState(false)
-
   return (
     <main>
       <div className="mt-2 px-2 flex justify-between">
-        <span className="text-3xl font-bold">Накладные отпуск</span>
+        <span className="text-3xl font-bold">Накладные возврат из объекта</span>
         <div>
           <Button onClick={() => setShowReportModal(true)} text="Отчет" buttonType="default" />
         </div>
@@ -123,21 +123,12 @@ export default function InvoiceOutput() {
               <span>Код</span>
             </th>
             <th className="px-4 py-3">
-              <span>Район</span>
-            </th>
-            <th className="px-4 py-3">
               <span>Объект</span>
             </th>
             <th className="px-4 py-3">
-              <span>Бригада</span>
+              <span>Бригадиры</span>
             </th>
-            <th className="px-4 py-3 min-w-[110px]">
-              <span>Зав. Склад</span>
-            </th>
-            <th className="px-4 py-3">
-              <span>Составитель</span>
-            </th>
-            <th className="px-4 py-3 w-[110px]">
+            <th className="px-4 py-3 w-[150px]">
               <span>Дата</span>
             </th>
             <th className="px-4 py-3">
@@ -149,40 +140,36 @@ export default function InvoiceOutput() {
           </tr>
         </thead>
         <tbody>
-          {tableData.map((row, index) =>
-            <tr key={index} className="text-sm">
-              <td className="px-4 py-3">{row.deliveryCode}</td>
-              <td className="px-4 py-3">{row.districtName}</td>
-              <td className="px-4 py-3">{row.objectName}</td>
-              <td className="px-4 py-3">{row.teamName}</td>
-              <td className="px-4 py-3">{row.warehouseManagerName}</td>
-              <td className="px-4 py-3">{row.releasedName}</td>
-              <td className="px-4 py-3">{row.dateOfInvoice.toString().substring(0, 10)}</td>
+          {tableData.map((value, index) =>
+            <tr key={index}>
+              <td className="px-4 py-3">{value.deliveryCode}</td>
+              <td className="px-4 py-3">{value.objectName}</td>
+              <td className="px-4 py-3">{value.objectSupervisorNames.reduce((acc, val) => acc + ", " + val)}</td>
+              <td className="px-4 py-3">{value.dateOfInvoice.toString().substring(0, 10)}</td>
               <td className="px-4 py-3 border-box flex space-x-3">
                 <IconButton
-                  icon={<FaRegListAlt size="20px" title={`Просмотр деталей накладной ${row.deliveryCode}`} />}
+                  icon={<FaRegListAlt size="20px" title={`Просмотр деталей накладной ${value.deliveryCode}`} />}
                   onClick={() => showDetails(index)}
                 />
-                {row.confirmation &&
+                {value.confirmation &&
                   <IconButton
-                    icon={<FaDownload size="20px" title={`Скачать подтвержденный файл накладной ${row.deliveryCode}`} />}
-                    onClick={() => getInvoiceOutputDocument(row.deliveryCode)}
+                    icon={<FaDownload size="20px" title={`Скачать подтвержденный файл накладной ${value.deliveryCode}`} />}
+                    onClick={() => getInvoiceReturnDocument(value.deliveryCode)}
                   />
                 }
-                {!row.confirmation &&
-                  <>
+                {!value.confirmation && <>
                     <label
                       htmlFor="file"
-                      onClick={() => setConfirmationData({ ...confirmationData, id: row.id })}
+                      onClick={() => setConfirmationData({ ...confirmationData, id: value.id })}
                       className="px-4 py-2 flex items-center text-white bg-red-700 hover:bg-red-800 rounded-lg text-center cursor-pointer"
                     >
                       <FaUpload
                         size="20px"
-                        title={`Подтвердить файлом накладную ${row.deliveryCode}`}
+                        title={`Подтвердить файлом накладную ${value.deliveryCode}`}
                       />
                     </label>
                     <input
-                      name={`file-${row.id}`}
+                      name={`file-${value.id}`}
                       type="file"
                       id="file"
                       onChange={(e) => acceptExcel(e)}
@@ -190,16 +177,16 @@ export default function InvoiceOutput() {
                       value=''
                     />
                     <IconButton
-                      icon={<FaDownload size="20px" title={`Скачать сгенерированный файл накладной ${row.deliveryCode}`} />}
-                      onClick={() => getInvoiceOutputDocument(row.deliveryCode)}
+                      icon={<FaDownload size="20px" title={`Скачать сгенерированный файл накладной ${value.deliveryCode}`} />}
+                      onClick={() => getInvoiceReturnDocument(value.deliveryCode)}
                     />               {/* <IconButton */}
                     {/*   icon={<FaRegEdit size="20px" title={`Изменить данные накладной ${row.deliveryCode}`} />} */}
                     {/*   onClick={() => showDetails(index)} */}
                     {/* /> */}
                     <IconButton
                       type="delete"
-                      icon={<FaRegTrashAlt size="20px" title={`Удалить все данные накладной ${row.deliveryCode}`} />}
-                      onClick={() => onDeleteButtonClick(row)}
+                      icon={<FaRegTrashAlt size="20px" title={`Удалить все данные накладной ${value.deliveryCode}`} />}
+                      onClick={() => onDeleteButtonClick(value)}
                     />
                   </>
                 }
@@ -208,14 +195,14 @@ export default function InvoiceOutput() {
           )}
         </tbody>
       </table>
-      {showDetailsModal && <ShowInvoiceOutputDetails setShowModal={setShowDetailsModal} data={detailModalData}/>}
+      {showDetailsModal && <ShowInvoiceReturnDetails setShowModal={setShowDetailsModal} data={detailModalData} />}
       {showModal &&
         <DeleteModal {...modalProps}>
-          <span>При подтверждении накладая уход с кодом {modalProps.no_delivery} и все связанные материалы будут удалены</span>
+          <span>При подтверждении накладая приход с кодом {modalProps.no_delivery} и все связанные материалы будут удалены</span>
         </DeleteModal>
       }
-      {showMutationModal && <MutationInvoiceOutput mutationType={mutationModalType} setShowMutationModal={setShowMutationModal} />}
-      {showReportModal && <ReportInvoiceOutput setShowReportModal={setShowReportModal} />}
+      {showMutationModal && <MutationInvoiceReturnObject setShowMutationModal={setShowMutationModal} mutationType={mutationModalType} />}
+      {showReportModal && <ReportInvoiceReturn setShowReportModal={setShowReportModal} />}
     </main>
   )
 }

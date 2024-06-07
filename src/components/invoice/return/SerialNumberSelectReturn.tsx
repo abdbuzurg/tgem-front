@@ -9,7 +9,8 @@ import { getSerialNumberCodesInLocation } from "../../../services/api/invoiceRet
 interface Props {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>
   materialID: number
-  status: string
+  locationType: string
+  locationID: number
   addSerialNumbersToInvoice: (serailNumbes: string[]) => void
   alreadySelectedSerialNumers: string[]
 }
@@ -17,7 +18,8 @@ interface Props {
 export default function SerialNumberSelectReturnModal({
   setShowModal,
   addSerialNumbersToInvoice,
-  status,
+  locationType,
+  locationID,
   materialID,
   alreadySelectedSerialNumers,
 }: Props) {
@@ -27,8 +29,8 @@ export default function SerialNumberSelectReturnModal({
   const [selectedAvailableSerialNumber, setSelectedAvailableSerialNumber] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
 
   const codesQuery = useQuery<string[], Error, string[]>({
-    queryKey: [`serial-number-for-${materialID}-in-${status}`],
-    queryFn: () => getSerialNumberCodesInLocation(materialID, status),
+    queryKey: [`serial-number-for-${materialID}-in-${locationType}`],
+    queryFn: () => getSerialNumberCodesInLocation(materialID, locationType, locationID),
   })
   useEffect(() => {
     if (codesQuery.isSuccess && codesQuery.data) {

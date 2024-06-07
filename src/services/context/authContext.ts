@@ -12,9 +12,9 @@ export interface IAuthContext {
 
 export const AuthContext = createContext<IAuthContext>({
   permissions: [],
-  setPermissions: (permissions: UserPermissions[]) => {},
+  setPermissions: () => {},
   username: "",
-  setUsername: (username: string) => {},
-  hasPermission: (pathname?: string) => false,
+  setUsername: () => {},
+  hasPermission: () => false,
   clearContext: () => {}
 })

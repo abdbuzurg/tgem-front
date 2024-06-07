@@ -11,7 +11,7 @@ export default function AuthProvider({children}: Props) {
   const [username, setUsername] = useState("")
   const [permissions, setPermissions] = useState<UserPermissions[]>([])
   
-  const hasPermission = (pathname?: string) => {
+  const hasPermission = () => {
     return true
   }
 

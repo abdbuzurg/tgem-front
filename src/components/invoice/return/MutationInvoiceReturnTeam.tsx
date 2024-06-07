@@ -4,7 +4,6 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Fragment, useEffect, useState } from "react";
 import { IInvoiceReturn, IInvoiceReturnMaterials } from "../../../services/interfaces/invoiceReturn";
-import ObjectSelect from "../../ObjectSelect";
 import TeamSelect from "../../TeamSelect";
 import Button from "../../UI/button";
 import IReactSelectOptions from "../../../services/interfaces/react-select";
@@ -27,7 +26,7 @@ interface Props {
 }
 
 
-export default function MutationInvoiceReturnObject({
+export default function MutationInvoiceReturnTeam({
   mutationType,
   setShowMutationModal,
 }: Props) {
@@ -41,23 +40,22 @@ export default function MutationInvoiceReturnObject({
     notes: "",
     projectID: 0,
     returnerID: 0,
-    returnerType: "object",
+    returnerType: "team",
     acceptorID: 0,
-    acceptorType: "team",
+    acceptorType: "warehouse",
     acceptedByWorkerID: 0,
     confirmation: false,
   })
 
   // District, Object, Team and District select logic
   const [selectedDistrictID, setSelectedDistrictID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
-  const [selectedObjectID, setSelectedObjectID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   const [selectedTeamID, setSelectedTeamID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   const [selectedAcceptedByWorkerID, setSelectedAcceptedByWorkerID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   useEffect(() => {
     setMutationData({
       ...mutationData,
-      returnerID: selectedObjectID.value,
-      acceptorID: selectedTeamID.value,
+      returnerID: selectedTeamID.value,
+      acceptorID: 0,
       districtID: selectedDistrictID.value,
       acceptedByWorkerID: selectedAcceptedByWorkerID.value
     })
@@ -76,7 +74,7 @@ export default function MutationInvoiceReturnObject({
       isDefective: false,
       notes: "",
     })
-  }, [selectedObjectID, selectedTeamID, selectedDistrictID, selectedAcceptedByWorkerID])
+  }, [selectedTeamID, selectedDistrictID, selectedAcceptedByWorkerID])
 
   //Invoice material information
   const [invoiceMaterials, setInvoiceMaterials] = useState<IInvoiceReturnMaterials[]>([])
@@ -297,11 +295,6 @@ export default function MutationInvoiceReturnObject({
       return
     }
 
-    if (selectedObjectID.value == 0) {
-      toast.error("Не выбран Объект")
-      return
-    }
-
     if (selectedAcceptedByWorkerID.value == 0) {
       toast.error("Не выбран принимающий")
       return
@@ -350,19 +343,15 @@ export default function MutationInvoiceReturnObject({
               selectedDistrictID={selectedDistrictID}
               setSelectedDistrictID={setSelectedDistrictID}
             />
-            <ObjectSelect
-              selectedObjectID={selectedObjectID}
-              setSelectedObjectID={setSelectedObjectID}
-            />
-          </div>
-          <div className="flex space-x-2 items-center">
             <TeamSelect
               selectedTeamID={selectedTeamID}
               setSelectedTeamID={setSelectedTeamID}
             />
-            <WorkerSelect 
+          </div>
+          <div className="flex space-x-2 items-center">
+            <WorkerSelect
               title="Принял"
-              jobTitle="Бригадир"
+              jobTitle="Заведующий складом"
               selectedWorkerID={selectedAcceptedByWorkerID}
               setSelectedWorkerID={setSelectedAcceptedByWorkerID}
             />

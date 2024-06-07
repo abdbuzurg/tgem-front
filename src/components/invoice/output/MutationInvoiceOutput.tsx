@@ -11,12 +11,13 @@ import "react-datepicker/dist/react-datepicker.css";
 import Select from 'react-select'
 import Button from "../../UI/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import getAllMaterials from "../../../services/api/materials/getAll";
-import Material from "../../../services/interfaces/material";
-import { InvoiceOutputItem, InvoiceOutputMutation, createInvoiceOutput, getAmountInWarehouse } from "../../../services/api/invoiceOutput";
+import { AvailableMaterial, InvoiceOutputItem, InvoiceOutputMutation, createInvoiceOutput, getAvailableMaterialsInWarehouse, } from "../../../services/api/invoiceOutput";
 import Input from '../../UI/Input'
 import SerialNumberSelectModal from "./SerialNumberSelectModal";
 import toast from "react-hot-toast";
+import IconButton from "../../IconButtons";
+import { FaBarcode } from "react-icons/fa";
+import { IoIosAddCircleOutline } from "react-icons/io";
 
 interface Props {
   setShowMutationModal: React.Dispatch<React.SetStateAction<boolean>>
@@ -27,16 +28,12 @@ export default function MutationInvoiceOutput({ mutationType, setShowMutationMod
 
   // MAIN INVOICE INFORMATION
   const [mutationData, setMutationData] = useState<IInvoiceOutput>({
-    dateOfAdd: new Date(),
-    dateOfEdit: new Date(),
     dateOfInvoice: new Date(),
     deliveryCode: "",
     districtID: 0,
     id: 0,
     notes: "",
     objectID: 0,
-    operatorAddWorkerID: 0,
-    operatorEditWorkerID: 0,
     projectID: 0,
     recipientWorkerID: 0,
     releasedWorkerID: 0,
@@ -82,24 +79,10 @@ export default function MutationInvoiceOutput({ mutationType, setShowMutationMod
   })
 
   //MATERIAL SELECT LOGIC
-  const materialQuery = useQuery<Material[], Error, Material[]>({
-    queryKey: ["all-materials"],
-    queryFn: getAllMaterials,
+  const materialQuery = useQuery<AvailableMaterial[], Error, AvailableMaterial[]>({
+    queryKey: ["available-materials"],
+    queryFn: getAvailableMaterialsInWarehouse,
   })
-
-  const chosenMaterialAmountQuery = useQuery<number, Error, number>({
-    queryKey: ["material-amount", invoiceMaterial.materialID],
-    queryFn: () => getAmountInWarehouse(invoiceMaterial.materialID),
-  })
-
-  useEffect(() => {
-    if (chosenMaterialAmountQuery.isSuccess) {
-      setInvoiceMaterial({
-        ...invoiceMaterial,
-        warehouseAmount: chosenMaterialAmountQuery.data
-      })
-    }
-  }, [chosenMaterialAmountQuery.data])
 
   const [allMaterialData, setAllMaterialData] = useState<IReactSelectOptions<number>[]>([])
   const [selectedMaterial, setSelectedMaterial] = useState<IReactSelectOptions<number>>({ value: 0, label: "" })
@@ -138,6 +121,7 @@ export default function MutationInvoiceOutput({ mutationType, setShowMutationMod
         unit: material.unit,
         materialID: material.id,
         materialName: material.name,
+        warehouseAmount: material.amount,
         hasSerialNumber: material.hasSerialNumber,
         serialNumbers: [],
       })
@@ -347,17 +331,16 @@ export default function MutationInvoiceOutput({ mutationType, setShowMutationMod
                 onChange={(value) => onMaterialSelect(value)}
               />
             </div>
-            <div className="px-4 py-3">{invoiceMaterial.unit}</div>
-            <div className="px-4 py-3">{invoiceMaterial.warehouseAmount}</div>
+            <div className="px-4 py-3 flex items-center">{invoiceMaterial.unit}</div>
+            <div className="px-4 py-3 flex items-center">{invoiceMaterial.warehouseAmount}</div>
             <div className="px-4 py-3">
               <Input
                 name="amount"
                 value={invoiceMaterial.amount}
                 type="number"
-                onChange={(e) => setInvoiceMaterial((prev) => ({ ...prev, amount: +e.target.value }))}
+                onChange={(e) => setInvoiceMaterial((prev) => ({ ...prev, amount: e.target.valueAsNumber }))}
               />
             </div>
-
             <div className="px-4 py-3">
               <Input
                 name="notes"
@@ -366,9 +349,25 @@ export default function MutationInvoiceOutput({ mutationType, setShowMutationMod
                 onChange={(e) => setInvoiceMaterial((prev) => ({ ...prev, notes: e.target.value }))}
               />
             </div>
-            <div className="grid grid-cols-1 gap-2">
-              {invoiceMaterial.hasSerialNumber && <Button onClick={() => setShowSerialNumberSelectModal(true)} text="Серийные номера" /> }
-              <Button onClick={() => onAddClick()} text="Добавить" />
+            <div className="grid grid-cols-2 gap-2 text-center items-center">
+              {invoiceMaterial.hasSerialNumber &&
+                <div>
+                  <IconButton
+                    icon={<FaBarcode
+                      size="25px"
+                      title={`Привязать серийные номера`} />}
+                    onClick={() => setShowSerialNumberSelectModal(true)}
+                  />
+                </div>
+              }
+              <div className="text-center">
+                <IconButton
+                  icon={<IoIosAddCircleOutline
+                    size="25px"
+                    title={`Привязать серийные номера`} />}
+                  onClick={() => onAddClick()}
+                />
+              </div>
             </div>
           </div>
           <div className="grid grid-cols-6 text-sm text-left mt-2 w-full border-box overflow-y-scroll max-h-[30vh]">

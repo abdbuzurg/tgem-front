@@ -7,7 +7,6 @@ import IReactSelectOptions from "../../../services/interfaces/react-select";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { InvoiceInputReportFilter, buildReport, getAllUniqueCode, getAllUniqueReleased, getAllUniqueWarehouseManager } from "../../../services/api/invoiceInput";
-import ErrorModal from "../../errorModal";
 import toast from "react-hot-toast";
 
 interface Props {

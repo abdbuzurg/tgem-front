@@ -1,3 +1,4 @@
+import fileDownload from "js-file-download"
 import { IObject } from "../interfaces/objects"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
@@ -25,7 +26,7 @@ export async function getPaginatedKL04KVObjects({ pageParam = 1 }): Promise<IKL0
   const responseRaw = await axiosClient.get<IAPIResposeFormat<IKL04KVObjectGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
-    return response.data
+    return {...response.data, page: pageParam}
   } else {
     throw new Error(response.error)
   }
@@ -67,5 +68,30 @@ export async function deleteKL04KVObject(id: number): Promise<boolean> {
     return true
   } else {
     throw new Error(response.error)
+  }
+}
+
+export async function getKL04KVTemplateDocument(): Promise<boolean> {
+  const response = await axiosClient.get(`${URL}/document/template`, { responseType: "blob" })
+  if (response.status == 200) {
+    fileDownload(response.data, "Шаблон для импорта объектов - КЛ 04 КВ.xlsx")
+    return true
+  } else {
+    throw new Error(response.statusText)
+  }
+}
+
+export async function importKL04KV(data: File): Promise<boolean> {
+  const formData = new FormData()
+  formData.append("file", data)
+  const responseRaw = await axiosClient.post(`${URL}/document/import`, formData, {
+    headers: {
+      "Content-Type": `multipart/form-data; boundary=WebAppBoundary`,
+    }
+  })
+  if (responseRaw.status == 200) {
+    return true
+  } else {
+    throw new Error(responseRaw.data)
   }
 }

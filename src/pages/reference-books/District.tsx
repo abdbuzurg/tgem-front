@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import Modal from "../../components/Modal"
 import Button from "../../components/UI/button"
 import LoadingDots from "../../components/UI/loadingDots"

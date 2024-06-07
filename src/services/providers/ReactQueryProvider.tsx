@@ -9,12 +9,12 @@ interface Props{
 export const ReactQueryProvider = ({children}: Props) => {
   const [queryClient] = useState(() => new QueryClient({
     queryCache: new QueryCache({
-      onError(error: any, query) {
+      onError(error: any) {
         toast.error(error.message)
       },
     }),
     mutationCache: new MutationCache({
-      onError(error: any, variables, context, mutation) {
+      onError(error: any) {
         toast.error(error.message)
       },
     }),

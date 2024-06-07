@@ -1,6 +1,6 @@
 import IAPIResposeFormat from "./IAPIResposeFormat";
 import axiosClient from "./axiosClient";
-import { InvoiceObjectFullDataItem, InvoiceObjectPaginatedView } from "./invoiceObject";
+import {  InvoiceObjectPaginatedView } from "./invoiceObject";
 
 const URL = "/invoice-correction"
 
@@ -14,8 +14,15 @@ export async function getAllInvoiceObjectsForCorrect(): Promise<InvoiceObjectPag
   }
 }
 
-export async function getInvoiceMaterialsForCorrect(invoiceID: number): Promise<InvoiceObjectFullDataItem[]>{
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceObjectFullDataItem[]>>(`${URL}/invoice-materials/${invoiceID}/all`)
+export interface InvoiceCorrectionMaterial {
+  invoiceMaterialID: number
+  materialName: string
+  materialCost: number
+  materialAmount: number
+}
+
+export async function getInvoiceMaterialsForCorrect(invoiceID: number): Promise<InvoiceCorrectionMaterial[]>{
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceCorrectionMaterial[]>>(`${URL}/materials/${invoiceID}`)
   const response = responseRaw.data
   if (response.success && response.permission) {
     return response.data
@@ -28,6 +35,16 @@ export async function getTotalAmounByTeamNumber(materialID: number, teamNumber: 
   const responseRaw = await axiosClient.get<IAPIResposeFormat<number>>(`${URL}/total-amount/${materialID}/team/${teamNumber}`)
   const response = responseRaw.data
   if (response.success && response.permission) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export async function getSerialNumbersOfMaterialInTeam(materialID: number, teamNumber: string): Promise<string[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/serial-number/material/${materialID}/teams/${teamNumber}`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
     return response.data
   } else {
     throw new Error(response.error)

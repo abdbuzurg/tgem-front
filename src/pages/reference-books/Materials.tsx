@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { ENTRY_LIMIT } from "../../services/api/constants";
 import getPaginatedMaterials, { MaterialsGetAllResponse } from "../../services/api/materials/getPaginated";
@@ -11,16 +11,17 @@ import Modal from "../../components/Modal";
 import Input from "../../components/UI/Input";
 import createMaterial from "../../services/api/materials/create";
 import updateMaterial from "../../services/api/materials/update";
-import exportMaterials from "../../services/api/materials/export";
 import { MEASUREMENT } from "../../services/lib/measurement";
 import IReactSelectOptions from "../../services/interfaces/react-select";
 import Select from "react-select"
+import { getMaterialTemplateDocument, importMaterials } from "../../services/api/material";
+import toast from "react-hot-toast";
 
 export default function Materials() {
   //FETCHING LOGIC
   const tableDataQuery = useInfiniteQuery<MaterialsGetAllResponse, Error>({
     queryKey: ["materials"],
-    queryFn: ({pageParam}) => getPaginatedMaterials({pageParam}),
+    queryFn: ({ pageParam }) => getPaginatedMaterials({ pageParam }),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
@@ -42,12 +43,6 @@ export default function Materials() {
     window.addEventListener("scroll", loadDataOnScrollEnd)
     return () => window.removeEventListener("scroll", loadDataOnScrollEnd)
   }, [])
-  //EXPORT LOGIC
-  const exportQuery = useQuery<boolean, Error>({
-    queryKey:["material-export"],
-    queryFn: () => exportMaterials(tableData),
-    enabled: false,
-  })
 
   //DELETION LOGIC
   const [showModal, setShowModal] = useState(false)
@@ -61,7 +56,7 @@ export default function Materials() {
   const [modalProps, setModalProps] = useState({
     setShowModal: setShowModal,
     no_delivery: "",
-    deleteFunc: () => {}
+    deleteFunc: () => { }
   })
   const onDeleteButtonClick = (row: Material) => {
     setShowModal(true)
@@ -86,24 +81,18 @@ export default function Materials() {
     hasSerialNumber: false,
   })
 
-  const measurements = MEASUREMENT.map<IReactSelectOptions<string>>((value) =>({label: value, value: value}))
-  const [selectedMeasurement, setSelectedMeasurement] = useState<IReactSelectOptions<string>>({label: "", value: ""})
+  const measurements = MEASUREMENT.map<IReactSelectOptions<string>>((value) => ({ label: value, value: value }))
+  const [selectedMeasurement, setSelectedMeasurement] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
   const onMeasurementSelect = (value: null | IReactSelectOptions<string>) => {
     if (!value) {
-      setSelectedMeasurement({label: "", value: ""})
-      setMaterialMutationData({...materialMutationData, unit: ""})
+      setSelectedMeasurement({ label: "", value: "" })
+      setMaterialMutationData({ ...materialMutationData, unit: "" })
       return
     }
 
     setSelectedMeasurement(value)
-    setMaterialMutationData({...materialMutationData, unit: value.value})
+    setMaterialMutationData({ ...materialMutationData, unit: value.value })
   }
-
-  const [mutationModalErrors, setMutationModalErrors] = useState({
-    category: false,
-    name: false,
-    unit: false,
-  })
 
   const createMaterialMutation = useMutation<Material, Error, Material>({
     mutationFn: createMaterial,
@@ -121,40 +110,63 @@ export default function Materials() {
   })
 
   const onMutationSubmit = () => {
-    if (materialMutationData.category == "") setMutationModalErrors((prev) => ({...prev, category: true}))
-    else setMutationModalErrors((prev) => ({...prev, category: false}))
-    
-    if (materialMutationData.name == "") setMutationModalErrors((prev) => ({...prev, name: true}))
-    else setMutationModalErrors((prev) => ({...prev, name: false}))
 
-    if (materialMutationData.unit == "") setMutationModalErrors((prev) => ({...prev, unit: true}))
-    else setMutationModalErrors((prev) => ({...prev, unit: false}))
-    
-    const isThereError = Object.keys(materialMutationData).some((value) => {
-      if (materialMutationData[value as keyof typeof materialMutationData] == "" && value != "notes" && value != "id" && value != "code") {
-        return true
-      }
-    })
-    if (isThereError) return
-    
-    switch(mutationModalType) {
+    if (materialMutationData.category == "") {
+      toast.error("Не указана категория материала")
+      return
+    }
+
+    if (materialMutationData.name == "") {
+      toast.error("Не указано наименование материала")
+      return
+    }
+
+    if (materialMutationData.unit == "") {
+      toast.error("Не указана еденица измерения материала")
+      return
+    }
+
+    switch (mutationModalType) {
       case "create":
         createMaterialMutation.mutate(materialMutationData)
         return
       case "update":
         updateMaterialMutation.mutate(materialMutationData)
         return
-      
+
       default:
         throw new Error("Неправильная операция была выбрана")
     }
   }
-  
+
+  const [showImportModal, setShowImportModal] = useState(false)
+
+  const importMutation = useMutation<boolean, Error, File>({
+    mutationFn: importMaterials,
+  })
+
+  const acceptExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return
+    importMutation.mutate(e.target.files[0], {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["materials"])
+        setShowImportModal(false)
+      },
+      onSettled: () => {
+        e.target.value = ""
+      },
+      onError: (error) => {
+        toast.error(`Импортированный файл имеет неправильные данные: ${error.message}`)
+      }
+    })
+  }
+
   return (
     <main>
       <div className="mt-2 pl-2 flex space-x-2">
         <span className="text-3xl font-bold">Материалы</span>
         {/* <Button text="Экспорт" onClick={() => exportQuery.refetch()}/> */}
+        <Button text="Импорт" onClick={() => setShowImportModal(true)} />
       </div>
       <table className="table-auto text-sm text-left mt-2 w-full border-box">
         <thead className="shadow-md border-t-2">
@@ -181,19 +193,19 @@ export default function Materials() {
               <Button text="Добавить" onClick={() => {
                 setMutationModalType("create")
                 setShowMutationModal(true)
-              }}/>
+              }} />
             </th>
           </tr>
         </thead>
         <tbody>
-          {tableDataQuery.isLoading && 
+          {tableDataQuery.isLoading &&
             <tr>
               <td colSpan={6}>
                 <LoadingDots />
               </td>
             </tr>
           }
-          {tableDataQuery.isError && 
+          {tableDataQuery.isError &&
             <tr>
               <td colSpan={6} className="text-red font-bold text-center">
                 {tableDataQuery.error.message}
@@ -211,20 +223,20 @@ export default function Materials() {
                 <td className="px-4 py-3">{row.notes}</td>
                 <td className="px-4 py-3 border-box flex space-x-3">
                   <Button text="Изменить" buttonType="default" onClick={() => {
-                      setShowMutationModal(true)
-                      setMutationModalType("update")
-                      setMaterialMutationData(row)
-                    }}
+                    setShowMutationModal(true)
+                    setMutationModalType("update")
+                    setMaterialMutationData(row)
+                  }}
                   />
-                  <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)}/>
+                  <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)} />
                 </td>
               </tr>
             ))
           }
         </tbody>
       </table>
-      {showModal && 
-        <DeleteModal {...modalProps}> 
+      {showModal &&
+        <DeleteModal {...modalProps}>
           <span>При подтверждении материал под именем {modalProps.no_delivery} и все его данные в ней будут удалены</span>
         </DeleteModal>
       }
@@ -238,23 +250,21 @@ export default function Materials() {
             <div className="flex flex-col space-y-3 mt-2">
               <div className="flex flex-col space-y-1">
                 <label htmlFor="name">Категория материала</label>
-                <Input 
+                <Input
                   name="category"
                   type="text"
                   value={materialMutationData.category}
-                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: e.target.value})}
+                  onChange={(e) => setMaterialMutationData({ ...materialMutationData, [e.target.name]: e.target.value })}
                 />
-                {mutationModalErrors.category && <span className="text-red-600 text-sm font-bold">Не указана категория материала</span>}
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="name">Наименование</label>
-                <Input 
+                <Input
                   name="name"
                   type="text"
                   value={materialMutationData.name}
-                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: e.target.value})}
+                  onChange={(e) => setMaterialMutationData({ ...materialMutationData, [e.target.name]: e.target.value })}
                 />
-                {mutationModalErrors.name && <span className="text-red-600 text-sm font-bold">Не указано наименование материала</span>}
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="unit">Еденица измерения</label>
@@ -269,59 +279,82 @@ export default function Materials() {
                   options={measurements}
                   onChange={(value) => onMeasurementSelect(value)}
                 />
-                {mutationModalErrors.unit && <span className="text-red-600 text-sm font-bold">Не указана еденица измерения материала</span>}
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="code">Код материала</label>
-                <Input 
+                <Input
                   name="code"
                   type="text"
                   value={materialMutationData.code}
-                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: e.target.value})}
+                  onChange={(e) => setMaterialMutationData({ ...materialMutationData, [e.target.name]: e.target.value })}
                 />
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="code">Пункт</label>
-                <Input 
+                <Input
                   name="article"
                   type="text"
                   value={materialMutationData.article}
-                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: e.target.value})}
+                  onChange={(e) => setMaterialMutationData({ ...materialMutationData, [e.target.name]: e.target.value })}
                 />
               </div>
               <div className="flex flex-col space-y-1">
                 <div className="flex space-x-2">
                   <input type="checkbox" id="hasSerialNumber" value={1} name="hasSerialNumber" onChange={
-                      (e) => {
-                        if (e.target.checked) {
-                          setMaterialMutationData({...materialMutationData, hasSerialNumber: true})
-                        } else {
-                          setMaterialMutationData({...materialMutationData, hasSerialNumber: false})
-                        }
+                    (e) => {
+                      if (e.target.checked) {
+                        setMaterialMutationData({ ...materialMutationData, hasSerialNumber: true })
+                      } else {
+                        setMaterialMutationData({ ...materialMutationData, hasSerialNumber: false })
                       }
                     }
+                  }
                   />
                   <label htmlFor="hasSerialNumber">Серийный номер</label>
                 </div>
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="notes">Примичание</label>
-                <textarea 
+                <textarea
                   name="notes"
                   value={materialMutationData.notes}
-                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: e.target.value})}
+                  onChange={(e) => setMaterialMutationData({ ...materialMutationData, [e.target.name]: e.target.value })}
                   className="py-1.5 px-2 resize-none w-full h-[100px] rounded border  border-gray-800"
                 >
                 </textarea>
               </div>
               <div>
-                <Button 
-                  text={mutationModalType=="create" ? "Добавить" : "Подтвердить изменения"}
+                <Button
+                  text={mutationModalType == "create" ? "Добавить" : "Подтвердить изменения"}
                   onClick={onMutationSubmit}
                 />
               </div>
             </div>
           </div>
+        </Modal>
+      }
+      {showImportModal &&
+        <Modal setShowModal={setShowImportModal}>
+          <span className="font-bold text-xl px-2 py-1">Импорт данных в Справочник - Материалы</span>
+          <div className="grid grid-cols-2 gap-2 items-center px-2 pt-2">
+            <Button text="Скачать шаблон" onClick={() => getMaterialTemplateDocument()} />
+            <div className="w-full">
+              <label
+                htmlFor="file"
+                className="w-full text-white py-3 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+              >
+                Импортировать данные
+              </label>
+              <input
+                name="file"
+                type="file"
+                id="file"
+                onChange={(e) => acceptExcel(e)}
+                className="hidden"
+              />
+            </div>
+          </div>
+          <span className="text-sm italic px-2 w-full text-center">При импортировке система будет следовать правилам шаблона</span>
         </Modal>
       }
     </main>

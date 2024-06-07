@@ -26,7 +26,7 @@ export default function Objects() {
   //fetching data logic
   const tableDataQuery = useInfiniteQuery<IObjectGetAllResponse, Error>({
     queryKey: ["objects"],
-    queryFn: ({pageParam}) => getPaginatedObjects({pageParam}),
+    queryFn: ({pageParam = 1}) => getPaginatedObjects({pageParam}),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1

@@ -3,8 +3,6 @@ export interface IInvoiceOutput {
   projectID: number
   warehouseManagerWorkerID: number
   releasedWorkerID: number
-  operatorAddWorkerID: number
-  operatorEditWorkerID: number
   districtID: number
   teamID: number
   objectID: number
@@ -12,8 +10,6 @@ export interface IInvoiceOutput {
   deliveryCode: string
   notes: string
   dateOfInvoice: Date
-  dateOfAdd: Date
-  dateOfEdit: Date
   confirmation: boolean
 }
 
@@ -31,8 +27,6 @@ export interface IInvoiceOutputMaterials {
 export interface IInvoiceOutputView extends Omit<IInvoiceOutput, 
   "warehouseManagerWorkerID" | 
   "releasedWorkerID" | 
-  "operatorAddWorkerID" | 
-  "operatorEditWorkerID" |
   "projectID" |
   "districtID" |
   "teamID" |
@@ -41,11 +35,8 @@ export interface IInvoiceOutputView extends Omit<IInvoiceOutput,
 > {
   warehouseManagerName: string
   releasedName: string
-  operatorAddName: string
-  operatorEditName: string
-  projectName: string
   districtName: string
   teamName: string
   objectName: string
-  recipientWorkerName: string
+  recipientName: string
 }
