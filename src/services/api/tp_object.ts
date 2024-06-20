@@ -15,6 +15,7 @@ export interface ITPObjectPaginated {
   voltageClass: string
   nourashes: string
   supervisors: string[]
+  teams: string[]
 }
 
 export interface ITPObjectGetAllResponse {
@@ -41,6 +42,7 @@ export interface ITPObjectCreate {
     nourashes: string
   }
   supervisors: number[]
+  teams: number[]
 }
 
 export async function createTPObject(data: ITPObjectCreate): Promise<boolean> {

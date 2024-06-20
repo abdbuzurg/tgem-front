@@ -12,7 +12,10 @@ import LoadingDots from "../../../components/UI/loadingDots"
 import DeleteModal from "../../../components/deleteModal"
 import Modal from "../../../components/Modal"
 import Input from "../../../components/UI/Input"
-import { OBJECT_STATUSES_FOR_SELECT } from "../../../services/lib/objectStatuses"
+import { OBJECT_STATUSES_FOR_SELECT, TP_OBJECT_MODELS_FOR_SELECT, TP_OBJECT_VOLTAGE_CLASS_FOR_SELECT } from "../../../services/lib/objectStatuses"
+import { ITeam } from "../../../services/interfaces/teams"
+import { getAllTeams } from "../../../services/api/team"
+import arrayListToString from "../../../services/lib/arrayListToStringWithCommas"
 
 export default function TPObject() {
 
@@ -84,6 +87,7 @@ export default function TPObject() {
       nourashes: "",
     },
     supervisors: [],
+    teams: [],
   })
 
   const [selectedSupervisorsWorkerID, setselectedSupervisorsWorkerID] = useState<IReactSelectOptions<number>[]>([])
@@ -99,6 +103,22 @@ export default function TPObject() {
       ])
     }
   }, [supervisorsQuery.data])
+
+  const [selectedTeamID, setSelectedTeamID] = useState<IReactSelectOptions<number>[]>([])
+  const [availableTeams, setAvailableTeams] = useState<IReactSelectOptions<number>[]>([])
+  const teamsQuery = useQuery<ITeam[], Error, ITeam[]>({
+    queryKey: ["all-teams"],
+    queryFn: () => getAllTeams()
+  })
+  useEffect(() => {
+    if (teamsQuery.isSuccess && teamsQuery.data) {
+      setAvailableTeams([
+        ...teamsQuery.data.map<IReactSelectOptions<number>>((val) => ({ label: val.number, value: val.id }))
+      ])
+    }
+  }, [teamsQuery.data])
+
+
 
   const createMutation = useMutation<boolean, Error, ITPObjectCreate>({
     mutationFn: createTPObject,
@@ -118,11 +138,6 @@ export default function TPObject() {
 
     if (mutationData.baseInfo.status == "") {
       toast.error("Не указан статус объекта.")
-      return
-    }
-
-    if (mutationData.supervisors.length == 0) {
-      toast.error("Объект должен иметь хотя бы 1 супервайзера")
       return
     }
 
@@ -162,6 +177,11 @@ export default function TPObject() {
       return avaiableSupervisors[subIndex]
     }).filter((val) => val)!
 
+    const teams = tableData[index].teams.map<IReactSelectOptions<number>>((value) => {
+      const subIndex = availableTeams.findIndex((val) => val.label == value)!
+      return availableTeams[subIndex]
+    }).filter((val) => val)!
+
     setMutationData({
       baseInfo: {
         id: tableData[index].objectID,
@@ -177,9 +197,11 @@ export default function TPObject() {
         nourashes: tableData[index].nourashes,
       },
       supervisors: supervisors.map(val => val.value),
+      teams: teams.map(val => val.value)
     })
 
     setselectedSupervisorsWorkerID(supervisors)
+    setSelectedTeamID(teams)
 
     setShowMutationModal(true)
     setMutationType("update")
@@ -234,6 +256,9 @@ export default function TPObject() {
             <th className="px-4 py-3 w-[150px]">
               <span>Супервайзер</span>
             </th>
+            <th className="px-4 py-3 w-[150px]">
+              <span>Бригады</span>
+            </th>
             <th className="px-4 py-3">
               <Button text="Добавить" onClick={() => {
                 setMutationType("create")
@@ -254,6 +279,7 @@ export default function TPObject() {
                     nourashes: "",
                   },
                   supervisors: [],
+                  teams: [],
                 })
               }} />
             </th>
@@ -282,9 +308,8 @@ export default function TPObject() {
                 <td className="px-4 py-3">{row.model}</td>
                 <td className="px-4 py-3">{row.voltageClass}</td>
                 <td className="px-4 py-3">{row.nourashes}</td>
-                <td className="px-4 py-3">
-                  {row.supervisors.reduce((acc, value) => acc + ", " + value)}
-                </td>
+                <td className="px-4 py-3">{arrayListToString(row.supervisors)}</td>
+                <td className="px-4 py-3">{arrayListToString(row.teams)}</td>
                 <td className="px-4 py-3 border-box flex space-x-3">
                   <Button text="Изменить" onClick={() => onEditClick(index)} />
                   <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)} />
@@ -307,7 +332,7 @@ export default function TPObject() {
           </div>
           <div className="flex flex-col space-y-2 py-2">
             <div className="flex flex-col space-y-1">
-              <label htmlFor="name">Наименование</label>
+              <label htmlFor="name">Наименование<span className="text-red-600">*</span></label>
               <Input
                 name="name"
                 type="text"
@@ -322,7 +347,7 @@ export default function TPObject() {
               />
             </div>
             <div className="flex flex-col space-y-1">
-              <label htmlFor="status">Статус</label>
+              <label htmlFor="status">Статус<span className="text-red-600">*</span></label>
               <Select
                 className="basic-single text-black"
                 classNamePrefix="select"
@@ -365,38 +390,75 @@ export default function TPObject() {
                 }}
               />
             </div>
+            <div>
+              <label htmlFor="">Бригады</label>
+              <Select
+                className="basic-single text-black"
+                classNamePrefix="select"
+                isSearchable={true}
+                isClearable={true}
+                isMulti
+                name={"supervisors-select"}
+                placeholder={""}
+                value={selectedTeamID}
+                options={availableTeams}
+                onChange={(value) => {
+                  setSelectedTeamID([...value])
+                  setMutationData({
+                    ...mutationData,
+                    teams: value.map((val) => val.value),
+                  })
+                }}
+              />
+            </div>
             <div className="flex flex-col space-y-1">
-              <label htmlFor="name">Модель</label>
-              <Input
-                name="model"
-                type="text"
-                value={mutationData.detailedInfo.model}
-                onChange={(e) => setMutationData({
+              <label htmlFor="name">Тип<span className="text-red-600">*</span></label>
+              <Select
+                className="basic-single text-black"
+                classNamePrefix="select"
+                isSearchable={true}
+                isClearable={true}
+                name={"object-status-select"}
+                placeholder={""}
+                value={{
+                  label: mutationData.detailedInfo.model,
+                  value: mutationData.detailedInfo.model,
+                }}
+                options={TP_OBJECT_MODELS_FOR_SELECT}
+                onChange={(value) => setMutationData({
                   ...mutationData,
                   detailedInfo: {
                     ...mutationData.detailedInfo,
-                    model: e.target.value,
-                  },
+                    model: value?.value ?? "",
+                  }
                 })}
               />
             </div>
             <div className="flex flex-col space-y-1">
-              <label htmlFor="name">Класс Напряжения</label>
-              <Input
-                name="voltageClass"
-                type="text"
-                value={mutationData.detailedInfo.voltageClass}
-                onChange={(e) => setMutationData({
+              <label htmlFor="name">Класс Напряжения<span className="text-red-600">*</span></label>
+              <Select
+                className="basic-single text-black"
+                classNamePrefix="select"
+                isSearchable={true}
+                isClearable={true}
+                name={"object-status-select"}
+                placeholder={""}
+                value={{
+                  label: mutationData.detailedInfo.voltageClass,
+                  value: mutationData.detailedInfo.voltageClass,
+                }}
+                options={TP_OBJECT_VOLTAGE_CLASS_FOR_SELECT}
+                onChange={(value) => setMutationData({
                   ...mutationData,
                   detailedInfo: {
                     ...mutationData.detailedInfo,
-                    voltageClass: e.target.value,
-                  },
+                    voltageClass: value?.value ?? "",
+                  }
                 })}
               />
             </div>
             <div className="flex flex-col space-y-1">
-              <label htmlFor="name">Питает</label>
+              <label htmlFor="name">Питает<span className="text-red-600">*</span></label>
               <Input
                 name="nourashes"
                 type="text"

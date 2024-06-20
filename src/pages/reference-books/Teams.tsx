@@ -12,8 +12,6 @@ import Select from 'react-select'
 import toast from "react-hot-toast";
 import IWorker from "../../services/interfaces/worker";
 import { getWorkerByJobTitle } from "../../services/api/worker";
-import { IObject } from "../../services/interfaces/objects";
-import { getAllObjects } from "../../services/api/object";
 import { TeamMutation, TeamGetAllResponse, TeamPaginated, createTeam, deleteTeam, getPaginatedTeams, updateTeam, importTeam, getTeamTemplateDocument } from "../../services/api/team";
 
 export default function Team() {
@@ -88,7 +86,6 @@ export default function Team() {
     leaderIDs: [],
     mobileNumber: "",
     number: "",
-    objectIDs: [],
   })
 
   const [selectedTeamLeaderWorkerID, setSelectedTeamLeaderWorkerID] = useState<IReactSelectOptions<number>[]>([])
@@ -108,24 +105,6 @@ export default function Team() {
     }
 
   }, [allTeamLeadersQuery.data])
-
-  const [selectedObjectIDs, setSelectedObjectIDs] = useState<IReactSelectOptions<number>[]>([])
-  const [availableObjects, setAvailableObjects] = useState<IReactSelectOptions<number>[]>([])
-  const allObjectsQuery = useQuery<IObject[], Error, IObject[]>({
-    queryKey: ["all-objects"],
-    queryFn: getAllObjects,
-  })
-  useEffect(() => {
-    if (allObjectsQuery.isSuccess && allObjectsQuery.data) {
-      setAvailableObjects([
-        ...allObjectsQuery.data.map<IReactSelectOptions<number>>((val) => ({
-          value: val.id,
-          label: val.name,
-        }))
-      ])
-    }
-
-  }, [allObjectsQuery.data])
 
   const createMaterialMutation = useMutation<ITeam, Error, TeamMutation>({
     mutationFn: createTeam,
@@ -151,19 +130,12 @@ export default function Team() {
     }).filter((val) => val)!
     setSelectedTeamLeaderWorkerID(leaders)
 
-    const objects = tableData[index].objects.map<IReactSelectOptions<number>>((value) => {
-      const subIndex = availableObjects.findIndex((val) => val.label == value)!
-      return availableObjects[subIndex]
-    }).filter((val) => val)!
-    setSelectedObjectIDs(objects)
-
     setMutationData({
       id: tableData[index].id,
       company: tableData[index].company,
       mobileNumber: tableData[index].mobileNumber,
       number: tableData[index].number,
       leaderIDs: leaders.map(v => v.value),
-      objectIDs: objects.map(v => v.value),
     })
 
     setShowMutationModal(true)
@@ -188,22 +160,11 @@ export default function Team() {
       return
     }
 
-    if (!mutationData.company) {
-      toast.error("Не указана компания бригады")
-      return
-    }
-
-    if (selectedObjectIDs.length == 0) {
-      toast.error("Не привязаны объекты к бригаде")
-      return
-    }
-
     switch (mutationModalType) {
       case "create":
 
         createMaterialMutation.mutate({
           ...mutationData,
-          objectIDs: [...selectedObjectIDs.map(v => v.value)],
           leaderIDs: [...selectedTeamLeaderWorkerID.map(v => v.value)],
         })
         return
@@ -211,7 +172,6 @@ export default function Team() {
 
         updateMaterialMutation.mutate({
           ...mutationData,
-          objectIDs: [...selectedObjectIDs.map(v => v.value)],
           leaderIDs: [...selectedTeamLeaderWorkerID.map(v => v.value)],
         })
         return
@@ -264,10 +224,7 @@ export default function Team() {
             <th className="px-4 py-3 w-[150px]">
               <span>Компания</span>
             </th>
-            <th className="px-4 py-3 w-[150px]">
-              <span>Объекты</span>
-            </th>
-            <th className="px-4 py-3">
+           <th className="px-4 py-3">
               <Button text="Добавить" onClick={() => {
                 setMutationModalType("create")
                 setShowMutationModal(true)
@@ -276,10 +233,8 @@ export default function Team() {
                   company: "",
                   mobileNumber: "",
                   number: "",
-                  objectIDs: [],
                   leaderIDs: [],
                 })
-                setSelectedObjectIDs([])
                 setSelectedTeamLeaderWorkerID([])
               }} />
             </th>
@@ -307,7 +262,6 @@ export default function Team() {
                 <td className="px-4 py-3">{row.leaderNames.reduce((acc, val) => acc + ", " + val)}</td>
                 <td className="px-4 py-3">{row.mobileNumber}</td>
                 <td className="px-4 py-3">{row.company}</td>
-                <td className="px-4 py-3">{row.objects.reduce((acc, val) => acc + ", " + val)}</td>
                 <td className="px-4 py-3 border-box flex space-x-3">
                   <Button text="Изменить" buttonType="default" onClick={() => onEditClick(index)}/>
                   <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)} />
@@ -331,7 +285,7 @@ export default function Team() {
             </h3>
             <div className="flex flex-col space-y-3 mt-2">
               <div className="flex flex-col space-y-1">
-                <label htmlFor="number">Номер Бригады</label>
+                <label htmlFor="number">Номер Бригады<span className="text-red-600">*</span></label>
                 <Input
                   name="number"
                   type="text"
@@ -340,7 +294,7 @@ export default function Team() {
                 />
               </div>
               <div className="flex flex-col space-y-1">
-                <label>Бригадир</label>
+                <label>Бригадир<span className="text-red-600">*</span></label>
                 <Select
                   className="basic-single"
                   classNamePrefix="select"
@@ -355,7 +309,7 @@ export default function Team() {
                 />
               </div>
               <div className="flex flex-col space-y-1">
-                <label htmlFor="mobileNumber">Основной номер телефона бригады</label>
+                <label htmlFor="mobileNumber">Мобильный номер бригадира<span className="text-red-600">*</span></label>
                 <Input
                   name="mobileNumber"
                   type="text"
@@ -364,27 +318,12 @@ export default function Team() {
                 />
               </div>
               <div className="flex flex-col space-y-1">
-                <label htmlFor="company">Компания</label>
+                <label htmlFor="company">Компания (если субподрядчик)</label>
                 <Input
                   name="company"
                   type="text"
                   value={mutationData.company}
                   onChange={(e) => setMutationData({ ...mutationData, [e.target.name]: e.target.value })}
-                />
-              </div>
-              <div className="flex flex-col space-y-1">
-                <label>Объекты</label>
-                <Select
-                  className="basic-single"
-                  classNamePrefix="select"
-                  isSearchable={true}
-                  isClearable={true}
-                  isMulti
-                  name={"team-objects"}
-                  placeholder={""}
-                  value={selectedObjectIDs}
-                  options={availableObjects}
-                  onChange={(value) => setSelectedObjectIDs([...value])}
                 />
               </div>
               <div>

@@ -12,7 +12,6 @@ export interface TeamMutation {
   leaderIDs: number[],
   mobileNumber: string,
   number: string,
-  objectIDs: number[]
 }
 
 export async function createTeam(data: TeamMutation): Promise<ITeam> {

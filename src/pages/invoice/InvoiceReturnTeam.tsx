@@ -111,7 +111,7 @@ export default function InvoiceReturnTeam() {
   return (
     <main>
       <div className="mt-2 px-2 flex justify-between">
-        <span className="text-3xl font-bold">Накладные возврат из объекта</span>
+        <span className="text-3xl font-bold">Накладные возврат из бригад</span>
         <div>
           <Button onClick={() => setShowReportModal(true)} text="Отчет" buttonType="default" />
         </div>

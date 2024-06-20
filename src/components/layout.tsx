@@ -4,7 +4,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getPermissionByResourceURL } from "../services/api/permission";
-import { PERMISSION_DENIED } from "../URLs";
+import { ADMIN_USERS_PAGE, HOME, LOGIN, PERMISSION_DENIED, REFERENCE_BOOK, REPORT } from "../URLs";
 import LoadingDots from "./UI/loadingDots";
 
 export default function Layout() {
@@ -45,7 +45,7 @@ export default function Layout() {
       localStorage.removeItem("username");
       toast.dismiss(loadingToast);
       toast.success("Операция успешна");
-      navigate("/login");
+      navigate(LOGIN);
   };
 
   if (hasAccessQuery.isLoading && resourceURL !== "")
@@ -61,22 +61,22 @@ export default function Layout() {
         <div className="hidden md:block md:items-center md:justify-between md:w-full">
           <ul className="flex p-0 font-medium space-x-8 items-center">
             <li>
-              <Link to="/" className="block text-white bg-transparent p-0 hover:text-gray-400">
+              <Link to={`${HOME}`} className="block text-white bg-transparent p-0 hover:text-gray-400">
                 Главная
               </Link>
             </li>
             <li>
-              <Link to="/report" className="block text-white bg-transparent p-0 hover:text-gray-400">
+              <Link to={`${REPORT}`} className="block text-white bg-transparent p-0 hover:text-gray-400">
                 Отчет
               </Link>
             </li>
             <li>
-              <Link to="/admin/user" className="block text-white bg-transparent p-0 hover:text-gray-400">
+              <Link to={`${ADMIN_USERS_PAGE}`} className="block text-white bg-transparent p-0 hover:text-gray-400">
                 Пользователи
               </Link>
             </li>
             <li>
-              <Link to="/reference-books" className="block text-white bg-transparent p-0 hover:text-gray-400">
+              <Link to={`${REFERENCE_BOOK}`} className="block text-white bg-transparent p-0 hover:text-gray-400">
                 Справочник
               </Link>
             </li>

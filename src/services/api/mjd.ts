@@ -16,6 +16,7 @@ export interface IMJDObjectPaginated {
   amountEntrances: number
   hasBasement: boolean
   supervisors: string[]
+  teams: string[]
 }
 
 export interface IMJDObjectGetAllResponse {
@@ -43,6 +44,7 @@ export interface IMJDObjectCreate {
     hasBasement: boolean,
   }
   supervisors: number[]
+  teams: number[]
 }
 
 export async function createMJDObject(data: IMJDObjectCreate): Promise<boolean> {

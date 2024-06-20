@@ -2,7 +2,9 @@ import axios from 'axios';
 
 const axiosClient = axios.create();
 
-axiosClient.defaults.baseURL = "http://127.0.0.1:8080"
+axiosClient.defaults.baseURL = process.env.NODE_ENV === "production"
+                                ? "https://webserver.com/api"
+                                : "http://localhost:5000/api";
 
 //All request will wait 10 seconds before timeout
 axiosClient.defaults.timeout = 10000;

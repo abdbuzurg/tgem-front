@@ -58,7 +58,7 @@ export default function ReportBalance({ setShowModal }: Props) {
   return (
     <Modal setShowModal={setShowModal}>
       <div className="py-2">
-        <p className="text-2xl font-bold">Отчет для накладной приход</p>
+        <p className="text-2xl font-bold">Отчет остатка</p>
       </div>
       <div className="px-2 flex flex-col space-y-2 pb-2">
         <span className="text-xl font-semibold">Параметры</span>

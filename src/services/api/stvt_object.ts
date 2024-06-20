@@ -15,6 +15,7 @@ export interface ISTVTObjectPaginated {
   voltageClass: string
   ttCoefficient: string
   supervisors: string[]
+  teams: string[]
 }
 
 export interface ISTVTObjectGetAllResponse {
@@ -40,6 +41,7 @@ export interface ISTVTObjectCreate {
     ttCoefficient: string
   }
   supervisors: number[]
+  teams: number[]
 }
 
 export async function createSTVTObject(data: ISTVTObjectCreate): Promise<boolean> {

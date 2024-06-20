@@ -65,7 +65,7 @@ export async function updateInvoiceInput(data: InvoiceInputMutation): Promise<In
 }
 
 export async function getInvoiceInputDocument(deliveryCode: string): Promise<boolean> {
-  const responseRaw = await axiosClient.get(`http://127.0.0.1:8080${URL}/document/${deliveryCode}`, { responseType: "blob", })
+  const responseRaw = await axiosClient.get(`${URL}/document/${deliveryCode}`, { responseType: "blob", })
   if (responseRaw.status == 200) {
     fileDownload(responseRaw.data, `${deliveryCode}.xlsx`)
     return true
@@ -77,7 +77,7 @@ export async function getInvoiceInputDocument(deliveryCode: string): Promise<boo
 export async function sendInvoiceInputConfirmationExcel(id: number, data: File): Promise<boolean> {
   const formData = new FormData()
   formData.append("file", data)
-  const responseRaw = await axiosClient.post(`http://127.0.0.1:8080${URL}/confirm/${id}`, formData, {
+  const responseRaw = await axiosClient.post(`${URL}/confirm/${id}`, formData, {
     headers: {
       "Content-Type": `multipart/form-data; boundary=WebAppBoundary`,
     }
@@ -128,7 +128,7 @@ export interface InvoiceInputReportFilter {
 }
 
 export async function buildReport(filter: InvoiceInputReportFilter): Promise<boolean> {
-  const responseRaw = await axiosClient.post(`http://127.0.0.1:8080${URL}/report`, filter, { responseType: "blob", })
+  const responseRaw = await axiosClient.post(`${URL}/report`, filter, { responseType: "blob", })
   if (responseRaw.status == 200) {
     const fileName = "Отчет"
     fileDownload(responseRaw.data, `${fileName}.xlsx`)

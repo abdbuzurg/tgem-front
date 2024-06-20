@@ -68,7 +68,7 @@ export async function updateInvoiceReturn(data: InvoiceReturnMutation): Promise<
 }
 
 export async function getInvoiceReturnDocument(deliveryCode: string): Promise<boolean> {
-  const responseRaw = await axiosClient.get(`http://127.0.0.1:8080${URL}/document/${deliveryCode}`, { responseType: "blob" })
+  const responseRaw = await axiosClient.get(`${URL}/document/${deliveryCode}`, { responseType: "blob" })
   if (responseRaw.status == 200) {
     fileDownload(responseRaw.data, `${deliveryCode}.xlsx`)
     return true
@@ -80,7 +80,7 @@ export async function getInvoiceReturnDocument(deliveryCode: string): Promise<bo
 export async function sendInvoiceReturnConfirmationExcel(id: number, data: File): Promise<boolean> {
   const formData = new FormData()
   formData.append("file", data)
-  const responseRaw = await axiosClient.post(`http://127.0.0.1:8080${URL}/confirm/${id}`, formData, {
+  const responseRaw = await axiosClient.post(`${URL}/confirm/${id}`, formData, {
     headers: {
       "Content-Type": `multipart/form-data; boundary=WebAppBoundary`,
     }

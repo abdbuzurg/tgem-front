@@ -13,6 +13,9 @@ import IReactSelectOptions from "../../../services/interfaces/react-select";
 import IWorker from "../../../services/interfaces/worker";
 import { getWorkerByJobTitle } from "../../../services/api/worker";
 import toast from "react-hot-toast";
+import { ITeam } from "../../../services/interfaces/teams";
+import { getAllTeams } from "../../../services/api/team";
+import arrayListToString from "../../../services/lib/arrayListToStringWithCommas";
 
 export default function KL04KVObject() {
 
@@ -83,6 +86,7 @@ export default function KL04KVObject() {
       nourashes: "",
     },
     supervisors: [],
+    teams: [],
   })
 
   const [selectedSupervisorsWorkerID, setselectedSupervisorsWorkerID] = useState<IReactSelectOptions<number>[]>([])
@@ -98,6 +102,20 @@ export default function KL04KVObject() {
       ])
     }
   }, [supervisorsQuery.data])
+
+  const [selectedTeamID, setSelectedTeamID] = useState<IReactSelectOptions<number>[]>([])
+  const [availableTeams, setAvailableTeams] = useState<IReactSelectOptions<number>[]>([])
+  const teamsQuery = useQuery<ITeam[], Error, ITeam[]>({
+    queryKey: ["all-teams"],
+    queryFn: () => getAllTeams()
+  })
+  useEffect(() => {
+    if (teamsQuery.isSuccess && teamsQuery.data) {
+      setAvailableTeams([
+        ...teamsQuery.data.map<IReactSelectOptions<number>>((val) => ({ label: val.number, value: val.id }))
+      ])
+    }
+  }, [teamsQuery.data])
 
   const createMutation = useMutation<boolean, Error, IKL04KVObjectCreate>({
     mutationFn: createKL04KVObject
@@ -119,18 +137,8 @@ export default function KL04KVObject() {
       return
     }
 
-    if (mutationData.supervisors.length == 0) {
-      toast.error("Объект должен иметь хотя бы 1 супервайзера")
-      return
-    }
-
     if (mutationData.detailedInfo.nourashes == "") {
       toast.error("Не указано что питает объект")
-      return
-    }
-
-    if (!mutationData.detailedInfo.length || mutationData.detailedInfo.length <= 0) {
-      toast.error("Неправильно указана длина")
       return
     }
 
@@ -155,6 +163,11 @@ export default function KL04KVObject() {
       return avaiableSupervisors[subIndex]
     }).filter((val) => val)!
 
+    const teams = tableData[index].teams.map<IReactSelectOptions<number>>((value) => {
+      const subIndex = availableTeams.findIndex((val) => val.label == value)!
+      return availableTeams[subIndex]
+    }).filter((val) => val)!
+
     setMutationData({
       baseInfo: {
         id: tableData[index].objectID,
@@ -169,9 +182,11 @@ export default function KL04KVObject() {
         length: tableData[index].length,
       },
       supervisors: supervisors.map(val => val.value),
+      teams: teams.map(val => val.value)
     })
 
     setselectedSupervisorsWorkerID(supervisors)
+    setSelectedTeamID(teams)
 
     setShowMutationModal(true)
     setMutationType("update")
@@ -218,10 +233,13 @@ export default function KL04KVObject() {
               <span>Питает</span>
             </th>
             <th className="px-4 py-3">
-              <span>Длина</span>
+              <span>Длина линии</span>
             </th>
             <th className="px-4 py-3 w-[150px]">
               <span>Супервайзер</span>
+            </th>
+            <th className="px-4 py-3 w-[150px]">
+              <span>Бригады</span>
             </th>
             <th className="px-4 py-3">
               <Button text="Добавить" onClick={() => {
@@ -241,6 +259,7 @@ export default function KL04KVObject() {
                     length: 0,
                   },
                   supervisors: [],
+                  teams: [],
                 })
               }} />
             </th>
@@ -269,7 +288,10 @@ export default function KL04KVObject() {
                 <td className="px-4 py-3">{row.nourashes}</td>
                 <td className="px-4 py-3">{row.length}</td>
                 <td className="px-4 py-3">
-                  {row.supervisors.reduce((acc, value) => acc + ", " + value)}
+                  {arrayListToString(row.supervisors)}
+                </td>
+                <td className="px-4 py-3">
+                  {arrayListToString(row.teams)}
                 </td>
                 <td className="px-4 py-3 border-box flex space-x-3">
                   <Button text="Изменить" onClick={() => onEditClick(index)} />
@@ -293,7 +315,7 @@ export default function KL04KVObject() {
           </div>
           <div className="flex flex-col space-y-2 py-2">
             <div className="flex flex-col space-y-1">
-              <label htmlFor="name">Наименование</label>
+              <label htmlFor="name">Наименование<span className="text-red-600">*</span></label>
               <Input
                 name="name"
                 type="text"
@@ -308,7 +330,7 @@ export default function KL04KVObject() {
               />
             </div>
             <div className="flex flex-col space-y-1">
-              <label htmlFor="status">Статус</label>
+              <label htmlFor="status">Статус<span className="text-red-600">*</span></label>
               <Select
                 className="basic-single text-black"
                 classNamePrefix="select"
@@ -351,8 +373,29 @@ export default function KL04KVObject() {
                 }}
               />
             </div>
+            <div>
+              <label htmlFor="">Бригадиры Объекта</label>
+              <Select
+                className="basic-single text-black"
+                classNamePrefix="select"
+                isSearchable={true}
+                isClearable={true}
+                isMulti
+                name={"supervisors-select"}
+                placeholder={""}
+                value={selectedTeamID}
+                options={availableTeams}
+                onChange={(value) => {
+                  setSelectedTeamID([...value])
+                  setMutationData({
+                    ...mutationData,
+                    teams: value.map((val) => val.value),
+                  })
+                }}
+              />
+            </div>
             <div className="flex flex-col space-y-1">
-              <label htmlFor="name">Питает</label>
+              <label htmlFor="name">Питает<span className="text-red-600">*</span></label>
               <Input
                 name="nourashes"
                 type="text"
@@ -367,7 +410,7 @@ export default function KL04KVObject() {
               />
             </div>
             <div className="flex flex-col space-y-1">
-              <label htmlFor="name">Длина</label>
+              <label htmlFor="name">Длина линии</label>
               <Input
                 name="length"
                 type="number"

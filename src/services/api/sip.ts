@@ -13,6 +13,7 @@ export interface ISIPObjectPaginated {
   status: string
   amountFeeders: number
   supervisors: string[]
+  teams: string[]
 }
 
 export interface ISIPObjectGetAllResponse {
@@ -37,6 +38,7 @@ export interface ISIPObjectCreate {
     amountFeeders: number
   }
   supervisors: number[]
+  teams: number[]
 }
 
 export async function createSIPObject(data: ISIPObjectCreate): Promise<boolean> {

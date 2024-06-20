@@ -10,6 +10,7 @@ import IReactSelectOptions from "../services/interfaces/react-select"
 import Select from 'react-select'
 import Project from "../services/interfaces/project"
 import { GetAllProjects } from "../services/api/project"
+import { HOME } from "../URLs"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -79,12 +80,13 @@ export default function Login() {
         
         // browser does not save token localStorage immediately
         setTimeout(() => {
-          navigate("/")
+          navigate(HOME)
           toast.dismiss(successToast)
         }, 1500)
 
       }, 
       onSettled: () => {
+        toast.dismiss(loadingToast)
       }
     })
   }
