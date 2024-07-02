@@ -3,7 +3,7 @@ import axios from 'axios';
 const axiosClient = axios.create();
 
 axiosClient.defaults.baseURL = process.env.NODE_ENV === "production"
-                                ? "https://webserver.com/api"
+                                ? "http://79.141.74.35/api"
                                 : "http://localhost:5000/api";
 
 //All request will wait 10 seconds before timeout
