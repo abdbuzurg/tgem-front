@@ -8,7 +8,7 @@ const OBJECT_STATUSES = [
 ]
 
 export const OBJECT_STATUSES_FOR_SELECT: IReactSelectOptions<string>[] = OBJECT_STATUSES.map<IReactSelectOptions<string>>(
-  val => ({label: val, value: val})
+  val => ({ label: val, value: val })
 )
 
 const MJD_OBJECT_TYPES = [
@@ -21,7 +21,7 @@ const MJD_OBJECT_TYPES = [
 ]
 
 export const MJD_OBJECT_TYPES_FOR_SELECT: IReactSelectOptions<string>[] = MJD_OBJECT_TYPES.map<IReactSelectOptions<string>>(
-  val => ({label: val, value: val})
+  val => ({ label: val, value: val })
 )
 
 const STVT_OBJECT_VOLTAGE_CLASSES = [
@@ -32,7 +32,7 @@ const STVT_OBJECT_VOLTAGE_CLASSES = [
 ]
 
 export const STVT_OBJECT_VOLTAGE_CLASSES_FOR_SELECT: IReactSelectOptions<string>[] = STVT_OBJECT_VOLTAGE_CLASSES.map<IReactSelectOptions<string>>(
-  val => ({label: val, value: val})
+  val => ({ label: val, value: val })
 )
 
 const TP_OBJECT_MODELS = [
@@ -47,7 +47,7 @@ const TP_OBJECT_MODELS = [
 ]
 
 export const TP_OBJECT_MODELS_FOR_SELECT: IReactSelectOptions<string>[] = TP_OBJECT_MODELS.map<IReactSelectOptions<string>>(
-  val => ({label: val, value: val})
+  val => ({ label: val, value: val })
 )
 
 const TP_OBJECT_VOLTAGE_CLASS = [
@@ -58,7 +58,7 @@ const TP_OBJECT_VOLTAGE_CLASS = [
 ]
 
 export const TP_OBJECT_VOLTAGE_CLASS_FOR_SELECT: IReactSelectOptions<string>[] = TP_OBJECT_VOLTAGE_CLASS.map<IReactSelectOptions<string>>(
-  val => ({label: val, value: val})
+  val => ({ label: val, value: val })
 )
 
 const SUBSTATION_OBJECT_VOLTAGE_CLASS = [
@@ -75,6 +75,48 @@ const SUBSTATION_OBJECT_VOLTAGE_CLASS = [
 ]
 
 export const SUBSTATION_OBJECT_VOLTAGE_CLASS_FOR_SELECT: IReactSelectOptions<string>[] = SUBSTATION_OBJECT_VOLTAGE_CLASS.map<IReactSelectOptions<string>>(
-  val => ({label: val, value: val})
+  val => ({ label: val, value: val })
 )
 
+const MATERIALS_CATEGORIES = [
+  "Мебель",
+  "Стройматериалы",
+  "Инструменты",
+  "Электроматериалы",
+  "Изготовленный",
+  "МБП",
+  "З/Ч Безопастность",
+  "Канцтовары",
+  "Хозяйственные",
+  "Орг. Техника",
+  "Спец. Одежда",
+  "Пожарный материал",
+  "Основные средства",
+  "Сантехнический",
+  "ГСМ",
+  "Материалы",
+  "Запасные части",
+  "Другое",
+]
+
+export const MATERIALS_CATEGORIES_FOR_SELECT: IReactSelectOptions<string>[] = MATERIALS_CATEGORIES.map<IReactSelectOptions<string>>(
+  val => ({ label: val, value: val })
+)
+
+export function objectTypeIntoRus(objectType: string) {
+  switch (objectType) {
+    case "stvt_objects":
+      return "СТВТ"
+    case "sip_objects":
+      return "СИП"
+    case "mjd_objects":
+      return "МЖД"
+    case "kl04kv_objects":
+      return "Кл 04 кВ"
+    case "tp_objects":
+      return "Кл 04 кВ"
+    case "substation_objects":
+      return "Подстанция"
+
+  }
+}

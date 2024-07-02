@@ -1,6 +1,5 @@
 import { useQuery } from "@tanstack/react-query"
-import { InvoiceObjectPaginatedView } from "../../services/api/invoiceObject"
-import { getAllInvoiceObjectsForCorrect } from "../../services/api/invoiceCorrection"
+import { InvoiceCorrectionPaginatedView, getAllInvoiceObjectsForCorrect } from "../../services/api/invoiceCorrection"
 import { useEffect, useState } from "react"
 import LoadingDots from "../../components/UI/loadingDots"
 import Button from "../../components/UI/button"
@@ -8,8 +7,8 @@ import CorrectionModal from "../../components/invoice/correction/CorrectionModal
 
 export default function InvoiceCorrection() {
 
-  const [tableData, setTableData] = useState<InvoiceObjectPaginatedView[]>([])
-  const tableDataQuery = useQuery<InvoiceObjectPaginatedView[], Error, InvoiceObjectPaginatedView[]>({
+  const [tableData, setTableData] = useState<InvoiceCorrectionPaginatedView[]>([])
+  const tableDataQuery = useQuery<InvoiceCorrectionPaginatedView[], Error, InvoiceCorrectionPaginatedView[]>({
     queryKey: ["invoice-correction-all"],
     queryFn: getAllInvoiceObjectsForCorrect,
   })
@@ -20,8 +19,8 @@ export default function InvoiceCorrection() {
   }, [tableDataQuery.data])
 
   const [showCorrectionModal, setShowCorrectionModal] = useState(false)
-  const [modalData, setModalData] = useState<InvoiceObjectPaginatedView>()
-  const toggleModal = (val: InvoiceObjectPaginatedView) => {
+  const [modalData, setModalData] = useState<InvoiceCorrectionPaginatedView>()
+  const toggleModal = (val: InvoiceCorrectionPaginatedView) => {
     setModalData(val)
     setShowCorrectionModal(true)
   }

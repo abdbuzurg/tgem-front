@@ -64,23 +64,17 @@ export default function Worker() {
 
   //mutation CREATE AND EDIT logic
 
-  const [currentJobTitle, setCurrentJobTitle] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
-  const onJobTitleSelect = (value: null | IReactSelectOptions<string>) => {
-    if (!value) {
-      setCurrentJobTitle({ value: "", label: "" })
-      setWorkerMutationData({ ...workerMutationData, jobTitle: "" })
-      return
-    }
+  const [jobTitleInTGEM, setJobTitleInTGEM] = useState<IReactSelectOptions<string> | null>({ label: "", value: "" })
+  const [jobTitleInProject, setJobTitleInProject] = useState<IReactSelectOptions<string> | null>({ label: "", value: "" })
 
-    setCurrentJobTitle(value)
-    setWorkerMutationData({ ...workerMutationData, jobTitle: value.value })
-  }
   const [showMutationModal, setShowMutationModal] = useState<boolean>(false)
   const [mutationModalType, setMutationModalType] = useState<null | "update" | "create">()
   const [workerMutationData, setWorkerMutationData] = useState<IWorker>({
     id: 0,
-    jobTitle: "",
-    mobileNumber: "",
+    jobTitleInProject: "",
+    jobTitleInCompany: "",
+    companyWorkerID: "",
+    mobileNumber: "+992",
     name: "",
   })
   const createMaterialMutation = useMutation<IWorker, Error, IWorker>({
@@ -104,8 +98,13 @@ export default function Worker() {
       return
     }
 
-    if (workerMutationData.jobTitle == "") {
-      toast.error("Не указано имя должность рабоника")
+    if (workerMutationData.jobTitleInCompany == "") {
+      toast.error("Не указано должность рабоника в ТГЭМ")
+      return
+    }
+
+    if (workerMutationData.jobTitleInProject == "") {
+      toast.error("Не указано должность рабоника в проекте")
       return
     }
 
@@ -118,6 +117,7 @@ export default function Worker() {
       case "create":
         createMaterialMutation.mutate(workerMutationData)
         return
+
       case "update":
         updateMaterialMutation.mutate(workerMutationData)
         return
@@ -125,6 +125,7 @@ export default function Worker() {
       default:
         throw new Error("Неправильная операция была выбрана")
     }
+
   }
 
   const [showImportModal, setShowImportModal] = useState(false)
@@ -162,7 +163,13 @@ export default function Worker() {
               <span>Имя</span>
             </th>
             <th className="px-4 py-3">
-              <span>Должность</span>
+              <span>Должность в ТГЭМ</span>
+            </th>
+            <th className="px-4 py-3">
+              <span>ID сотруника</span>
+            </th>
+            <th className="px-4 py-3">
+              <span>Должность в проекте</span>
             </th>
             <th className="px-4 py-3">
               <span>Номера</span>
@@ -171,6 +178,16 @@ export default function Worker() {
               <Button text="Добавить" onClick={() => {
                 setMutationModalType("create")
                 setShowMutationModal(true)
+                setWorkerMutationData({
+                  id: 0,
+                  name: "",
+                  jobTitleInCompany: "",
+                  companyWorkerID: "",
+                  jobTitleInProject: "",
+                  mobileNumber: "+992"
+                })
+                setJobTitleInTGEM({label: "", value:  ""})
+                setJobTitleInProject({label: "", value:  ""})
               }} />
             </th>
           </tr>
@@ -194,14 +211,17 @@ export default function Worker() {
             tableData.map((row, index) => (
               <tr key={index} className="border-b">
                 <td className="px-4 py-3">{row.name}</td>
-                <td className="px-4 py-3">{row.jobTitle}</td>
+                <td className="px-4 py-3">{row.jobTitleInCompany}</td>
+                <td className="px-4 py-3">{row.companyWorkerID}</td>
+                <td className="px-4 py-3">{row.jobTitleInProject}</td>
                 <td className="px-4 py-3">{row.mobileNumber}</td>
                 <td className="px-4 py-3 border-box flex space-x-3">
                   <Button text="Изменить" buttonType="default" onClick={() => {
                     setShowMutationModal(true)
                     setMutationModalType("update")
                     setWorkerMutationData(row)
-                    setCurrentJobTitle({ value: row.jobTitle, label: row.jobTitle })
+                    setJobTitleInProject({ label: row.jobTitleInProject, value: row.jobTitleInProject })
+                    setJobTitleInTGEM({ label: row.jobTitleInCompany, value: row.jobTitleInCompany })
                   }}
                   />
                   <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)} />
@@ -225,7 +245,7 @@ export default function Worker() {
             </h3>
             <div className="flex flex-col space-y-3 mt-2">
               <div className="flex flex-col space-y-1">
-                <label htmlFor="name">Фамилия Имя</label>
+                <label htmlFor="name">Фамилия Имя Отчество<span className="text-red-600">*</span></label>
                 <Input
                   name="name"
                   type="text"
@@ -234,21 +254,56 @@ export default function Worker() {
                 />
               </div>
               <div className="flex flex-col space-y-1">
-                <label htmlFor="jobTitle">Должность</label>
+                <label htmlFor="jobTitle">Должность в ТГЭМ<span className="text-red-600">*</span></label>
                 <Select
                   className="basic-single"
                   classNamePrefix="select"
                   isSearchable={true}
                   isClearable={true}
-                  name={"job-title-select"}
+                  name={"job-title-in-company"}
                   placeholder={""}
-                  value={currentJobTitle}
+                  value={jobTitleInTGEM}
                   options={JOB_TITLES.map<IReactSelectOptions<string>>((value) => ({ label: value, value: value }))}
-                  onChange={(value) => onJobTitleSelect(value)}
+                  onChange={(value) => {
+                    setJobTitleInTGEM(value)
+                    setWorkerMutationData({
+                      ...workerMutationData,
+                      jobTitleInCompany: value?.value ?? "",
+                    })
+                  }}
                 />
               </div>
               <div className="flex flex-col space-y-1">
-                <label htmlFor="mobileNumber">Номера телефона</label>
+                <label htmlFor="mobileNumber">ID сотрудника</label>
+                <Input
+                  name="companyWorkerID"
+                  type="text"
+                  value={workerMutationData.companyWorkerID}
+                  onChange={(e) => setWorkerMutationData({ ...workerMutationData, [e.target.name]: e.target.value })}
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="jobTitle">Должность в Проекте<span className="text-red-600">*</span></label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"job-title-in-project"}
+                  placeholder={""}
+                  value={jobTitleInProject}
+                  options={JOB_TITLES.map<IReactSelectOptions<string>>((value) => ({ label: value, value: value }))}
+                  onChange={(value) => {
+                    setJobTitleInProject(value)
+                    setWorkerMutationData({
+                      ...workerMutationData,
+                      jobTitleInProject: value?.value ?? "",
+                    })
+                  }}
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="mobileNumber">Номера телефона<span className="text-red-600">*</span></label>
                 <Input
                   name="mobileNumber"
                   type="text"

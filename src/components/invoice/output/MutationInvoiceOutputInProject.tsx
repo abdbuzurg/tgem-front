@@ -4,30 +4,30 @@ import Modal from "../../Modal";
 import ObjectSelect from "../../ObjectSelect";
 import TeamSelect from "../../TeamSelect";
 import WorkerSelect from "../../WorkerSelect";
-import { IInvoiceOutput, IInvoiceOutputMaterials } from "../../../services/interfaces/invoiceOutput";
 import IReactSelectOptions from "../../../services/interfaces/react-select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import Select from 'react-select'
 import Button from "../../UI/button";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { AvailableMaterial, InvoiceOutputItem, InvoiceOutputMutation, createInvoiceOutput, getAvailableMaterialsInWarehouse, } from "../../../services/api/invoiceOutput";
 import Input from '../../UI/Input'
 import SerialNumberSelectModal from "./SerialNumberSelectModal";
 import toast from "react-hot-toast";
 import IconButton from "../../IconButtons";
 import { FaBarcode } from "react-icons/fa";
 import { IoIosAddCircleOutline } from "react-icons/io";
+import { IInvoiceOutputInProject, IInvoiceOutputMaterials } from "../../../services/interfaces/invoiceOutputInProject";
+import { AvailableMaterial, InvoiceOutputInProjectMutation, InvoiceOutputItem, createInvoiceOutputInProject, getAvailableMaterialsInWarehouse } from "../../../services/api/invoiceOutputInProject";
 
 interface Props {
   setShowMutationModal: React.Dispatch<React.SetStateAction<boolean>>
   mutationType: "create" | "update"
 }
-export default function MutationInvoiceOutput({ mutationType, setShowMutationModal }: Props) {
+export default function MutationInvoiceOutputInProject({ mutationType, setShowMutationModal }: Props) {
   const queryClient = useQueryClient()
 
   // MAIN INVOICE INFORMATION
-  const [mutationData, setMutationData] = useState<IInvoiceOutput>({
+  const [mutationData, setMutationData] = useState<IInvoiceOutputInProject>({
     dateOfInvoice: new Date(),
     deliveryCode: "",
     districtID: 0,
@@ -177,10 +177,10 @@ export default function MutationInvoiceOutput({ mutationType, setShowMutationMod
   }
 
   // SUBMIT INVOICE LOGIC
-  const createInvoiceOutputMutation = useMutation<InvoiceOutputMutation, Error, InvoiceOutputMutation>({
-    mutationFn: createInvoiceOutput,
+  const createInvoiceOutputMutation = useMutation<InvoiceOutputInProjectMutation, Error, InvoiceOutputInProjectMutation>({
+    mutationFn: createInvoiceOutputInProject,
     onSettled: () => {
-      queryClient.invalidateQueries(["invoice-output"])
+      queryClient.invalidateQueries(["invoice-output-in-project"])
       setShowMutationModal(false)
     }
   })

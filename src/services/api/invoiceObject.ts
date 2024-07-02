@@ -1,6 +1,7 @@
 import { InvoiceMaterialViewWithSerialNumbers,  InvoiceMaterialViewWithoutSerialNumbers } from "../interfaces/invoiceMaterial"
 import { IInvoiceObject } from "../interfaces/invoiceObject"
 import Material from "../interfaces/material"
+import { ITeam } from "../interfaces/teams"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
@@ -112,4 +113,12 @@ export async function getInvoiceObjectDescriptiveDataByID(id: number): Promise<I
   }
 }
 
-
+export async function getTeamsFromObjectID(objectID: number): Promise<ITeam[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<ITeam[]>>(`${URL}/object/${objectID}`)
+  const response = responseRaw.data
+  if (response.success && response.permission) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}

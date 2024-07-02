@@ -136,7 +136,7 @@ export default function ReportInvoiceReturn({ setShowReportModal }: Props) {
           </div>
         </div>
         <div className="flex flex-col space-y-1">
-          <label htmlFor="code">Код накладной</label>
+          <label htmlFor="code">Номер накладной</label>
           <Select
             id="code"
             className="basic-single"

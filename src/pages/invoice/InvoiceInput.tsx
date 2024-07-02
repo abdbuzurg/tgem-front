@@ -174,7 +174,7 @@ export default function InvoiceInput() {
                   {!row.confirmation &&
                     <>
                       <label
-                        htmlFor="file"
+                        htmlFor={`file-${row.id}`}
                         onClick={() => setConfirmationData({ ...confirmationData, id: row.id })}
                         className="px-4 py-2 flex items-center text-white bg-red-700 hover:bg-red-800 rounded-lg text-center cursor-pointer"
                       >
@@ -186,7 +186,7 @@ export default function InvoiceInput() {
                       <input
                         name={`file-${row.id}`}
                         type="file"
-                        id="file"
+                        id={`file-${row.id}`}
                         onChange={(e) => acceptExcel(e)}
                         className="hidden"
                         value=''

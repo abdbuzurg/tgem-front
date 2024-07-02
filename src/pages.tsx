@@ -1,4 +1,4 @@
-import { LOGIN, PAGE_NOT_FOUND, PERMISSION_DENIED, HOME, INVOICE_INPUT, INVOICE_OUTPUT, INVOICE_WRITEOFF, REFERENCE_BOOK_WORKER, REFERENCE_BOOK_OBJECTS, REFERENCE_BOOK_OPERATIONS, REFERENCE_BOOK_MATERIAL_COST, REFERENCE_BOOK_DISTRICT, INVOICE_OBJECT, REPORT, ADMIN_USERS_PAGE, REFERENCE_BOOK_TEAM, REFERENCE_BOOK_MATERIAL, INVOICE_OBJECT_MUTATION_ADD, INVOICE_OBJECT_DETIALS, INVOICE_CORRECTION, REFERENCE_BOOK_KL04KV_OBJECT, REFERENCE_BOOK_MJD_OBJECT, REFERENCE_BOOK_SIP_OBJECT, REFERENCE_BOOK_STVT_OBJECT, REFERENCE_BOOK_TP_OBJECT, INVOICE_RETURN_TEAM, INVOICE_RETURN_OBJECT, REFERENCE_BOOK, REFERENCE_BOOK_SUBSTATION_OBJECT, } from "./URLs"
+import { LOGIN, PAGE_NOT_FOUND, PERMISSION_DENIED, HOME, INVOICE_INPUT, INVOICE_WRITEOFF, REFERENCE_BOOK_WORKER, REFERENCE_BOOK_OBJECTS, REFERENCE_BOOK_OPERATIONS, REFERENCE_BOOK_MATERIAL_COST, REFERENCE_BOOK_DISTRICT, INVOICE_OBJECT, REPORT, ADMIN_USERS_PAGE, REFERENCE_BOOK_TEAM, REFERENCE_BOOK_MATERIAL, INVOICE_OBJECT_MUTATION_ADD, INVOICE_OBJECT_DETIALS, INVOICE_CORRECTION, REFERENCE_BOOK_KL04KV_OBJECT, REFERENCE_BOOK_MJD_OBJECT, REFERENCE_BOOK_SIP_OBJECT, REFERENCE_BOOK_STVT_OBJECT, REFERENCE_BOOK_TP_OBJECT, INVOICE_RETURN_TEAM, INVOICE_RETURN_OBJECT, REFERENCE_BOOK, REFERENCE_BOOK_SUBSTATION_OBJECT, INVOICE_OUTPUT_IN_PROJECT, INVOICE_OUTPUT_OUT_OF_PROJECT, } from "./URLs"
 import Home from "./pages/Home"
 import Login from "./pages/Login"
 import PermissionDenied from "./pages/PermissionDenied"
@@ -6,7 +6,6 @@ import ReferenceBooks from "./pages/ReferenceBooks"
 import ErrorPage from "./pages/error-page"
 import InvoiceInput from "./pages/invoice/InvoiceInput"
 import InvoiceObject from "./pages/invoice/InvoiceObject"
-import InvoiceOutput from "./pages/invoice/InvoiceOutput"
 import InvoiceWriteOff from "./pages/invoice/InvoiceWriteOff"
 import District from "./pages/reference-books/District"
 import Materials from "./pages/reference-books/Materials"
@@ -28,6 +27,8 @@ import TPObject from "./pages/reference-books/object/TPObject"
 import InvoiceReturnTeam from "./pages/invoice/InvoiceReturnTeam"
 import InvoiceReturnObject from "./pages/invoice/InvoiceReturnObject"
 import SubstationObject from "./pages/reference-books/object/SubstationObject"
+import InvoiceOutputInProject from "./pages/invoice/InvoiceOutputInProject"
+import InvoiceOutputOutOfProject from "./pages/invoice/InvoiceOutputOutOfProject"
 
 export const PAGES_WITHOUT_LAYOUT = [
   {
@@ -66,8 +67,12 @@ export const PAGES_WITH_LAYOUT = [
     element: <InvoiceReturnObject />
   },
   {
-    path: INVOICE_OUTPUT,
-    element: <InvoiceOutput />
+    path: INVOICE_OUTPUT_IN_PROJECT,
+    element: <InvoiceOutputInProject />
+  },
+  {
+    path: INVOICE_OUTPUT_OUT_OF_PROJECT,
+    element: <InvoiceOutputOutOfProject />
   },
   {
     path: INVOICE_OBJECT,

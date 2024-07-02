@@ -11,7 +11,7 @@ import IReactSelectOptions from "../../services/interfaces/react-select";
 import Select from 'react-select'
 import toast from "react-hot-toast";
 import IWorker from "../../services/interfaces/worker";
-import { getWorkerByJobTitle } from "../../services/api/worker";
+import { getAllWorkers} from "../../services/api/worker";
 import { TeamMutation, TeamGetAllResponse, TeamPaginated, createTeam, deleteTeam, getPaginatedTeams, updateTeam, importTeam, getTeamTemplateDocument } from "../../services/api/team";
 
 export default function Team() {
@@ -90,21 +90,21 @@ export default function Team() {
 
   const [selectedTeamLeaderWorkerID, setSelectedTeamLeaderWorkerID] = useState<IReactSelectOptions<number>[]>([])
   const [availableTeamLeaders, setAvailableTeamLeaders] = useState<IReactSelectOptions<number>[]>([])
-  const allTeamLeadersQuery = useQuery<IWorker[], Error, IWorker[]>({
-    queryKey: ["all-team-leaders"],
-    queryFn: () => getWorkerByJobTitle("Бригадир"),
+  const allWorkersQuery = useQuery<IWorker[], Error, IWorker[]>({
+    queryKey: ["all-workers"],
+    queryFn: () => getAllWorkers(),
   })
   useEffect(() => {
-    if (allTeamLeadersQuery.data && allTeamLeadersQuery.isSuccess) {
+    if (allWorkersQuery.data && allWorkersQuery.isSuccess) {
       setAvailableTeamLeaders([
-        ...allTeamLeadersQuery.data.map<IReactSelectOptions<number>>((val) => ({
+        ...allWorkersQuery.data.map<IReactSelectOptions<number>>((val) => ({
           label: val.name,
           value: val.id,
         }))
       ])
     }
 
-  }, [allTeamLeadersQuery.data])
+  }, [allWorkersQuery.data])
 
   const createMaterialMutation = useMutation<ITeam, Error, TeamMutation>({
     mutationFn: createTeam,

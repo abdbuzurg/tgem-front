@@ -106,16 +106,6 @@ export default function AddNewMaterialModal({ setShowModal }: Props) {
       return
     }
     
-    if (materialCostData.costWithCustomer == 0) {
-      toast.error("Не указана цена с закасчиком")
-      return
-    }
-    
-    if (materialCostData.costPrime == 0) {
-      toast.error("Не указана изначальная цена")
-      return
-    }
-    
     if (addType == "newMaterialCost") {
       newMaterailCostMutation.mutate(materialCostData)
       setShowModal(false)
@@ -284,7 +274,7 @@ export default function AddNewMaterialModal({ setShowModal }: Props) {
                                     name="costPrime"
                                     type="number"
                                     value={materialCostData.costPrime}
-                                    onChange={(e) => setMaterialCostData({...materialCostData, [e.target.name]: +e.target.value})}
+                                    onChange={(e) => setMaterialCostData({...materialCostData, [e.target.name]: e.target.valueAsNumber})}
                                   />
                                 </div>
                                 <div className="flex flex-col space-y-1">
@@ -293,7 +283,7 @@ export default function AddNewMaterialModal({ setShowModal }: Props) {
                                     name="costM19"
                                     type="number"
                                     value={materialCostData.costM19}
-                                    onChange={(e) => setMaterialCostData({...materialCostData, [e.target.name]: +e.target.value})}
+                                    onChange={(e) => setMaterialCostData({...materialCostData, [e.target.name]: +e.target.valueAsNumber})}
                                   />
                                 </div>
                                 <div className="flex flex-col space-y-1">
@@ -302,7 +292,7 @@ export default function AddNewMaterialModal({ setShowModal }: Props) {
                                     name="costWithCustomer"
                                     type="number"
                                     value={materialCostData.costWithCustomer}
-                                    onChange={(e) => setMaterialCostData({...materialCostData, [e.target.name]: +e.target.value})}
+                                    onChange={(e) => setMaterialCostData({...materialCostData, [e.target.name]: +e.target.valueAsNumber})}
                                   />
                                 </div>
                                 <div className="flex mt-2">

@@ -1,20 +1,21 @@
 import Modal from "../../Modal";
 import Select from 'react-select'
 import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";  
+import "react-datepicker/dist/react-datepicker.css";
 import Button from "../../UI/button";
 import IReactSelectOptions from "../../../services/interfaces/react-select";
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import { InvoiceInputReportFilter, buildReport, getAllUniqueCode, getAllUniqueReleased, getAllUniqueWarehouseManager } from "../../../services/api/invoiceInput";
 import toast from "react-hot-toast";
+import LoadingDots from "../../UI/loadingDots";
 
 interface Props {
   setShowReportModal: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export default function ReportInvoiceInput({setShowReportModal}: Props) {
-  
+export default function ReportInvoiceInput({ setShowReportModal }: Props) {
+
   //Logic for All the codes(serial codes)
   const [codes, setCodes] = useState<IReactSelectOptions<string>[]>([])
   const codesQuery = useQuery<string[], Error, string[]>({
@@ -23,7 +24,7 @@ export default function ReportInvoiceInput({setShowReportModal}: Props) {
   })
   useEffect(() => {
     if (codesQuery.isSuccess && codesQuery.data) {
-      setCodes([...codesQuery.data.map<IReactSelectOptions<string>>((value) => ({value: value, label: value}))])
+      setCodes([...codesQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
     }
   }, [codesQuery.data])
 
@@ -35,7 +36,7 @@ export default function ReportInvoiceInput({setShowReportModal}: Props) {
   })
   useEffect(() => {
     if (warehouseManagersQuery.isSuccess && warehouseManagersQuery.data) {
-      setWarehouseManagers([...warehouseManagersQuery.data.map<IReactSelectOptions<string>>((value) => ({value: value, label: value}))])
+      setWarehouseManagers([...warehouseManagersQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
     }
   }, [warehouseManagersQuery.data])
 
@@ -47,10 +48,10 @@ export default function ReportInvoiceInput({setShowReportModal}: Props) {
   })
   useEffect(() => {
     if (releasedsQuery.isSuccess && releasedsQuery.data) {
-      setReleaseds([...releasedsQuery.data.map<IReactSelectOptions<string>>((value) => ({value: value, label: value}))])
+      setReleaseds([...releasedsQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
     }
   }, [releasedsQuery.data])
-  
+
   //Filter data 
   const [filter, setFilter] = useState<InvoiceInputReportFilter>({
     code: "",
@@ -61,14 +62,19 @@ export default function ReportInvoiceInput({setShowReportModal}: Props) {
   })
 
   //Submit filter
+
+  const buildInvoiceInputReport = useMutation({
+    mutationFn: () => buildReport(filter)
+  })
+
   const onCreateReportClick = () => {
-    
+
     if (filter.dateFrom && filter.dateTo) {
-      toast.error("Неправильно указан диапазон дат") 
+      toast.error("Неправильно указан диапазон дат")
       return
     }
-    
-    buildReport(filter)
+
+    buildInvoiceInputReport.mutate()
   }
 
   return (
@@ -79,7 +85,7 @@ export default function ReportInvoiceInput({setShowReportModal}: Props) {
       <div className="px-2 flex flex-col space-y-2 pb-2">
         <span className="text-xl font-semibold">Параметры</span>
         <div className="flex flex-col space-y-1">
-          <label htmlFor="code">Код накладной</label>
+          <label htmlFor="code">Номер накладной</label>
           <Select
             id="code"
             className="basic-single"
@@ -89,10 +95,10 @@ export default function ReportInvoiceInput({setShowReportModal}: Props) {
             menuPosition="fixed"
             name={"code"}
             placeholder={""}
-            value={{value: filter.code, label: filter.code}}
+            value={{ value: filter.code, label: filter.code }}
             options={codes}
-            onChange={(value: null | IReactSelectOptions<string>) => 
-              setFilter({...filter, code: value?.value ?? ""})
+            onChange={(value: null | IReactSelectOptions<string>) =>
+              setFilter({ ...filter, code: value?.value ?? "" })
             }
           />
         </div>
@@ -107,26 +113,26 @@ export default function ReportInvoiceInput({setShowReportModal}: Props) {
             menuPosition="fixed"
             name={"warehouseManager"}
             placeholder={""}
-            value={{label: filter.warehouseManager, value: filter.warehouseManager}}
+            value={{ label: filter.warehouseManager, value: filter.warehouseManager }}
             options={warehouseManagers}
-            onChange={(value: null | IReactSelectOptions<string>) => setFilter({...filter, warehouseManager: value?.value ?? ""})}
+            onChange={(value: null | IReactSelectOptions<string>) => setFilter({ ...filter, warehouseManager: value?.value ?? "" })}
           />
         </div>
         <div className="flex flex-col space-y-1">
           <label htmlFor="released">Составил</label>
           <Select
             id="released"
-            className="basic-single" 
+            className="basic-single"
             classNamePrefix="select"
             isSearchable={true}
             isClearable={true}
             menuPosition="fixed"
             name={"released"}
             placeholder={""}
-            value={{label: filter.released, value: filter.released}}
+            value={{ label: filter.released, value: filter.released }}
             options={releaseds}
-            onChange={(value: null | IReactSelectOptions<string>) => 
-              setFilter({...filter, released: value?.value ?? ""})
+            onChange={(value: null | IReactSelectOptions<string>) =>
+              setFilter({ ...filter, released: value?.value ?? "" })
             }
           />
         </div>
@@ -138,9 +144,9 @@ export default function ReportInvoiceInput({setShowReportModal}: Props) {
                 name="dateOfInvoice"
                 className="outline-none w-full"
                 dateFormat={"dd-MM-yyyy"}
-                selected={filter.dateFrom} 
-                onChange={(date: Date | null) => 
-                  setFilter({...filter, dateFrom: date ?? new Date()})
+                selected={filter.dateFrom}
+                onChange={(date: Date | null) =>
+                  setFilter({ ...filter, dateFrom: date ?? new Date() })
                 }
               />
             </div>
@@ -149,30 +155,36 @@ export default function ReportInvoiceInput({setShowReportModal}: Props) {
                 name="dateOfInvoice"
                 className="outline-none w-full"
                 dateFormat={"dd-MM-yyyy"}
-                selected={filter.dateTo} 
+                selected={filter.dateTo}
                 onChange={(date: Date | null) =>
-                  setFilter({...filter, dateTo: date ?? new Date()})
+                  setFilter({ ...filter, dateTo: date ?? new Date() })
                 }
               />
-            </div> 
+            </div>
             <div>
-              <Button 
-                onClick={() => 
+              <Button
+                onClick={() =>
                   setFilter({
-                    ...filter, 
-                    dateFrom: null, 
-                    dateTo: null})
-                  } 
-                text="X" 
+                    ...filter,
+                    dateFrom: null,
+                    dateTo: null
+                  })
+                }
+                text="X"
                 buttonType="default"
               />
             </div>
           </div>
         </div>
-        <div>
-          <Button onClick={() => onCreateReportClick()} buttonType="default" text="Создать отсчёт"/>
+        <div className="flex">
+          <div
+            onClick={() => onCreateReportClick()}
+            className="text-center text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+          >
+            {buildInvoiceInputReport.isLoading ? <LoadingDots height={30} /> : "Создать Отчет"}
+          </div>
         </div>
-      </div> 
+      </div>
     </Modal>
   )
 }

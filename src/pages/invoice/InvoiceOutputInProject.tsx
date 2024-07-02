@@ -1,30 +1,30 @@
 import { useEffect, useState } from "react";
 import Button from "../../components/UI/button";
-import { IInvoiceOutputView } from "../../services/interfaces/invoiceOutput";
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { InvoiceOutputPagianted, deleteInvoiceOutput, getInvoiceOutputDocument, getPaginatedInvoiceOutput, sendInvoiceOutputConfirmationExcel } from "../../services/api/invoiceOutput";
 import { ENTRY_LIMIT } from "../../services/api/constants";
 import DeleteModal from "../../components/deleteModal";
-import MutationInvoiceOutput from "../../components/invoice/output/MutationInvoiceOutput";
 import ReportInvoiceOutput from "../../components/invoice/output/ReportInvoiceOutput";
 import IconButton from "../../components/IconButtons";
 import { FaDownload, FaRegListAlt, FaRegTrashAlt, FaUpload } from "react-icons/fa";
-import ShowInvoiceOutputDetails from "../../components/invoice/output/ShowInvoiceOutputDetails";
+import ShowInvoiceOutputInProjectDetails from "../../components/invoice/output/ShowInvoiceOutputInProjectDetails";
+import { InvoiceOutputInProjectPagianted, deleteInvoiceOutputInProject, getInvoiceOutputInProjectDocument, getPaginatedInvoiceOutputInProject, sendInvoiceOutputInProjectConfirmationExcel } from "../../services/api/invoiceOutputInProject";
+import { IInvoiceOutputInProjectView } from "../../services/interfaces/invoiceOutputInProject";
+import MutationInvoiceOutputInProject from "../../components/invoice/output/MutationInvoiceOutputInProject";
 
-export default function InvoiceOutput() {
+export default function InvoiceOutputInProject() {
   //FETCHING LOGIC
-  const tableDataQuery = useInfiniteQuery<InvoiceOutputPagianted, Error>({
-    queryKey: ["invoice-output"],
-    queryFn: ({ pageParam }) => getPaginatedInvoiceOutput({ pageParam }),
+  const tableDataQuery = useInfiniteQuery<InvoiceOutputInProjectPagianted, Error>({
+    queryKey: ["invoice-output-in-project"],
+    queryFn: ({ pageParam }) => getPaginatedInvoiceOutputInProject({ pageParam }),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
     }
   })
-  const [tableData, setTableData] = useState<IInvoiceOutputView[]>([])
+  const [tableData, setTableData] = useState<IInvoiceOutputInProjectView[]>([])
   useEffect(() => {
     if (tableDataQuery.isSuccess && tableDataQuery.data) {
-      const data: IInvoiceOutputView[] = tableDataQuery.data.pages.reduce<IInvoiceOutputView[]>((acc, page) => [...acc, ...page.data], [])
+      const data: IInvoiceOutputInProjectView[] = tableDataQuery.data.pages.reduce<IInvoiceOutputInProjectView[]>((acc, page) => [...acc, ...page.data], [])
       setTableData(data)
     }
   }, [tableDataQuery.data])
@@ -41,8 +41,8 @@ export default function InvoiceOutput() {
   //Confirmation logic
   const [confirmationData, setConfirmationData] = useState<{ id: number, data: File | null }>({ id: 0, data: null })
   const confirmationFileMutation = useMutation<boolean, Error, void>({
-    mutationFn: () => sendInvoiceOutputConfirmationExcel(confirmationData.id, confirmationData.data!),
-    onSuccess: () => queryClient.invalidateQueries(["invoice-output"])
+    mutationFn: () => sendInvoiceOutputInProjectConfirmationExcel(confirmationData.id, confirmationData.data!),
+    onSuccess: () => queryClient.invalidateQueries(["invoice-output-in-project"])
   })
   const acceptExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files) return
@@ -61,7 +61,7 @@ export default function InvoiceOutput() {
   const [showModal, setShowModal] = useState(false)
   const queryClient = useQueryClient()
   const deleteMutation = useMutation({
-    mutationFn: deleteInvoiceOutput,
+    mutationFn: deleteInvoiceOutputInProject,
     onSuccess: () => {
       queryClient.invalidateQueries(["invoice-output"])
     }
@@ -71,7 +71,7 @@ export default function InvoiceOutput() {
     no_delivery: "",
     deleteFunc: () => { }
   })
-  const onDeleteButtonClick = (row: IInvoiceOutputView) => {
+  const onDeleteButtonClick = (row: IInvoiceOutputInProjectView) => {
     setShowModal(true)
     setModalProps({
       deleteFunc: () => deleteMutation.mutate(row.id),
@@ -86,7 +86,7 @@ export default function InvoiceOutput() {
 
   //Details logic
   const [showDetailsModal, setShowDetailsModal] = useState(false)
-  const [detailModalData, setDetailModalData] = useState<IInvoiceOutputView>({
+  const [detailModalData, setDetailModalData] = useState<IInvoiceOutputInProjectView>({
     dateOfInvoice: new Date(),
     deliveryCode: "",
     id: 0,
@@ -111,7 +111,7 @@ export default function InvoiceOutput() {
   return (
     <main>
       <div className="mt-2 px-2 flex justify-between">
-        <span className="text-3xl font-bold">Накладные отпуск</span>
+        <span className="text-3xl font-bold">Накладные отпуск внутри проекта</span>
         <div>
           <Button onClick={() => setShowReportModal(true)} text="Отчет" buttonType="default" />
         </div>
@@ -166,13 +166,13 @@ export default function InvoiceOutput() {
                 {row.confirmation &&
                   <IconButton
                     icon={<FaDownload size="20px" title={`Скачать подтвержденный файл накладной ${row.deliveryCode}`} />}
-                    onClick={() => getInvoiceOutputDocument(row.deliveryCode)}
+                    onClick={() => getInvoiceOutputInProjectDocument(row.deliveryCode)}
                   />
                 }
                 {!row.confirmation &&
                   <>
                     <label
-                      htmlFor="file"
+                      htmlFor={`file-${row.id}`}
                       onClick={() => setConfirmationData({ ...confirmationData, id: row.id })}
                       className="px-4 py-2 flex items-center text-white bg-red-700 hover:bg-red-800 rounded-lg text-center cursor-pointer"
                     >
@@ -184,14 +184,14 @@ export default function InvoiceOutput() {
                     <input
                       name={`file-${row.id}`}
                       type="file"
-                      id="file"
+                      id={`file-${row.id}`}
                       onChange={(e) => acceptExcel(e)}
                       className="hidden"
                       value=''
                     />
                     <IconButton
                       icon={<FaDownload size="20px" title={`Скачать сгенерированный файл накладной ${row.deliveryCode}`} />}
-                      onClick={() => getInvoiceOutputDocument(row.deliveryCode)}
+                      onClick={() => getInvoiceOutputInProjectDocument(row.deliveryCode)}
                     />               {/* <IconButton */}
                     {/*   icon={<FaRegEdit size="20px" title={`Изменить данные накладной ${row.deliveryCode}`} />} */}
                     {/*   onClick={() => showDetails(index)} */}
@@ -208,13 +208,13 @@ export default function InvoiceOutput() {
           )}
         </tbody>
       </table>
-      {showDetailsModal && <ShowInvoiceOutputDetails setShowModal={setShowDetailsModal} data={detailModalData}/>}
+      {showDetailsModal && <ShowInvoiceOutputInProjectDetails setShowModal={setShowDetailsModal} data={detailModalData}/>}
       {showModal &&
         <DeleteModal {...modalProps}>
           <span>При подтверждении накладая уход с кодом {modalProps.no_delivery} и все связанные материалы будут удалены</span>
         </DeleteModal>
       }
-      {showMutationModal && <MutationInvoiceOutput mutationType={mutationModalType} setShowMutationModal={setShowMutationModal} />}
+      {showMutationModal && <MutationInvoiceOutputInProject mutationType={mutationModalType} setShowMutationModal={setShowMutationModal} />}
       {showReportModal && <ReportInvoiceOutput setShowReportModal={setShowReportModal} />}
     </main>
   )

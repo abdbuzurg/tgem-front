@@ -17,7 +17,9 @@ interface Props {
 export default function AddNewWorkerModal({ setShowModal }: Props) {
   const [workerMutationData, setWorkerMutationData] = useState<IWorker>({
     id: 0,
-    jobTitle: "",
+    jobTitleInCompany: "",
+    jobTitleInProject: "",
+    companyWorkerID: "",
     mobileNumber: "",
     name: "",
   })
@@ -26,12 +28,12 @@ export default function AddNewWorkerModal({ setShowModal }: Props) {
   const onJobTitleSelect = (value: null | IReactSelectOptions<string>) => {
     if (!value) {
       setCurrentJobTitle({ value: "", label: "" })
-      setWorkerMutationData({ ...workerMutationData, jobTitle: "" })
+      setWorkerMutationData({ ...workerMutationData, jobTitleInCompany: "" })
       return
     }
 
     setCurrentJobTitle(value)
-    setWorkerMutationData({ ...workerMutationData, jobTitle: value.value })
+    setWorkerMutationData({ ...workerMutationData, jobTitleInCompany: value.value })
   }
 
   //Submitting the worker repo
@@ -46,7 +48,7 @@ export default function AddNewWorkerModal({ setShowModal }: Props) {
   })
 
   const onMutationSubmit = () => {
-    if (workerMutationData.jobTitle == "") {
+    if (workerMutationData.jobTitleInCompany == "") {
       toast.error("Не выбрана должность")
       return
     }

@@ -67,7 +67,9 @@ export async function updateInvoiceInput(data: InvoiceInputMutation): Promise<In
 export async function getInvoiceInputDocument(deliveryCode: string): Promise<boolean> {
   const responseRaw = await axiosClient.get(`${URL}/document/${deliveryCode}`, { responseType: "blob", })
   if (responseRaw.status == 200) {
-    fileDownload(responseRaw.data, `${deliveryCode}.xlsx`)
+    const contentType: string = responseRaw.headers["content-type"]
+    const extension = contentType.split("/")[1]
+    fileDownload(responseRaw.data, `${deliveryCode}.${extension}`)
     return true
   } else {
     throw new Error(responseRaw.data)
@@ -130,7 +132,8 @@ export interface InvoiceInputReportFilter {
 export async function buildReport(filter: InvoiceInputReportFilter): Promise<boolean> {
   const responseRaw = await axiosClient.post(`${URL}/report`, filter, { responseType: "blob", })
   if (responseRaw.status == 200) {
-    const fileName = "Отчет"
+    const date = new Date()
+    const fileName = `Отчет Накладной Приход ${date}`
     fileDownload(responseRaw.data, `${fileName}.xlsx`)
     return true
   } else {

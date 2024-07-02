@@ -3,126 +3,138 @@ import IReactSelectOptions from "../../../services/interfaces/react-select";
 import Modal from "../../Modal";
 import Select from 'react-select'
 import { useQuery } from "@tanstack/react-query";
-import getAllMaterials from "../../../services/api/materials/getAll";
 import Material from "../../../services/interfaces/material";
 import Input from "../../UI/Input";
-import { IInvoiceObjectMaterials } from "../../../services/interfaces/invoiceObject";
-import { InvoiceCorrectionMaterial, getSerialNumbersOfMaterialInTeam, getTotalAmounByTeamNumber } from "../../../services/api/invoiceCorrection";
+import { InvoiceCorrectionMaterial } from "../../../services/api/invoiceCorrection";
 import toast from "react-hot-toast";
-import Button from "../../UI/button";
+import { getMaterialAmount, getTeamMaterials } from "../../../services/api/invoiceObject"
 
 interface Props {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>
-  teamNumber: string
+  correctionIndex: number
+  teamID: number
   materialData: InvoiceCorrectionMaterial
+  correctionFunction: (index: number, correction: InvoiceCorrectionMaterial) => void
 }
 
 export default function MaterialCorrectionModal({
   setShowModal,
+  correctionIndex,
+  correctionFunction,
   materialData,
-  teamNumber,
+  teamID,
 }: Props) {
 
   const [selectedMaterial, setSelectedMaterial] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   const [availableMaterials, setAvailableMaterials] = useState<IReactSelectOptions<number>[]>([])
+
   const materialQuery = useQuery<Material[], Error, Material[]>({
-    queryKey: ["all-materials"],
-    queryFn: getAllMaterials,
+    queryKey: ["materials-in-team", teamID],
+    queryFn: () => getTeamMaterials(teamID),
   })
+
   useEffect(() => {
     if (materialQuery.isSuccess && materialQuery.data) {
+
       setAvailableMaterials([
         ...materialQuery.data.map<IReactSelectOptions<number>>(val => ({
           value: val.id,
           label: val.name,
         }))
       ])
-      const material = materialQuery.data.find((val) => val.name == materialData.materialName)!
-      setSelectedMaterial({
-        value: material.id,
-        label: material.name,
-      })
-      setCorrection({
-        ...correction,
-        materialID: material.id,
-        hasSerialNumbers: material.hasSerialNumber,
-        unit: material.unit,
-      })
+
+      if (materialData.invoiceMaterialID != 0) {
+        const material = materialQuery.data.find((val) => val.name == materialData.materialName)!
+        setSelectedMaterial({
+          value: material.id,
+          label: material.name,
+        })
+      }
     }
   }, [materialQuery.data])
 
   useEffect(() => {
+    if (selectedMaterial.value == 0) {
+      return
+    }
+
     if (materialQuery.isSuccess && materialQuery.data) {
-      const material = materialQuery.data.find((val) => val.name == materialData.materialName)!
+      const material = materialQuery.data.find((val) => val.id == selectedMaterial.value)!
       setCorrection({
         ...correction,
         materialID: material.id,
-        hasSerialNumbers: material.hasSerialNumber,
-        unit: material.unit,
+        materialUnit: material.unit,
+        materialName: material.name,
       })
     }
 
   }, [selectedMaterial])
 
-  // 
-  const [correction, setCorrection] = useState<IInvoiceObjectMaterials>({
+  const [correction, setCorrection] = useState<InvoiceCorrectionMaterial>(materialData)
+
+  const resetCorrection = () => setCorrection({
+    invoiceMaterialID: 0,
+    materialAmount: 0,
     materialID: 0,
-    materialName: materialData.materialName,
-    availableMaterial: 0,
-    unit: "",
-    amount: 0,
+    materialName: "",
     notes: "",
-    hasSerialNumbers: false,
-    serialNumbers: [],
+    materialUnit: "",
   })
 
   const materialAmountQuery = useQuery<number, Error, number>({
-    queryKey: [`total-amount-material-${selectedMaterial.value}-team-number-${teamNumber}`],
-    queryFn: () => getTotalAmounByTeamNumber(selectedMaterial.value, teamNumber),
+    queryKey: [`total-amount-material-team-number`, teamID, selectedMaterial.value],
+    queryFn: () => getMaterialAmount(selectedMaterial.value, teamID),
     enabled: selectedMaterial.value != 0,
   })
-  useEffect(() => {
-    if (materialAmountQuery.isSuccess && materialAmountQuery.data) {
-      setCorrection({
-        ...correction,
-        availableMaterial: materialAmountQuery.data,
-      })
-    }
-  }, [])
 
-  const [availableSerialNumbers, setAvaiableSerialNumbers] = useState<IReactSelectOptions<string>[]>([])
-  const [selectedSerialNumber, setSelectedSerialNumber] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
-  const [alreadySelectedSerialNumbers, setAlreadySelectedSerialNumbers] = useState<IReactSelectOptions<string>[]>([])
-  const [toBeDeletedSerialNumber, setToBeDeletedSerialNumber] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
+  // const [availableSerialNumbers, setAvaiableSerialNumbers] = useState<IReactSelectOptions<string>[]>([])
+  // const [selectedSerialNumber, setSelectedSerialNumber] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
+  // const [alreadySelectedSerialNumbers, setAlreadySelectedSerialNumbers] = useState<IReactSelectOptions<string>[]>([])
+  // const [toBeDeletedSerialNumber, setToBeDeletedSerialNumber] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
 
-  const availableSerialNumbersQuery = useQuery<string[], Error, string[]>({
-    queryKey: [`serial-numbers-of-material-${selectedMaterial.value}`],
-    queryFn: () => getSerialNumbersOfMaterialInTeam(selectedMaterial.value, teamNumber),
-    enabled: selectedMaterial.value != 0,
-  })
-  useEffect(() => {
+  // const availableSerialNumbersQuery = useQuery<string[], Error, string[]>({
+  //   queryKey: [`serial-numbers-of-material-${selectedMaterial.value}`],
+  //   queryFn: () => getSerialNumbersOfMaterialInTeam(selectedMaterial.value, teamID),
+  //   enabled: correction.hasSerialNumbers,
+  // })
+  // useEffect(() => {
 
-    if (availableSerialNumbersQuery.isSuccess && availableSerialNumbersQuery.data) {
-      setAvaiableSerialNumbers([
-        ...availableSerialNumbersQuery.data.map<IReactSelectOptions<string>>((val) => ({ value: val, label: val }))
-      ])
-    }
+  //   if (availableSerialNumbersQuery.isSuccess && availableSerialNumbersQuery.data) {
+  //     setAvaiableSerialNumbers([
+  //       ...availableSerialNumbersQuery.data.map<IReactSelectOptions<string>>((val) => ({ value: val, label: val }))
+  //     ])
+  //   }
 
-  }, [availableSerialNumbersQuery.data])
+  // }, [availableSerialNumbersQuery.data])
 
-  const addToSerialNumberList = () => {
-    const index = alreadySelectedSerialNumbers.findIndex((val) => selectedSerialNumber.value == val.value)
-    if (index != -1) {
-      toast.error("Данный серийний код уже в списке")
+  // const addToSerialNumberList = () => {
+  //   const index = alreadySelectedSerialNumbers.findIndex((val) => selectedSerialNumber.value == val.value)
+  //   if (index != -1) {
+  //     toast.error("Данный серийний код уже в списке")
+  //     return
+  //   }
+  //   setAlreadySelectedSerialNumbers([selectedSerialNumber, ...alreadySelectedSerialNumbers])
+  //   setSelectedSerialNumber({ label: "", value: "" })
+  // }
+
+  // const deleteSerialNumberFromList = () => {
+  //   setAlreadySelectedSerialNumbers([...alreadySelectedSerialNumbers.filter((val) => val.value != toBeDeletedSerialNumber.value)])
+  //   setToBeDeletedSerialNumber({ label: "", value: "" })
+  // }
+
+  const submitChanges = () => {
+    if (selectedMaterial.value == 0) {
+      toast.error("Не выбран материал")
       return
     }
-    setAlreadySelectedSerialNumbers([selectedSerialNumber, ...alreadySelectedSerialNumbers])
-    setSelectedSerialNumber({ label: "", value: "" })
-  }
 
-  const deleteSerialNumberFromList = () => {
-    setAlreadySelectedSerialNumbers([...alreadySelectedSerialNumbers.filter((val) => val.value != toBeDeletedSerialNumber.value)])
-    setToBeDeletedSerialNumber({ label: "", value: "" })
+    if (correction.materialAmount > materialAmountQuery.data!) {
+      toast.error(`Кол-во материала превышает доступное количество: ${correction.materialAmount} > ${materialAmountQuery.data!}`)
+      return
+    }
+
+    correctionFunction(correctionIndex, correction)
+    setShowModal(false)
   }
 
   return (
@@ -140,71 +152,74 @@ export default function MaterialCorrectionModal({
             placeholder={""}
             value={selectedMaterial}
             options={availableMaterials}
-            onChange={(value) => setSelectedMaterial({
-              value: value?.value ?? 0,
-              label: value?.label ?? "",
-            })}
+            onChange={(value) => {
+              setSelectedMaterial({
+                value: value?.value ?? 0,
+                label: value?.label ?? "",
+              })
+              resetCorrection()
+            }}
           />
         </div>
-        <div className="flex space-x-2 items-end">
+        <div className="flex space-x-2 items-center">
           <div className="flex flex-col space-y-1">
             <label className="font-bold">Количество</label>
             <Input
               name="amount"
               type="number"
-              value={correction.amount}
+              value={correction.materialAmount}
               onChange={(e) => setCorrection({
                 ...correction,
-                amount: e.target.valueAsNumber
+                materialAmount: e.target.valueAsNumber
               })}
             />
           </div>
-          <span>Доступно - {correction.availableMaterial}{correction.unit}</span>
+          <span>Доступно - {materialAmountQuery.data ?? 0} {correction.materialUnit}</span>
         </div>
-        {correction.hasSerialNumbers &&
-          <div className="flex flex-col space-y-4">
-            <div className="flex space-x-2">
-              <div className="flex flex-col space-y-1">
-                <label>Доступные серийные номера</label>
-                <Select
-                  className="basic-single text-black"
-                  classNamePrefix="select"
-                  isSearchable={true}
-                  isClearable={true}
-                  name={"material-cost-material-select"}
-                  placeholder={""}
-                  value={selectedSerialNumber}
-                  options={availableSerialNumbers}
-                  onChange={(value) => setSelectedSerialNumber({
-                    label: value?.label ?? "",
-                    value: value?.value ?? "",
-                  })}
-                />
-              </div>
-              <Button onClick={() => addToSerialNumberList()} text="Выбрать" />
-            </div>
-            <div className="flex space-x-2">
-              <div className="flex flex-col space-y-1">
-                <label>Выбранные серийные материалы</label>
-                <Select
-                  className="basic-single text-black"
-                  classNamePrefix="select"
-                  isSearchable={true}
-                  isClearable={true}
-                  name={"material-cost-material-select"}
-                  placeholder={""}
-                  value={toBeDeletedSerialNumber}
-                  options={alreadySelectedSerialNumbers}
-                  onChange={(value) => setToBeDeletedSerialNumber({
-                    label: value?.label ?? "",
-                    value: value?.value ?? "",
-                  })}
-                />
-              </div>
-              <Button onClick={() => deleteSerialNumberFromList()} text="Удалить" buttonType="delete" />
-            </div>
-          </div>
-        }
+        {/* {correction.hasSerialNumbers && */}
+        {/*   <div className="flex flex-col space-y-4"> */}
+        {/*     <div className="flex space-x-2"> */}
+        {/*       <div className="flex flex-col space-y-1"> */}
+        {/*         <label>Доступные серийные номера</label> */}
+        {/*         <Select */}
+        {/*           className="basic-single text-black" */}
+        {/*           classNamePrefix="select" */}
+        {/*           isSearchable={true} */}
+        {/*           isClearable={true} */}
+        {/*           name={"material-cost-material-select"} */}
+        {/*           placeholder={""} */}
+        {/*           value={selectedSerialNumber} */}
+        {/*           options={availableSerialNumbers} */}
+        {/*           onChange={(value) => setSelectedSerialNumber({ */}
+        {/*             label: value?.label ?? "", */}
+        {/*             value: value?.value ?? "", */}
+        {/*           })} */}
+        {/*         /> */}
+        {/*       </div> */}
+        {/*       <Button onClick={() => addToSerialNumberList()} text="Выбрать" /> */}
+        {/*     </div> */}
+        {/*     <div className="flex space-x-2"> */}
+        {/*       <div className="flex flex-col space-y-1"> */}
+        {/*         <label>Выбранные серийные материалы</label> */}
+        {/*         <Select */}
+        {/*           className="basic-single text-black" */}
+        {/*           classNamePrefix="select" */}
+        {/*           isSearchable={true} */}
+        {/*           isClearable={true} */}
+        {/*           name={"material-cost-material-select"} */}
+        {/*           placeholder={""} */}
+        {/*           value={toBeDeletedSerialNumber} */}
+        {/*           options={alreadySelectedSerialNumbers} */}
+        {/*           onChange={(value) => setToBeDeletedSerialNumber({ */}
+        {/*             label: value?.label ?? "", */}
+        {/*             value: value?.value ?? "", */}
+        {/*           })} */}
+        {/*         /> */}
+        {/*       </div> */}
+        {/*       <Button onClick={() => deleteSerialNumberFromList()} text="Удалить" buttonType="delete" /> */}
+        {/*     </div> */}
+        {/*   </div> */}
+        {/* } */}
         <div>
           <label className="font-bold">Примичание</label>
           <textarea
@@ -212,6 +227,14 @@ export default function MaterialCorrectionModal({
             value={correction.notes}
             onChange={(e) => setCorrection({ ...correction, notes: e.target.value })}
           />
+        </div>
+        <div className="flex">
+          <div
+            onClick={() => submitChanges()}
+            className="text-white py-2.5 px-5 rounded-lg bg-gray-800 hover:bg-gray-700 hover:cursor-pointer"
+          >
+            Опубликовать
+          </div>
         </div>
       </div>
     </Modal>

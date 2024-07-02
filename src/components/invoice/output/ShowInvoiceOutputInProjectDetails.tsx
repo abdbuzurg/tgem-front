@@ -1,20 +1,20 @@
 import { FaBarcode } from "react-icons/fa"
-import { IInvoiceOutputView } from "../../../services/interfaces/invoiceOutput"
 import IconButton from "../../IconButtons"
 import Modal from "../../Modal"
 import LoadingDots from "../../UI/loadingDots"
 import { Fragment, useState } from "react"
 import SerialNumbersShowModal from "../../SerialNumberShowModal"
 import { useQuery } from "@tanstack/react-query"
-import { getInvoiceOutputMaterilsWithSerialNumbersByID, getInvoiceOutputMaterilsWithoutSerialNumbersByID } from "../../../services/api/invoiceOutput"
 import { InvoiceMaterialViewWithSerialNumbers, InvoiceMaterialViewWithoutSerialNumbers } from "../../../services/interfaces/invoiceMaterial"
+import { IInvoiceOutputInProjectView } from "../../../services/interfaces/invoiceOutputInProject"
+import { getInvoiceOutputMaterilsWithSerialNumbersByID, getInvoiceOutputMaterilsWithoutSerialNumbersByID } from "../../../services/api/invoiceOutputInProject"
 
 interface Props {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>
-  data: IInvoiceOutputView
+  data: IInvoiceOutputInProjectView
 }
 
-export default function ShowInvoiceOutputDetails({ setShowModal, data }: Props) {
+export default function ShowInvoiceOutputInProjectDetails({ setShowModal, data }: Props) {
 
   const invoiceOutputMaterialsWithourSerialNumbersQuery = useQuery<InvoiceMaterialViewWithoutSerialNumbers[], Error>({
     queryKey: ["invoice-input-materials-without-serial-numbers", data.id],

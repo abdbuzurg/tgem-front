@@ -15,12 +15,13 @@ import Select from "react-select"
 import IReactSelectOptions from "../../services/interfaces/react-select"
 import Material from "../../services/interfaces/material"
 import getAllMaterials from "../../services/api/materials/getAll"
+import toast from "react-hot-toast"
 
 export default function MaterialsCosts() {
   //fetching data logic
   const tableDataQuery = useInfiniteQuery<MaterialCostGetAllResponse, Error>({
     queryKey: ["materials-costs"],
-    queryFn: ({ pageParam }) => getPaginatedMaterialCost({pageParam}),
+    queryFn: ({ pageParam }) => getPaginatedMaterialCost({ pageParam }),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
@@ -54,7 +55,7 @@ export default function MaterialsCosts() {
   const [modalProps, setModalProps] = useState({
     setShowModal: setShowDeleteModal,
     no_delivery: "",
-    deleteFunc: () => {}
+    deleteFunc: () => { }
   })
   const onDeleteButtonClick = (row: IMaterialCostView) => {
     setShowDeleteModal(true)
@@ -66,7 +67,7 @@ export default function MaterialsCosts() {
   }
 
   //mutation CREATE AND EDIT logic
-  const [selectedMaterial, setSelectedMaterial] = useState<IReactSelectOptions<number>>({label:"", value: 0})
+  const [selectedMaterial, setSelectedMaterial] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   const [allMaterials, setAllMaterials] = useState<IReactSelectOptions<number>[]>([])
   const allMaterialQuery = useQuery<Material[], Error>({
     queryKey: ["material-all"],
@@ -74,20 +75,20 @@ export default function MaterialsCosts() {
   })
   useEffect(() => {
     if (allMaterialQuery.isSuccess && allMaterialQuery.data) {
-      setAllMaterials(allMaterialQuery.data.map<IReactSelectOptions<number>>((v) => ({value: v.id, label: v.name})))
+      setAllMaterials(allMaterialQuery.data.map<IReactSelectOptions<number>>((v) => ({ value: v.id, label: v.name })))
     }
   }, [allMaterialQuery.isSuccess])
   const onMaterialSelect = (value: IReactSelectOptions<number> | null) => {
     if (!value) {
-      setSelectedMaterial({value: 0, label: ""})
-      setMutationData({...mutationData, materialID: 0})
+      setSelectedMaterial({ value: 0, label: "" })
+      setMutationData({ ...mutationData, materialID: 0 })
       return
     }
 
-    setMutationData({...mutationData, materialID: value.value})
+    setMutationData({ ...mutationData, materialID: value.value })
     setSelectedMaterial(value)
   }
-  
+
   const [showMutationModal, setShowMutationModal] = useState<boolean>(false)
   const [mutationModalType, setMutationModalType] = useState<null | "update" | "create">()
   const [mutationData, setMutationData] = useState<IMaterialCost>({
@@ -97,12 +98,7 @@ export default function MaterialsCosts() {
     costM19: 0,
     materialID: 0,
   })
-  const [mutationModalErrors, setMutationModalErrors] = useState({
-    costPrime: false,
-    costWithCustomer: false,
-    costM19: false,
-    materialID: false,
-  })
+
   const createMaterialMutation = useMutation<IMaterialCost, Error, IMaterialCost>({
     mutationFn: createMaterialCost,
     onSettled: () => {
@@ -110,6 +106,7 @@ export default function MaterialsCosts() {
       setShowMutationModal(false)
     }
   })
+
   const updateMaterialMutation = useMutation<IMaterialCost, Error, IMaterialCost>({
     mutationFn: updateMaterialCost,
     onSettled: () => {
@@ -118,38 +115,48 @@ export default function MaterialsCosts() {
     }
   })
   const onMutationSubmit = () => {
-    console.log(mutationData)
-
-    if (mutationData.costPrime <= 0) setMutationModalErrors((prev) => ({...prev, costPrime: true}))
-    else setMutationModalErrors((prev) => ({...prev, costPrime: false}))
-    
-    if (mutationData.materialID == 0) setMutationModalErrors((prev) => ({...prev, materialID: true}))
-    else setMutationModalErrors((prev) => ({...prev, materialID: false}))
-
-    if (mutationData.costWithCustomer <= 0) setMutationModalErrors((prev) => ({...prev, costWithCustomer: true}))
-    else setMutationModalErrors((prev) => ({...prev, costWithCustomer: false}))
-
-    if (mutationData.costM19 <= 0) setMutationModalErrors((prev) => ({...prev, costM19: true}))
-    else setMutationModalErrors((prev) => ({...prev, costM19: false}))
-    
-    const isThereError = Object.keys(mutationData).some((value) => {
-      if (mutationData[value as keyof typeof mutationData] == 0 && value != "id") {
-        return true
-      }
-    })
-    if (isThereError) return
-    
-    switch(mutationModalType) {
-      case "create":
-        createMaterialMutation.mutate(mutationData)
-        return
-      case "update":
-        updateMaterialMutation.mutate(mutationData)
-        return
-      
-      default:
-        throw new Error("Неправильная операция была выбрана")
+    if (mutationData.materialID == 0) {
+      toast.error("Не указан материал")
+      return
     }
+
+    if (mutationData.costM19 <= 0) {
+      toast.error("Цена М19 обязательна")
+      return
+    }
+
+    if (mutationModalType == "create") {
+      createMaterialMutation.mutate(mutationData)
+    }
+
+    if (mutationModalType == "update") {
+      updateMaterialMutation.mutate(mutationData)
+    }
+
+    setMutationData({
+      id: 0,
+      materialID: 0,
+      costPrime: 0,
+      costM19: 0,
+      costWithCustomer: 0,
+    })
+    setSelectedMaterial({ label: "", value: 0 })
+
+  }
+
+  const onEditClick = (index: number) => {
+
+    const material = allMaterials.find((val) => val.label == tableData[index].materialName)!
+    setSelectedMaterial(material)
+    setMutationData({
+      id: tableData[index].id,
+      materialID: material.value,
+      costPrime: tableData[index].costPrime,
+      costM19: tableData[index].costM19,
+      costWithCustomer: tableData[index].costWithCustomer,
+    })
+    setShowMutationModal(true)
+    setMutationModalType("update")
   }
 
   return (
@@ -174,21 +181,29 @@ export default function MaterialsCosts() {
             </th>
             <th className="px-4 py-3">
               <Button text="Добавить" onClick={() => {
+                setMutationData({
+                  id: 0,
+                  materialID: 0,
+                  costPrime: 0,
+                  costM19: 0,
+                  costWithCustomer: 0,
+                })
+                setSelectedMaterial({value: 0, label: ""})
                 setMutationModalType("create")
                 setShowMutationModal(true)
-              }}/>
+              }} />
             </th>
           </tr>
         </thead>
         <tbody>
-          {tableDataQuery.isLoading && 
+          {tableDataQuery.isLoading &&
             <tr>
               <td colSpan={6}>
                 <LoadingDots />
               </td>
             </tr>
           }
-          {tableDataQuery.isError && 
+          {tableDataQuery.isError &&
             <tr>
               <td colSpan={6} className="text-red font-bold text-center">
                 {tableDataQuery.error.message}
@@ -203,21 +218,16 @@ export default function MaterialsCosts() {
                 <td className="px-4 py-3">{row.costM19}</td>
                 <td className="px-4 py-3">{row.costWithCustomer}</td>
                 <td className="px-4 py-3 border-box flex space-x-3">
-                  <Button text="Изменить" buttonType="default" onClick={() => {
-                      setShowMutationModal(true)
-                      setMutationModalType("update")
-                      //TODO get ID of the material
-                    }}
-                  />
-                  <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)}/>
+                  <Button text="Изменить" buttonType="default" onClick={() => onEditClick(index)} />
+                  <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)} />
                 </td>
               </tr>
             ))
           }
         </tbody>
       </table>
-      {showDeleteModal && 
-        <DeleteModal {...modalProps}> 
+      {showDeleteModal &&
+        <DeleteModal {...modalProps}>
           <span>При подтверждении материал под именем {modalProps.no_delivery} и все его данные в ней будут удалены</span>
         </DeleteModal>
       }
@@ -230,7 +240,7 @@ export default function MaterialsCosts() {
             </h3>
             <div className="flex flex-col space-y-3 mt-2">
               <div className="flex flex-col space-y-1">
-                <label htmlFor="name">Наименование</label>
+                <label htmlFor="name">Наименование<span className="text-red-600">*</span></label>
                 <Select
                   className="basic-single"
                   classNamePrefix="select"
@@ -242,41 +252,37 @@ export default function MaterialsCosts() {
                   options={allMaterials}
                   onChange={(value) => onMaterialSelect(value)}
                 />
-                {mutationModalErrors.materialID && <span className="text-red-600 text-sm font-bold">Не указан материал</span>}
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="costPrime">Изначальная Цена</label>
-                <Input 
+                <Input
                   name="costPrime"
                   type="number"
                   value={mutationData.costPrime}
-                  onChange={(e) => setMutationData({...mutationData, [e.target.name]: +e.target.value})}
+                  onChange={(e) => setMutationData({ ...mutationData, [e.target.name]: +e.target.valueAsNumber })}
                 />
-                {mutationModalErrors.costPrime && <span className="text-red-600 text-sm font-bold">Не указана изначальная цена за материал</span>}
               </div>
               <div className="flex flex-col space-y-1">
-                <label htmlFor="costPrime">Цена M19</label>
-                <Input 
+                <label htmlFor="costPrime">Цена M19<span className="text-red-600">*</span></label>
+                <Input
                   name="costM19"
                   type="number"
                   value={mutationData.costM19}
-                  onChange={(e) => setMutationData({...mutationData, [e.target.name]: +e.target.value})}
+                  onChange={(e) => setMutationData({ ...mutationData, [e.target.name]: +e.target.valueAsNumber })}
                 />
-                {mutationModalErrors.costPrime && <span className="text-red-600 text-sm font-bold">Не указана изначальная цена М19 за материал</span>}
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="costWithCustomer">Цена с заказчиком</label>
-                <Input 
+                <Input
                   name="costWithCustomer"
                   type="number"
                   value={mutationData.costWithCustomer}
-                  onChange={(e) => setMutationData({...mutationData, [e.target.name]: +e.target.value})}
+                  onChange={(e) => setMutationData({ ...mutationData, [e.target.name]: +e.target.valueAsNumber })}
                 />
-                {mutationModalErrors.costWithCustomer && <span className="text-red-600 text-sm font-bold">Не указана цена материала с заказчиком</span>}
               </div>
               <div>
-                <Button 
-                  text={mutationModalType=="create" ? "Добавить" : "Подтвердить изменения"}
+                <Button
+                  text={mutationModalType == "create" ? "Добавить" : "Подтвердить изменения"}
                   onClick={onMutationSubmit}
                 />
               </div>

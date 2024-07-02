@@ -1,19 +1,20 @@
 import Modal from "../../Modal";
 import Select from 'react-select'
 import DatePicker from "react-datepicker";
-import "react-datepicker/dist/react-datepicker.css";  
+import "react-datepicker/dist/react-datepicker.css";
 import Button from "../../UI/button";
 import IReactSelectOptions from "../../../services/interfaces/react-select";
 import { useEffect, useState } from "react";
-import { useQuery } from "@tanstack/react-query";
-import { InvoiceOutputReportFilter, buildReport, getAllUniqueCode, getAllUniqueObject, getAllUniqueRecieved, getAllUniqueDistrict, getAllUniqueTeam, getAllUniqueWarehouseManager } from "../../../services/api/invoiceOutput";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { InvoiceOutputReportFilter, buildReport, getAllUniqueCode, getAllUniqueObject, getAllUniqueRecieved, getAllUniqueDistrict, getAllUniqueTeam, getAllUniqueWarehouseManager } from "../../../services/api/invoiceOutputInProject";
 import ErrorModal from "../../errorModal";
+import LoadingDots from "../../UI/loadingDots";
 
 interface Props {
   setShowReportModal: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export default function ReportInvoiceOutput({setShowReportModal}: Props) {
+export default function ReportInvoiceOutput({ setShowReportModal }: Props) {
 
   //Logic for all the districts
   const [districts, setDistricts] = useState<IReactSelectOptions<string>[]>([])
@@ -23,7 +24,7 @@ export default function ReportInvoiceOutput({setShowReportModal}: Props) {
   })
   useEffect(() => {
     if (districtQuery.isSuccess && districtQuery.data) {
-      setDistricts([...districtQuery.data.map<IReactSelectOptions<string>>((value) => ({value: value, label: value}))])
+      setDistricts([...districtQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
     }
   }, [districtQuery.data])
 
@@ -35,7 +36,7 @@ export default function ReportInvoiceOutput({setShowReportModal}: Props) {
   })
   useEffect(() => {
     if (codesQuery.isSuccess && codesQuery.data) {
-      setCodes([...codesQuery.data.map<IReactSelectOptions<string>>((value) => ({value: value, label: value}))])
+      setCodes([...codesQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
     }
   }, [codesQuery.data])
 
@@ -47,7 +48,7 @@ export default function ReportInvoiceOutput({setShowReportModal}: Props) {
   })
   useEffect(() => {
     if (warehouseManagersQuery.isSuccess && warehouseManagersQuery.data) {
-      setWarehouseManagers([...warehouseManagersQuery.data.map<IReactSelectOptions<string>>((value) => ({value: value, label: value}))])
+      setWarehouseManagers([...warehouseManagersQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
     }
   }, [warehouseManagersQuery.data])
 
@@ -59,7 +60,7 @@ export default function ReportInvoiceOutput({setShowReportModal}: Props) {
   })
   useEffect(() => {
     if (recievedsQuery.isSuccess && recievedsQuery.data) {
-      setReceiveds([...recievedsQuery.data.map<IReactSelectOptions<string>>((value) => ({value: value, label: value}))])
+      setReceiveds([...recievedsQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
     }
   }, [recievedsQuery.data])
 
@@ -71,7 +72,7 @@ export default function ReportInvoiceOutput({setShowReportModal}: Props) {
   })
   useEffect(() => {
     if (objectQuery.isSuccess && objectQuery.data) {
-      setObjets([...objectQuery.data.map<IReactSelectOptions<string>>((value) => ({value: value, label: value}))])
+      setObjets([...objectQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
     }
   }, [objectQuery.data])
 
@@ -83,11 +84,11 @@ export default function ReportInvoiceOutput({setShowReportModal}: Props) {
   })
   useEffect(() => {
     if (teamQuery.isSuccess && teamQuery.data) {
-      setTeams([...teamQuery.data.map<IReactSelectOptions<string>>((value) => ({value: value, label: value}))])
+      setTeams([...teamQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
     }
   }, [teamQuery.data])
 
-  
+
   //Filter data 
   const [filter, setFilter] = useState<InvoiceOutputReportFilter>({
     code: "",
@@ -104,12 +105,17 @@ export default function ReportInvoiceOutput({setShowReportModal}: Props) {
   })
 
   const [showErrorsModal, setShowErrorsModal] = useState(false)
-  
+
   //Submit filter
+
+  const buildInvoiceOutputReport = useMutation({
+    mutationFn: () => buildReport(filter)
+  })
+
   const onCreateReportClick = () => {
     let errors = {
       date: false,
-    }; 
+    };
     if (filter.dateFrom && filter.dateTo) {
       errors = {
         date: filter.dateFrom > filter.dateTo
@@ -127,7 +133,7 @@ export default function ReportInvoiceOutput({setShowReportModal}: Props) {
       return
     }
 
-    buildReport(filter)
+    buildInvoiceOutputReport.mutate()
   }
 
   return (
@@ -138,7 +144,7 @@ export default function ReportInvoiceOutput({setShowReportModal}: Props) {
       <div className="px-2 flex flex-col space-y-2 pb-2">
         <span className="text-xl font-semibold">Параметры</span>
         <div className="flex flex-col space-y-1">
-          <label htmlFor="code">Код накладной</label>
+          <label htmlFor="code">Номер накладной</label>
           <Select
             id="code"
             className="basic-single"
@@ -148,9 +154,9 @@ export default function ReportInvoiceOutput({setShowReportModal}: Props) {
             menuPosition="fixed"
             name={"code"}
             placeholder={""}
-            value={{value: filter.code, label: filter.code}}
+            value={{ value: filter.code, label: filter.code }}
             options={codes}
-            onChange={(value: null | IReactSelectOptions<string>) => setFilter({...filter, code: value?.value ?? ""})}
+            onChange={(value: null | IReactSelectOptions<string>) => setFilter({ ...filter, code: value?.value ?? "" })}
           />
         </div>
         <div className="flex flex-col space-y-1">
@@ -164,9 +170,9 @@ export default function ReportInvoiceOutput({setShowReportModal}: Props) {
             menuPosition="fixed"
             name={"district"}
             placeholder={""}
-            value={{label: filter.district, value: filter.district}}
+            value={{ label: filter.district, value: filter.district }}
             options={districts}
-            onChange={(value: null | IReactSelectOptions<string>) => setFilter({...filter, district: value?.value ?? ""})}
+            onChange={(value: null | IReactSelectOptions<string>) => setFilter({ ...filter, district: value?.value ?? "" })}
           />
         </div>
         <div className="flex flex-col space-y-1">
@@ -180,57 +186,57 @@ export default function ReportInvoiceOutput({setShowReportModal}: Props) {
             menuPosition="fixed"
             name={"warehouseManager"}
             placeholder={""}
-            value={{label: filter.warehouseManager, value: filter.warehouseManager}}
+            value={{ label: filter.warehouseManager, value: filter.warehouseManager }}
             options={warehouseManagers}
-            onChange={(value: null | IReactSelectOptions<string>) => setFilter({...filter, warehouseManager: value?.value ?? ""})}
+            onChange={(value: null | IReactSelectOptions<string>) => setFilter({ ...filter, warehouseManager: value?.value ?? "" })}
           />
         </div>
         <div className="flex flex-col space-y-1">
           <label htmlFor="recieved">Составил</label>
           <Select
             id="recieved"
-            className="basic-single" 
+            className="basic-single"
             classNamePrefix="select"
             isSearchable={true}
             isClearable={true}
             menuPosition="fixed"
             name={"recieved"}
             placeholder={""}
-            value={{label: filter.recieved, value: filter.recieved}}
+            value={{ label: filter.recieved, value: filter.recieved }}
             options={recieveds}
-            onChange={(value: null | IReactSelectOptions<string>) => setFilter({...filter, recieved: value?.value ?? ""})}
+            onChange={(value: null | IReactSelectOptions<string>) => setFilter({ ...filter, recieved: value?.value ?? "" })}
           />
         </div>
         <div className="flex flex-col space-y-1">
           <label htmlFor="object">Объект</label>
           <Select
             id="object"
-            className="basic-single" 
+            className="basic-single"
             classNamePrefix="select"
             isSearchable={true}
             isClearable={true}
             menuPosition="fixed"
             name={"object"}
             placeholder={""}
-            value={{label: filter.object, value: filter.object}}
+            value={{ label: filter.object, value: filter.object }}
             options={objects}
-            onChange={(value: null | IReactSelectOptions<string>) => setFilter({...filter, object: value?.value ?? ""})}
+            onChange={(value: null | IReactSelectOptions<string>) => setFilter({ ...filter, object: value?.value ?? "" })}
           />
         </div>
         <div className="flex flex-col space-y-1">
           <label htmlFor="team">Бригады</label>
           <Select
             id="team"
-            className="basic-single" 
+            className="basic-single"
             classNamePrefix="select"
             isSearchable={true}
             isClearable={true}
             menuPosition="fixed"
             name={"team"}
             placeholder={""}
-            value={{label: filter.team, value: filter.team}}
+            value={{ label: filter.team, value: filter.team }}
             options={teams}
-            onChange={(value: null | IReactSelectOptions<string>) => setFilter({...filter, team: value?.value ?? ""})}
+            onChange={(value: null | IReactSelectOptions<string>) => setFilter({ ...filter, team: value?.value ?? "" })}
           />
         </div>
         <div className="felx flex-col space-y-1">
@@ -241,8 +247,8 @@ export default function ReportInvoiceOutput({setShowReportModal}: Props) {
                 name="dateOfInvoice"
                 className="outline-none w-full"
                 dateFormat={"dd-MM-yyyy"}
-                selected={filter.dateFrom} 
-                onChange={(date: Date | null) => setFilter({...filter, dateFrom: date ?? new Date()})}
+                selected={filter.dateFrom}
+                onChange={(date: Date | null) => setFilter({ ...filter, dateFrom: date ?? new Date() })}
               />
             </div>
             <div className="py-[4px] px-[8px] border-[#cccccc] border rounded-[4px]">
@@ -250,20 +256,25 @@ export default function ReportInvoiceOutput({setShowReportModal}: Props) {
                 name="dateOfInvoice"
                 className="outline-none w-full"
                 dateFormat={"dd-MM-yyyy"}
-                selected={filter.dateTo} 
-                onChange={(date: Date | null) => setFilter({...filter, dateTo: date ?? new Date()})}
+                selected={filter.dateTo}
+                onChange={(date: Date | null) => setFilter({ ...filter, dateTo: date ?? new Date() })}
               />
-            </div> 
+            </div>
             <div>
-              <Button onClick={() => setFilter({...filter, dateFrom: null, dateTo: null})} text="X" buttonType="default"/>
+              <Button onClick={() => setFilter({ ...filter, dateFrom: null, dateTo: null })} text="X" buttonType="default" />
             </div>
           </div>
         </div>
-        <div>
-          <Button onClick={() => onCreateReportClick()} buttonType="default" text="Создать отсчёт"/>
+        <div className="flex">
+          <div
+            onClick={() => onCreateReportClick()}
+            className="text-center text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+          >
+            {buildInvoiceOutputReport.isLoading ? <LoadingDots height={30} /> : "Создать Отчет"}
+          </div>
         </div>
       </div>
-      {showErrorsModal && 
+      {showErrorsModal &&
         <ErrorModal setShowModal={setShowErrorsModal}>
           {filterErrors.date && <span className="text-red-500 text-sm font-semibold">Неправильно указанный диапазон для дат. </span>}
           <span className="invisible">This is just make the modal look good. DO NOT TOUCH IT!!!!!</span>

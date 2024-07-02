@@ -20,6 +20,7 @@ import toast from "react-hot-toast";
 import IconButton from "../../IconButtons";
 import { FaBarcode } from "react-icons/fa";
 import { IoIosAddCircleOutline } from "react-icons/io";
+import LoadingDots from "../../UI/loadingDots";
 
 interface Props {
   setShowMutationModal: React.Dispatch<React.SetStateAction<boolean>>
@@ -304,8 +305,18 @@ export default function MutationInvoiceInput({
               </div>
             </div>
           </div>
-          <div className="mt-4">
-            <Button text="Опубликовать" onClick={() => onMutationSubmit()} />
+          <div className="mt-4 flex">
+            <div
+              onClick={() => onMutationSubmit()}
+              className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+            >
+              {createMaterialMutation.isLoading 
+                ?
+                  <LoadingDots height={30}/>
+                :
+                  "Опубликовать"
+              }
+            </div>
           </div>
         </div>
         <div>

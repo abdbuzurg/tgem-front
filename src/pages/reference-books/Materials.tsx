@@ -16,6 +16,7 @@ import IReactSelectOptions from "../../services/interfaces/react-select";
 import Select from "react-select"
 import { getMaterialTemplateDocument, importMaterials } from "../../services/api/material";
 import toast from "react-hot-toast";
+import { MATERIALS_CATEGORIES_FOR_SELECT } from "../../services/lib/objectStatuses";
 
 export default function Materials() {
   //FETCHING LOGIC
@@ -123,6 +124,11 @@ export default function Materials() {
 
     if (materialMutationData.unit == "") {
       toast.error("Не указана еденица измерения материала")
+      return
+    }
+
+    if (materialMutationData.code == "") {
+      toast.error("Не указан код материала")
       return
     }
 
@@ -249,16 +255,27 @@ export default function Materials() {
             </h3>
             <div className="flex flex-col space-y-3 mt-2">
               <div className="flex flex-col space-y-1">
-                <label htmlFor="name">Категория материала</label>
-                <Input
-                  name="category"
-                  type="text"
-                  value={materialMutationData.category}
-                  onChange={(e) => setMaterialMutationData({ ...materialMutationData, [e.target.name]: e.target.value })}
+                <label htmlFor="name">Категория материала<span className="text-red-600">*</span></label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"material-cost-material-select"}
+                  placeholder={""}
+                  value={{
+                    label: materialMutationData.category,
+                    value: materialMutationData.category,
+                  }}
+                  options={MATERIALS_CATEGORIES_FOR_SELECT}
+                  onChange={(value) => setMaterialMutationData({
+                    ...materialMutationData,
+                    category: value?.value ?? "",
+                  })}
                 />
               </div>
               <div className="flex flex-col space-y-1">
-                <label htmlFor="name">Наименование</label>
+                <label htmlFor="name">Наименование<span className="text-red-600">*</span></label>
                 <Input
                   name="name"
                   type="text"
@@ -267,7 +284,7 @@ export default function Materials() {
                 />
               </div>
               <div className="flex flex-col space-y-1">
-                <label htmlFor="unit">Еденица измерения</label>
+                <label htmlFor="unit">Еденица измерения<span className="text-red-600">*</span></label>
                 <Select
                   className="basic-single"
                   classNamePrefix="select"
@@ -281,7 +298,7 @@ export default function Materials() {
                 />
               </div>
               <div className="flex flex-col space-y-1">
-                <label htmlFor="code">Код материала</label>
+                <label htmlFor="code">Код материала<span className="text-red-600">*</span></label>
                 <Input
                   name="code"
                   type="text"
@@ -290,7 +307,7 @@ export default function Materials() {
                 />
               </div>
               <div className="flex flex-col space-y-1">
-                <label htmlFor="code">Пункт</label>
+                <label htmlFor="code">Пункт BOQ контракта с закасчиком/УС</label>
                 <Input
                   name="article"
                   type="text"
@@ -299,7 +316,7 @@ export default function Materials() {
                 />
               </div>
               <div className="flex flex-col space-y-1">
-                <div className="flex space-x-2">
+                <div className="flex space-x-2 items-center">
                   <input type="checkbox" id="hasSerialNumber" value={1} name="hasSerialNumber" onChange={
                     (e) => {
                       if (e.target.checked) {
@@ -310,7 +327,7 @@ export default function Materials() {
                     }
                   }
                   />
-                  <label htmlFor="hasSerialNumber">Серийный номер</label>
+                  <label htmlFor="hasSerialNumber">Необходимость контоля на уровне SN</label>
                 </div>
               </div>
               <div className="flex flex-col space-y-1">

@@ -4,7 +4,7 @@ import Select from 'react-select'
 import { useEffect, useState } from "react";
 import Button from "../../UI/button";
 import { useQuery } from "@tanstack/react-query";
-import { getSerialNumberCodesByMaterialID } from "../../../services/api/invoiceOutput";
+import { getSerialNumberCodesByMaterialID } from "../../../services/api/invoiceOutputInProject";
 
 interface Props {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>

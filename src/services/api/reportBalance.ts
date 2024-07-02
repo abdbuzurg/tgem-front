@@ -31,9 +31,9 @@ export interface ReportBalanceFilter {
 }
 
 export async function buildReportBalance(filter: ReportBalanceFilter): Promise<boolean> {
-  const responseRaw = await axiosClient.post(`http://127.0.0.1:8080${URL}/report/balance`, filter, { responseType: "blob", })
+  const responseRaw = await axiosClient.post(`${URL}/report/balance`, filter, { responseType: "blob", })
   if (responseRaw.status == 200) {
-    const fileName = "Отчет"
+    const fileName = "Отчет Остатка"
     fileDownload(responseRaw.data, `${fileName}.xlsx`)
     return true
   } else {

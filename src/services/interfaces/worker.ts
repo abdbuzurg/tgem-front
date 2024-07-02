@@ -1,6 +1,8 @@
 export default interface IWorker {
   id: number
   name: string
-  jobTitle: string
+  jobTitleInCompany: string
+  companyWorkerID: string
+  jobTitleInProject: string
   mobileNumber: string
 }

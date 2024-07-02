@@ -9,10 +9,11 @@ import Material from "../../services/interfaces/material"
 import { IInvoiceObjectMaterials } from "../../services/interfaces/invoiceObject"
 import toast from "react-hot-toast"
 import { getAllObjects } from "../../services/api/object"
-import { getAllTeams } from "../../services/api/team"
-import { InvoiceObjectCreateItems, createInvoiceObject, getMaterialAmount, getSerialNumbersOfMaterial, getTeamMaterials } from "../../services/api/invoiceObject"
+import { InvoiceObjectCreateItems, createInvoiceObject, getMaterialAmount, getSerialNumbersOfMaterial, getTeamMaterials, getTeamsFromObjectID } from "../../services/api/invoiceObject"
 import { useNavigate } from "react-router-dom"
 import { INVOICE_OBJECT } from "../../URLs"
+import { objectTypeIntoRus } from "../../services/lib/objectStatuses"
+import LoadingDots from "../../components/UI/loadingDots"
 
 export default function InvoiceObjectMutationAdd() {
 
@@ -32,10 +33,13 @@ export default function InvoiceObjectMutationAdd() {
     if (allObjectsQuery.isSuccess && allObjectsQuery.data) {
 
       setAvailableObject([
-        ...allObjectsQuery.data.map<IReactSelectOptions<number>>((val) => ({
-          label: val.name,
-          value: val.id,
-        }))
+        ...allObjectsQuery.data.map<IReactSelectOptions<number>>((val) => {
+          const objectType = objectTypeIntoRus(val.type)
+          return {
+            label: val.name + " (" + objectType + ")",
+            value: val.id,
+          }
+        })
       ])
 
     }
@@ -50,8 +54,9 @@ export default function InvoiceObjectMutationAdd() {
 
   const [availableTeams, setAvailableTeams] = useState<IReactSelectOptions<number>[]>([])
   const allTeamsQuery = useQuery<ITeam[], Error, ITeam[]>({
-    queryKey: ["all-teams"],
-    queryFn: getAllTeams,
+    queryKey: ["all-teams-in-object", selectedObject.value],
+    queryFn: () => getTeamsFromObjectID(selectedObject.value),
+    enabled: selectedObject.value != 0,
   })
   useEffect(() => {
 
@@ -77,7 +82,7 @@ export default function InvoiceObjectMutationAdd() {
 
   const [availableMaterials, setAvailableMaterials] = useState<IReactSelectOptions<number>[]>([])
   const allMaterialsQuery = useQuery<Material[], Error, Material[]>({
-    queryKey: [`materials-in-team-${selectedTeam.value}`],
+    queryKey: [`materials-in-team`, selectedTeam.value],
     queryFn: () => getTeamMaterials(selectedTeam.value),
     enabled: selectedTeam.value != 0,
   })
@@ -99,24 +104,13 @@ export default function InvoiceObjectMutationAdd() {
   const onMaterialSelect = (value: IReactSelectOptions<number> | null) => {
     if (!value) {
       setSelectedMaterial({ label: "", value: 0 })
-      setInvoiceMaterial({
-        materialID: 0,
-        materialName: "",
-        availableMaterial: 0,
-        unit: "",
-        amount: 0,
-        notes: "",
-        hasSerialNumbers: false,
-        serialNumbers: [],
-      })
-
+      resetInvoiceMaterialObject()
       return
     }
-    
+
     setSelectedMaterial(value)
     if (allMaterialsQuery.isSuccess && allMaterialsQuery.data) {
       const material = allMaterialsQuery.data.find((val) => val.id == value.value)!
-      console.log(material)
       setInvoiceMaterial({
         ...invoiceMaterial,
         materialID: material.id,
@@ -125,7 +119,7 @@ export default function InvoiceObjectMutationAdd() {
         unit: material.unit,
       })
     }
-  }  
+  }
 
   //Logic for getting the amount of selected material
   const materialAmountQuery = useQuery<number, Error, number>({
@@ -144,6 +138,17 @@ export default function InvoiceObjectMutationAdd() {
   const [invoiceMaterials, setInvoiceMaterials] = useState<IInvoiceObjectMaterials[]>([])
 
   const [invoiceMaterial, setInvoiceMaterial] = useState<IInvoiceObjectMaterials>({
+    materialID: 0,
+    materialName: "",
+    availableMaterial: 0,
+    unit: "",
+    amount: 0,
+    notes: "",
+    hasSerialNumbers: false,
+    serialNumbers: [],
+  })
+
+  const resetInvoiceMaterialObject = () => setInvoiceMaterial({
     materialID: 0,
     materialName: "",
     availableMaterial: 0,
@@ -310,8 +315,13 @@ export default function InvoiceObjectMutationAdd() {
         <span className="font-bold text-xl">Поступление материалов на объект</span>
       </div>
       <div className="px-2 py-1">
-        <div className="w-full">
-          <Button onClick={() => submitInvoice()} text="Опубликовать" />
+        <div className="w-full flex">
+          <div
+            onClick={() => submitInvoice()}
+            className="text-white py-2.5 px-5 rounded-lg bg-gray-800 hover:bg-gray-700 hover:cursor-pointer"
+          >
+            {createInvoiceObjectMutation.isLoading ? <LoadingDots height={30} /> : "Опубликовать" }
+          </div>
         </div>
         <span className="font-semibold text-lg">Основная информация</span>
         <div className="px-3 py-4 bg-gray-800 text-white rounded-md ">
@@ -326,10 +336,15 @@ export default function InvoiceObjectMutationAdd() {
               placeholder={""}
               value={selectedObject}
               options={availableObjects}
-              onChange={(value) => setSelectedObject({
-                label: value?.label ?? "",
-                value: value?.value ?? 0,
-              })}
+              onChange={(value) => {
+                setSelectedObject({
+                  label: value?.label ?? "",
+                  value: value?.value ?? 0,
+                })
+                setSelectedTeam({ value: 0, label: "" })
+                setSelectedMaterial({ value: 0, label: "" })
+                resetInvoiceMaterialObject()
+              }}
             />
           </div>
           <div className="flex flex-col space-y-1">
@@ -343,10 +358,14 @@ export default function InvoiceObjectMutationAdd() {
               placeholder={""}
               value={selectedTeam}
               options={availableTeams}
-              onChange={(value) => setSelectedTeam({
-                label: value?.label ?? "",
-                value: value?.value ?? 0,
-              })}
+              onChange={(value) => {
+                setSelectedTeam({
+                  label: value?.label ?? "",
+                  value: value?.value ?? 0,
+                })
+                setSelectedMaterial({ value: 0, label: "" })
+                resetInvoiceMaterialObject()
+              }}
             />
           </div>
         </div>
@@ -381,7 +400,7 @@ export default function InvoiceObjectMutationAdd() {
                   })}
                   className="text-black rounded-sm px-2 py-1.5"
                 />
-                <span>Доступно: {invoiceMaterial.availableMaterial}{invoiceMaterial.unit}</span>
+                <span>Доступно: {invoiceMaterial.availableMaterial} {invoiceMaterial.unit}</span>
               </div>
             </div>
             {invoiceMaterial.hasSerialNumbers &&

@@ -11,4 +11,5 @@ export const MEASUREMENT: string[] = [
   "м^2",
   "м^3",
   "пара", 
+  "пачка"
 ]
