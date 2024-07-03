@@ -1,13 +1,13 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Button from "../../components/UI/button";
 import { ENTRY_LIMIT } from "../../services/api/constants";
-import { useEffect, useState } from "react";
+import { useEffect,  useState } from "react";
 import LoadingDots from "../../components/UI/loadingDots";
 import DeleteModal from "../../components/deleteModal";
 import "react-datepicker/dist/react-datepicker.css";
 import MutationInvoiceInput from "../../components/invoice/input/MutationInvoiceInput";
 import ReportInvoiceInput from "../../components/invoice/input/ReportInvoiceInput";
-import { InvoiceInputPagianted, deleteInvoiceInput, getInvoiceInputDocument, getPaginatedInvoiceInput, sendInvoiceInputConfirmationExcel } from "../../services/api/invoiceInput";
+import { InvoiceInputConfirmationData, InvoiceInputPagianted, deleteInvoiceInput, getInvoiceInputDocument, getPaginatedInvoiceInput, sendInvoiceInputConfirmationExcel } from "../../services/api/invoiceInput";
 import { IInvoiceInputView } from "../../services/interfaces/invoiceInput";
 import { FaUpload, FaDownload, FaRegListAlt, FaRegTrashAlt } from "react-icons/fa";
 import IconButton from "../../components/IconButtons";
@@ -41,23 +41,24 @@ export default function InvoiceInput() {
   }, [])
 
   //Confirmation logic
-  const [confirmationData, setConfirmationData] = useState<{ id: number, data: File | null }>({ id: 0, data: null })
-  const confirmationFileMutation = useMutation<boolean, Error, void>({
-    mutationFn: () => sendInvoiceInputConfirmationExcel(confirmationData.id, confirmationData.data!),
-    onSuccess: () => queryClient.invalidateQueries(["invoice-input"])
-  })
-  const acceptExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return
-    setConfirmationData({
-      ...confirmationData,
-      data: e.target.files[0],
-    })
-  }
-  useEffect(() => {
-    if (confirmationData.data && confirmationData.id != 0) {
-      confirmationFileMutation.mutate()
+  const confirmationFileMutation = useMutation<boolean, Error, InvoiceInputConfirmationData>({
+    mutationFn: sendInvoiceInputConfirmationExcel,
+    onSuccess: () => {
+      queryClient.invalidateQueries(["invoice-input"])
     }
-  }, [confirmationData])
+  })
+
+  const acceptConfirmationFile = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    e.preventDefault()
+
+    if (!e.target.files) return
+
+    confirmationFileMutation.mutate({id: tableData[index].id, file: e.target.files[0]!})
+
+    e.target.files = null
+    e.target.value = ''
+
+  }
 
   //DELETE LOGIC
   const [showModal, setShowModal] = useState(false)
@@ -175,7 +176,6 @@ export default function InvoiceInput() {
                     <>
                       <label
                         htmlFor={`file-${row.id}`}
-                        onClick={() => setConfirmationData({ ...confirmationData, id: row.id })}
                         className="px-4 py-2 flex items-center text-white bg-red-700 hover:bg-red-800 rounded-lg text-center cursor-pointer"
                       >
                         <FaUpload
@@ -184,12 +184,12 @@ export default function InvoiceInput() {
                         />
                       </label>
                       <input
+                        key={index}
                         name={`file-${row.id}`}
                         type="file"
                         id={`file-${row.id}`}
-                        onChange={(e) => acceptExcel(e)}
+                        onChange={(e) => acceptConfirmationFile(e, index)}
                         className="hidden"
-                        value=''
                       />
                       {/* <IconButton */}
                       {/*   icon={<FaRegEdit size="20px" title={`Изменить данные накладной ${row.deliveryCode}`} />} */}
