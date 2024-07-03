@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
 import { ENTRY_LIMIT } from "../../services/api/constants"
-import { InvoiceReturnPagianted, deleteInvoiceReturn, getInvoiceReturnDocument, getPaginatedInvoiceReturn, sendInvoiceReturnConfirmationExcel } from "../../services/api/invoiceReturn"
+import { InvoiceReturnConfirmation, InvoiceReturnPagianted, deleteInvoiceReturn, getInvoiceReturnDocument, getPaginatedInvoiceReturn, sendInvoiceReturnConfirmationExcel } from "../../services/api/invoiceReturn"
 import { useEffect, useState } from "react"
 import { IInvoiceReturnView } from "../../services/interfaces/invoiceReturn"
 import Button from "../../components/UI/button"
@@ -40,24 +40,21 @@ export default function InvoiceReturnTeam() {
   }, [])
 
   //Confirmation logic
-  const [confirmationData, setConfirmationData] = useState<{ id: number, data: File | null }>({ id: 0, data: null })
-  const confirmationFileMutation = useMutation<boolean, Error, void>({
-    mutationFn: () => sendInvoiceReturnConfirmationExcel(confirmationData.id, confirmationData.data!),
+  const confirmationFileMutation = useMutation<boolean, Error, InvoiceReturnConfirmation>({
+    mutationFn: sendInvoiceReturnConfirmationExcel,
     onSuccess: () => queryClient.invalidateQueries(["invoice-return-team"])
   })
-  const acceptExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (!e.target.files) return
-    setConfirmationData({
-      ...confirmationData,
-      data: e.target.files[0],
-    })
-  }
-  useEffect(() => {
-    if (confirmationData.data && confirmationData.id != 0) {
-      confirmationFileMutation.mutate()
-    }
-  }, [confirmationData])
 
+  const acceptConfirmationFile = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    e.preventDefault()
+
+    if (!e.target.files) return
+
+    confirmationFileMutation.mutate({ id: tableData[index].id, file: e.target.files[0]! })
+
+    e.target.files = null
+    e.target.value = ''
+  }
 
   //DELETE LOGIC
   const [showModal, setShowModal] = useState(false)
@@ -160,7 +157,6 @@ export default function InvoiceReturnTeam() {
                 {!value.confirmation && <>
                   <label
                     htmlFor="file"
-                    onClick={() => setConfirmationData({ ...confirmationData, id: value.id })}
                     className="px-4 py-2 flex items-center text-white bg-red-700 hover:bg-red-800 rounded-lg text-center cursor-pointer"
                   >
                     <FaUpload
@@ -172,7 +168,7 @@ export default function InvoiceReturnTeam() {
                     name={`file-${value.id}`}
                     type="file"
                     id="file"
-                    onChange={(e) => acceptExcel(e)}
+                    onChange={(e) => acceptConfirmationFile(e, index)}
                     className="hidden"
                     value=''
                   />

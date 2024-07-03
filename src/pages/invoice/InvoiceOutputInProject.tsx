@@ -7,7 +7,7 @@ import ReportInvoiceOutput from "../../components/invoice/output/ReportInvoiceOu
 import IconButton from "../../components/IconButtons";
 import { FaDownload, FaRegListAlt, FaRegTrashAlt, FaUpload } from "react-icons/fa";
 import ShowInvoiceOutputInProjectDetails from "../../components/invoice/output/ShowInvoiceOutputInProjectDetails";
-import { InvoiceOutputInProjectPagianted, deleteInvoiceOutputInProject, getInvoiceOutputInProjectDocument, getPaginatedInvoiceOutputInProject, sendInvoiceOutputInProjectConfirmationExcel } from "../../services/api/invoiceOutputInProject";
+import { InvoiceOutputInProjectConfirmation, InvoiceOutputInProjectPagianted, deleteInvoiceOutputInProject, getInvoiceOutputInProjectDocument, getPaginatedInvoiceOutputInProject, sendInvoiceOutputInProjectConfirmationExcel } from "../../services/api/invoiceOutputInProject";
 import { IInvoiceOutputInProjectView } from "../../services/interfaces/invoiceOutputInProject";
 import MutationInvoiceOutputInProject from "../../components/invoice/output/MutationInvoiceOutputInProject";
 
@@ -39,23 +39,21 @@ export default function InvoiceOutputInProject() {
   }, [])
 
   //Confirmation logic
-  const [confirmationData, setConfirmationData] = useState<{ id: number, data: File | null }>({ id: 0, data: null })
-  const confirmationFileMutation = useMutation<boolean, Error, void>({
-    mutationFn: () => sendInvoiceOutputInProjectConfirmationExcel(confirmationData.id, confirmationData.data!),
+  const confirmationFileMutation = useMutation<boolean, Error, InvoiceOutputInProjectConfirmation>({
+    mutationFn: sendInvoiceOutputInProjectConfirmationExcel,
     onSuccess: () => queryClient.invalidateQueries(["invoice-output-in-project"])
   })
-  const acceptExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+
+  const acceptConfirmationFile = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    e.preventDefault()
+
     if (!e.target.files) return
-    setConfirmationData({
-      ...confirmationData,
-      data: e.target.files[0],
-    })
+
+    confirmationFileMutation.mutate({ id: tableData[index].id, file: e.target.files[0]! })
+
+    e.target.files = null
+    e.target.value = ''
   }
-  useEffect(() => {
-    if (confirmationData.data && confirmationData.id != 0) {
-      confirmationFileMutation.mutate()
-    }
-  }, [confirmationData])
 
   //DELETE LOGIC
   const [showModal, setShowModal] = useState(false)
@@ -173,7 +171,6 @@ export default function InvoiceOutputInProject() {
                   <>
                     <label
                       htmlFor={`file-${row.id}`}
-                      onClick={() => setConfirmationData({ ...confirmationData, id: row.id })}
                       className="px-4 py-2 flex items-center text-white bg-red-700 hover:bg-red-800 rounded-lg text-center cursor-pointer"
                     >
                       <FaUpload
@@ -185,7 +182,7 @@ export default function InvoiceOutputInProject() {
                       name={`file-${row.id}`}
                       type="file"
                       id={`file-${row.id}`}
-                      onChange={(e) => acceptExcel(e)}
+                      onChange={(e) => acceptConfirmationFile(e, index)}
                       className="hidden"
                       value=''
                     />
@@ -208,7 +205,7 @@ export default function InvoiceOutputInProject() {
           )}
         </tbody>
       </table>
-      {showDetailsModal && <ShowInvoiceOutputInProjectDetails setShowModal={setShowDetailsModal} data={detailModalData}/>}
+      {showDetailsModal && <ShowInvoiceOutputInProjectDetails setShowModal={setShowDetailsModal} data={detailModalData} />}
       {showModal &&
         <DeleteModal {...modalProps}>
           <span>При подтверждении накладая уход с кодом {modalProps.no_delivery} и все связанные материалы будут удалены</span>

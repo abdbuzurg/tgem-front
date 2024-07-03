@@ -32,7 +32,7 @@ export async function deleteInvoiceReturn(id: number): Promise<boolean> {
     return true
   } else {
     throw new Error(response.error)
-}
+  }
 }
 export interface InvoiceReturnItem {
   materialCostID: number
@@ -77,10 +77,15 @@ export async function getInvoiceReturnDocument(deliveryCode: string): Promise<bo
   }
 }
 
-export async function sendInvoiceReturnConfirmationExcel(id: number, data: File): Promise<boolean> {
+export interface InvoiceReturnConfirmation {
+  id: number
+  file: File
+}
+
+export async function sendInvoiceReturnConfirmationExcel(data: InvoiceReturnConfirmation): Promise<boolean> {
   const formData = new FormData()
-  formData.append("file", data)
-  const responseRaw = await axiosClient.post(`${URL}/confirm/${id}`, formData, {
+  formData.append("file", data.file)
+  const responseRaw = await axiosClient.post(`${URL}/confirm/${data.id}`, formData, {
     headers: {
       "Content-Type": `multipart/form-data; boundary=WebAppBoundary`,
     }

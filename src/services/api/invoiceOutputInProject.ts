@@ -74,10 +74,15 @@ export async function getInvoiceOutputInProjectDocument(deliveryCode: string):Pr
   }
 }
 
-export async function sendInvoiceOutputInProjectConfirmationExcel(id: number, data: File): Promise<boolean> {
+export interface InvoiceOutputInProjectConfirmation {
+  id: number
+  file: File
+}
+
+export async function sendInvoiceOutputInProjectConfirmationExcel(data: InvoiceOutputInProjectConfirmation): Promise<boolean> {
   const formData = new FormData()
-  formData.append("file", data)
-  const responseRaw = await axiosClient.post(`${URL}/confirm/${id}`, formData, {
+  formData.append("file", data.file)
+  const responseRaw = await axiosClient.post(`${URL}/confirm/${data.id}`, formData, {
     headers: {
       "Content-Type": `multipart/form-data; boundary=WebAppBoundary`,
     }
