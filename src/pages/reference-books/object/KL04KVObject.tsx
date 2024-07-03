@@ -16,6 +16,8 @@ import toast from "react-hot-toast";
 import { ITeam } from "../../../services/interfaces/teams";
 import { getAllTeams } from "../../../services/api/team";
 import arrayListToString from "../../../services/lib/arrayListToStringWithCommas";
+import { getAllTPs } from "../../../services/api/tp_object";
+import { IObject } from "../../../services/interfaces/objects";
 
 export default function KL04KVObject() {
 
@@ -87,6 +89,7 @@ export default function KL04KVObject() {
     },
     supervisors: [],
     teams: [],
+    nourashedByTP: [],
   })
 
   const [selectedSupervisorsWorkerID, setselectedSupervisorsWorkerID] = useState<IReactSelectOptions<number>[]>([])
@@ -116,6 +119,20 @@ export default function KL04KVObject() {
       ])
     }
   }, [teamsQuery.data])
+
+  const [selectedTP, setSelectedTP] = useState<IReactSelectOptions<number>[]>([])
+  const [availableTPs, setAvailableTPs] = useState<IReactSelectOptions<number>[]>([])
+  const tpsQuery = useQuery<IObject[], Error, IObject[]>({
+    queryKey: ["all-tp-objects"],
+    queryFn: getAllTPs,
+  })
+  useEffect(() => {
+    if (tpsQuery.isSuccess && tpsQuery.data) {
+      setAvailableTPs([
+        ...tpsQuery.data.map<IReactSelectOptions<number>>((val) => ({ label: val.name, value: val.id }))
+      ])
+    }
+  }, [tpsQuery.data])
 
   const createMutation = useMutation<boolean, Error, IKL04KVObjectCreate>({
     mutationFn: createKL04KVObject
@@ -168,6 +185,11 @@ export default function KL04KVObject() {
       return availableTeams[subIndex]
     }).filter((val) => val)!
 
+    const tps = tableData[index].tpNames.map<IReactSelectOptions<number>>((value) => {
+      const subIndex = availableTPs.findIndex((val) => val.label == value)!
+      return availableTPs[subIndex]
+    }).filter((val) => val)!
+
     setMutationData({
       baseInfo: {
         id: tableData[index].objectID,
@@ -182,7 +204,8 @@ export default function KL04KVObject() {
         length: tableData[index].length,
       },
       supervisors: supervisors.map(val => val.value),
-      teams: teams.map(val => val.value)
+      teams: teams.map(val => val.value),
+      nourashedByTP: tps.map(val => val.value)
     })
 
     setselectedSupervisorsWorkerID(supervisors)
@@ -241,6 +264,9 @@ export default function KL04KVObject() {
             <th className="px-4 py-3 w-[150px]">
               <span>Бригады</span>
             </th>
+            <th className="px-4 py-3 w-[150px]">
+              <span>Питается от ТП</span>
+            </th>
             <th className="px-4 py-3">
               <Button text="Добавить" onClick={() => {
                 setMutationType("create")
@@ -260,6 +286,7 @@ export default function KL04KVObject() {
                   },
                   supervisors: [],
                   teams: [],
+                  nourashedByTP: [],
                 })
               }} />
             </th>
@@ -292,6 +319,9 @@ export default function KL04KVObject() {
                 </td>
                 <td className="px-4 py-3">
                   {arrayListToString(row.teams)}
+                </td>
+                <td className="px-4 py-3">
+                  {arrayListToString(row.tpNames)}
                 </td>
                 <td className="px-4 py-3 border-box flex space-x-3">
                   <Button text="Изменить" onClick={() => onEditClick(index)} />
@@ -422,6 +452,27 @@ export default function KL04KVObject() {
                     length: e.target.valueAsNumber,
                   },
                 })}
+              />
+            </div>
+            <div>
+              <label htmlFor="">Питается от ТП</label>
+              <Select
+                className="basic-single text-black"
+                classNamePrefix="select"
+                isSearchable={true}
+                isClearable={true}
+                isMulti
+                name={"supervisors-select"}
+                placeholder={""}
+                value={selectedTP}
+                options={availableTPs}
+                onChange={(value) => {
+                  setSelectedTP([...value])
+                  setMutationData({
+                    ...mutationData,
+                    nourashedByTP: value.map((val) => val.value),
+                  })
+                }}
               />
             </div>
           </div>

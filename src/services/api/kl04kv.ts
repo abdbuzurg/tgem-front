@@ -15,6 +15,7 @@ export interface IKL04KVObjectPaginated {
   nourashes: string
   supervisors: string[]
   teams: string[]
+  tpNames: string[]
 }
 
 export interface IKL04KVObjectGetAllResponse {
@@ -27,7 +28,7 @@ export async function getPaginatedKL04KVObjects({ pageParam = 1 }): Promise<IKL0
   const responseRaw = await axiosClient.get<IAPIResposeFormat<IKL04KVObjectGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
-    return {...response.data, page: pageParam}
+    return { ...response.data, page: pageParam }
   } else {
     throw new Error(response.error)
   }
@@ -41,6 +42,7 @@ export interface IKL04KVObjectCreate {
   }
   supervisors: number[]
   teams: number[]
+  nourashedByTP: number[]
 }
 
 export async function createKL04KVObject(data: IKL04KVObjectCreate): Promise<boolean> {

@@ -106,17 +106,17 @@ export default function Team() {
 
   }, [allWorkersQuery.data])
 
-  const createMaterialMutation = useMutation<ITeam, Error, TeamMutation>({
+  const createTeamMutation = useMutation<ITeam, Error, TeamMutation>({
     mutationFn: createTeam,
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries(["teams"])
       setShowMutationModal(false)
     }
   })
 
-  const updateMaterialMutation = useMutation<ITeam, Error, TeamMutation>({
+  const updateTeamMutation = useMutation<ITeam, Error, TeamMutation>({
     mutationFn: updateTeam,
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries(["teams"])
       setShowMutationModal(false)
     }
@@ -163,14 +163,14 @@ export default function Team() {
     switch (mutationModalType) {
       case "create":
 
-        createMaterialMutation.mutate({
+        createTeamMutation.mutate({
           ...mutationData,
           leaderIDs: [...selectedTeamLeaderWorkerID.map(v => v.value)],
         })
         return
       case "update":
 
-        updateMaterialMutation.mutate({
+        updateTeamMutation.mutate({
           ...mutationData,
           leaderIDs: [...selectedTeamLeaderWorkerID.map(v => v.value)],
         })
@@ -326,11 +326,13 @@ export default function Team() {
                   onChange={(e) => setMutationData({ ...mutationData, [e.target.name]: e.target.value })}
                 />
               </div>
-              <div>
-                <Button
-                  text={mutationModalType == "create" ? "Добавить" : "Подтвердить изменения"}
-                  onClick={onMutationSubmit}
-                />
+              <div className="flex">
+                <div className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer" onClick={() => onMutationSubmit()}>
+                  {mutationModalType == "create" && !createTeamMutation.isLoading && "Добавить"} 
+                  {mutationModalType == "create" && createTeamMutation.isLoading && <LoadingDots height={30} />} 
+                  {mutationModalType == "update" && !updateTeamMutation.isLoading && "Подтвердить изменения"} 
+                  {mutationModalType == "update" && updateTeamMutation.isLoading && <LoadingDots height={30} />} 
+                </div>
               </div>
             </div>
           </div>
