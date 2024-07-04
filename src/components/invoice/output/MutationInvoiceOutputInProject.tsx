@@ -169,6 +169,17 @@ export default function MutationInvoiceOutputInProject({ mutationType, setShowMu
     }
 
     setInvoiceMaterials([invoiceMaterial, ...invoiceMaterials,])
+    setSelectedMaterial({label: "", value: 0})
+    setInvoiceMaterial({
+      amount: 0,
+      materialName: "",
+      unit: "",
+      warehouseAmount: 0,
+      materialID: 0,
+      notes: "",
+      hasSerialNumber: false,
+      serialNumbers: [],
+    })
   }
 
   //DELETE MATERIAL LOGIC
