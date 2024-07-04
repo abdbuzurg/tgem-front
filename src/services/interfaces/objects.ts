@@ -18,3 +18,9 @@ export interface SecondaryObjectData {
   amountFeeders: number,
   length: number,
 } 
+
+export interface ObjectDataForSelect {
+  id: number
+  objectName: string
+  objectType: string
+}

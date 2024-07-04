@@ -5,6 +5,9 @@ import { useMutation, useQuery } from "@tanstack/react-query";
 import { ReportBalanceFilter, buildReportBalance, getAllUniqueObjects, getAllUniqueTeams } from "../../services/api/reportBalance";
 import Select from 'react-select'
 import LoadingDots from "../UI/loadingDots";
+import { TeamDataForSelect } from "../../services/interfaces/teams";
+import { ObjectDataForSelect } from "../../services/interfaces/objects";
+import { objectTypeIntoRus } from "../../services/lib/objectStatuses";
 
 interface Props {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>
@@ -13,8 +16,8 @@ interface Props {
 export default function ReportBalance({ setShowModal }: Props) {
   const [reportBalanceType, setReportBalanceType] = useState<"warehouse" | "teams" | "objects" | string>("warehouse")
   const [filter, setFilter] = useState<ReportBalanceFilter>({
-    object: "",
-    team: "",
+    objectID: 0,
+    teamID: 0,
     type: "warehouse",
   })
 
@@ -24,28 +27,36 @@ export default function ReportBalance({ setShowModal }: Props) {
   }
 
   //Teams Logic
-  const [teams, setTeams] = useState<IReactSelectOptions<string>[]>([])
-  const teamsQuery = useQuery<string[], Error, string[]>({
+  const [selectedTeam, setSelectedTeam] = useState<IReactSelectOptions<number>>({label: "", value: 0})
+  const [teams, setTeams] = useState<IReactSelectOptions<number>[]>([])
+  const teamsQuery = useQuery<TeamDataForSelect[], Error, TeamDataForSelect[]>({
     queryKey: ["balance-report-unique-teams"],
     queryFn: getAllUniqueTeams,
     enabled: reportBalanceType == "team"
   })
   useEffect(() => {
     if (teamsQuery.data && teamsQuery.isSuccess) {
-      setTeams([...teamsQuery.data.map<IReactSelectOptions<string>>((value) => ({ label: value, value: value }))])
+      setTeams([...teamsQuery.data.map<IReactSelectOptions<number>>((value) => ({ 
+        label: `${value.teamNumber} (${value.teamLeaderName})`, 
+        value: value.id 
+      }))])
     }
   }, [teamsQuery.data])
 
   //Object Logic
-  const [objects, setObjects] = useState<IReactSelectOptions<string>[]>([])
-  const objectsQuery = useQuery<string[], Error, string[]>({
+  const [selectedObject, setSelectedObject] = useState<IReactSelectOptions<number>>({label: "", value: 0})
+  const [objects, setObjects] = useState<IReactSelectOptions<number>[]>([])
+  const objectsQuery = useQuery<ObjectDataForSelect[], Error, ObjectDataForSelect[]>({
     queryKey: ["balance-report-unique-objects"],
     queryFn: getAllUniqueObjects,
     enabled: reportBalanceType == "object"
   })
   useEffect(() => {
     if (objectsQuery.data && objectsQuery.isSuccess) {
-      setObjects([...objectsQuery.data.map<IReactSelectOptions<string>>((value) => ({ label: value, value: value }))])
+      setObjects([...objectsQuery.data.map<IReactSelectOptions<number>>((value) => ({ 
+        label: `${value.objectName} (${objectTypeIntoRus(value.objectType)})`, 
+        value: value.id, 
+      }))])
     }
   }, [objectsQuery.data])
 
@@ -94,9 +105,15 @@ export default function ReportBalance({ setShowModal }: Props) {
               menuPosition="fixed"
               name={"teams"}
               placeholder={""}
-              value={{ value: filter.team, label: filter.team }}
+              value={selectedTeam}
               options={teams}
-              onChange={(value: null | IReactSelectOptions<string>) => setFilter({ ...filter, team: value?.value ?? "" })}
+              onChange={(value) => {
+                setSelectedTeam(value ?? {label: "", value: 0})
+                setFilter({
+                  ...filter,
+                  teamID: value?.value ?? 0,
+                })
+              }}
             />
           </div>
         }
@@ -112,9 +129,15 @@ export default function ReportBalance({ setShowModal }: Props) {
               menuPosition="fixed"
               name={"objects"}
               placeholder={""}
-              value={{ value: filter.object, label: filter.object }}
+              value={selectedObject}
               options={objects}
-              onChange={(value: null | IReactSelectOptions<string>) => setFilter({ ...filter, object: value?.value ?? "" })}
+              onChange={(value) => {
+                setSelectedObject(value ?? {label: "", value: 0})
+                setFilter({
+                  ...filter,
+                  objectID: value?.value ?? 0,
+                })
+              }}
             />
           </div>
         }

@@ -1,11 +1,13 @@
 import fileDownload from "js-file-download"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
+import { TeamDataForSelect } from "../interfaces/teams"
+import { ObjectDataForSelect } from "../interfaces/objects"
 
 const URL = "/material-location"
 
-export async function getAllUniqueTeams() {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/unique/team`)
+export async function getAllUniqueTeams(): Promise<TeamDataForSelect[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<TeamDataForSelect[]>>(`${URL}/unique/team`)
   const response = responseRaw.data
   if (response.permission || response.success) {
     return response.data
@@ -14,8 +16,8 @@ export async function getAllUniqueTeams() {
   }
 }
 
-export async function getAllUniqueObjects() {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/unique/object`)
+export async function getAllUniqueObjects(): Promise<ObjectDataForSelect[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<ObjectDataForSelect[]>>(`${URL}/unique/object`)
   const response = responseRaw.data
   if (response.permission || response.success) {
     return response.data
@@ -26,8 +28,8 @@ export async function getAllUniqueObjects() {
 
 export interface ReportBalanceFilter {
   type: string
-  team: string
-  object: string
+  teamID: number
+  objectID: number
 }
 
 export async function buildReportBalance(filter: ReportBalanceFilter): Promise<boolean> {
