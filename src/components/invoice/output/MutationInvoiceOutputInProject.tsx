@@ -18,7 +18,7 @@ import { IoIosAddCircleOutline } from "react-icons/io";
 import { IInvoiceOutputInProject, IInvoiceOutputMaterials } from "../../../services/interfaces/invoiceOutputInProject";
 import { AvailableMaterial, InvoiceOutputInProjectMutation, InvoiceOutputItem, createInvoiceOutputInProject, getAvailableMaterialsInWarehouse } from "../../../services/api/invoiceOutputInProject";
 import { getTeamsByObjectID } from "../../../services/api/object";
-import { ITeam } from "../../../services/interfaces/teams";
+import {  TeamDataForSelect } from "../../../services/interfaces/teams";
 
 interface Props {
   setShowMutationModal: React.Dispatch<React.SetStateAction<boolean>>
@@ -71,7 +71,7 @@ export default function MutationInvoiceOutputInProject({ mutationType, setShowMu
   ])
 
   const [allTeamsInObject, setAllTeamsInObject] = useState<IReactSelectOptions<number>[]>([])
-  const allTeamsInObjectQuery = useQuery<ITeam[], Error, ITeam[]>({
+  const allTeamsInObjectQuery = useQuery<TeamDataForSelect[], Error, TeamDataForSelect[]>({
     queryKey: ["teams-in-object", selectedObjectID.value],
     queryFn: () => getTeamsByObjectID(selectedObjectID.value),
     enabled: selectedObjectID.value != 0,
@@ -79,7 +79,7 @@ export default function MutationInvoiceOutputInProject({ mutationType, setShowMu
   useEffect(() => {
     if (allTeamsInObjectQuery.data && allTeamsInObjectQuery.isSuccess) {
       setAllTeamsInObject(allTeamsInObjectQuery.data.map<IReactSelectOptions<number>>((val) => ({
-        label: val.number,
+        label: val.teamNumber + " (" + val.teamLeaderName + ")",
         value: val.id,
       })))
     }

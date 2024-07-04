@@ -3,7 +3,7 @@ import IReactSelectOptions from "../../services/interfaces/react-select"
 import Select from 'react-select'
 import Button from "../../components/UI/button"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { ITeam } from "../../services/interfaces/teams"
+import { TeamDataForSelect } from "../../services/interfaces/teams"
 import { IObject } from "../../services/interfaces/objects"
 import Material from "../../services/interfaces/material"
 import { IInvoiceObjectMaterials } from "../../services/interfaces/invoiceObject"
@@ -53,7 +53,7 @@ export default function InvoiceObjectMutationAdd() {
   })
 
   const [availableTeams, setAvailableTeams] = useState<IReactSelectOptions<number>[]>([])
-  const allTeamsQuery = useQuery<ITeam[], Error, ITeam[]>({
+  const allTeamsQuery = useQuery<TeamDataForSelect[], Error, TeamDataForSelect[]>({
     queryKey: ["all-teams-in-object", selectedObject.value],
     queryFn: () => getTeamsFromObjectID(selectedObject.value),
     enabled: selectedObject.value != 0,
@@ -64,7 +64,7 @@ export default function InvoiceObjectMutationAdd() {
 
       setAvailableTeams([
         ...allTeamsQuery.data.map<IReactSelectOptions<number>>((val) => ({
-          label: val.number,
+          label: val.teamNumber + " (" + val.teamLeaderName + ")",
           value: val.id
         }))
       ])

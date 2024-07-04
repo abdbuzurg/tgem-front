@@ -114,7 +114,7 @@ export function objectTypeIntoRus(objectType: string) {
     case "kl04kv_objects":
       return "Кл 04 кВ"
     case "tp_objects":
-      return "Кл 04 кВ"
+      return "ТП"
     case "substation_objects":
       return "Подстанция"
 

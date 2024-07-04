@@ -1,5 +1,5 @@
 import { IObject } from "../interfaces/objects"
-import { ITeam } from "../interfaces/teams"
+import { TeamDataForSelect } from "../interfaces/teams"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
@@ -89,8 +89,8 @@ export async function updateObject(data: IObject): Promise<IObject> {
   }
 }
 
-export async function getTeamsByObjectID(objectID: number): Promise<ITeam[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<ITeam[]>>(`${URL}/teams/${objectID}`)
+export async function getTeamsByObjectID(objectID: number): Promise<TeamDataForSelect[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<TeamDataForSelect[]>>(`${URL}/teams/${objectID}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
     return response.data

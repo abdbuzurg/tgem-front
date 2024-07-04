@@ -5,3 +5,9 @@ export interface ITeam {
   mobileNumber: string
   company: string
 }
+
+export interface TeamDataForSelect {
+  id: number
+  teamNumber: string
+  teamLeaderName: string
+}
