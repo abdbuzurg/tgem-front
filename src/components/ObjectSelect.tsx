@@ -5,6 +5,7 @@ import { useQuery } from '@tanstack/react-query'
 import { IObject } from '../services/interfaces/objects'
 import axiosClient from '../services/api/axiosClient'
 import IAPIResposeFormat from '../services/api/IAPIResposeFormat'
+import { objectTypeIntoRus } from '../services/lib/objectStatuses'
 
 interface Props {
   selectedObjectID: IReactSelectOptions<number>
@@ -29,7 +30,7 @@ export default function ObjectSelect({ selectedObjectID, setSelectedObjectID }:P
 
   useEffect(() => {
     if (query.isSuccess && query.data.length > 0) {
-      setAllData([...query.data.map<IReactSelectOptions<number>>((value) => ({label: value.name, value: value.id}))])
+      setAllData([...query.data.map<IReactSelectOptions<number>>((value) => ({label: value.name + " (" + objectTypeIntoRus(value.type) + ")", value: value.id}))])
     }
   }, [query.data])
 

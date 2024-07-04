@@ -1,7 +1,7 @@
 import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import Button from "../../components/UI/button";
 import { ENTRY_LIMIT } from "../../services/api/constants";
-import { useEffect,  useState } from "react";
+import { useEffect, useState } from "react";
 import LoadingDots from "../../components/UI/loadingDots";
 import DeleteModal from "../../components/deleteModal";
 import "react-datepicker/dist/react-datepicker.css";
@@ -53,7 +53,7 @@ export default function InvoiceInput() {
 
     if (!e.target.files) return
 
-    confirmationFileMutation.mutate({id: tableData[index].id, file: e.target.files[0]!})
+    confirmationFileMutation.mutate({ id: tableData[index].id, file: e.target.files[0]! })
 
     e.target.files = null
     e.target.value = ''
@@ -85,7 +85,6 @@ export default function InvoiceInput() {
 
   //Mutation Logic
   const [showMutationModal, setShowMutationModal] = useState(false)
-  const [mutationModalType, setMutationModalType] = useState<"create" | "update">("create")
 
   //Details logic
   const [showDetailsModal, setShowDetailsModal] = useState(false)
@@ -132,10 +131,7 @@ export default function InvoiceInput() {
               <span>Дата</span>
             </th>
             <th className="px-4 py-3">
-              <Button text="Добавить" onClick={() => {
-                setShowMutationModal(true)
-                setMutationModalType("create")
-              }} />
+              <Button text="Добавить" onClick={() => setShowMutationModal(true)} />
             </th>
           </tr>
         </thead>
@@ -214,7 +210,7 @@ export default function InvoiceInput() {
           <span>При подтверждении накладая приход с кодом {modalProps.no_delivery} и все связанные материалы будут удалены</span>
         </DeleteModal>
       }
-      {showMutationModal && <MutationInvoiceInput mutationType={mutationModalType} setShowMutationModal={setShowMutationModal} />}
+      {showMutationModal && <MutationInvoiceInput setShowMutationModal={setShowMutationModal} />}
       {showReportModal && <ReportInvoiceInput setShowReportModal={setShowReportModal} />}
     </main>
   )

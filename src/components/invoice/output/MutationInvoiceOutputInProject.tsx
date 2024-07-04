@@ -2,7 +2,6 @@ import { Fragment, useEffect, useState } from "react";
 import DistrictSelect from "../../DistrictSelect";
 import Modal from "../../Modal";
 import ObjectSelect from "../../ObjectSelect";
-import TeamSelect from "../../TeamSelect";
 import WorkerSelect from "../../WorkerSelect";
 import IReactSelectOptions from "../../../services/interfaces/react-select";
 import DatePicker from "react-datepicker";
@@ -18,6 +17,8 @@ import { FaBarcode } from "react-icons/fa";
 import { IoIosAddCircleOutline } from "react-icons/io";
 import { IInvoiceOutputInProject, IInvoiceOutputMaterials } from "../../../services/interfaces/invoiceOutputInProject";
 import { AvailableMaterial, InvoiceOutputInProjectMutation, InvoiceOutputItem, createInvoiceOutputInProject, getAvailableMaterialsInWarehouse } from "../../../services/api/invoiceOutputInProject";
+import { getTeamsByObjectID } from "../../../services/api/object";
+import { ITeam } from "../../../services/interfaces/teams";
 
 interface Props {
   setShowMutationModal: React.Dispatch<React.SetStateAction<boolean>>
@@ -46,9 +47,13 @@ export default function MutationInvoiceOutputInProject({ mutationType, setShowMu
   const [selectedWarehouseManagerWorkerID, setSelectedWarehouseManagerWorkerID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   const [selectedRecipientWorkerID, setSelectedRecipientWorkerID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   const [selectedObjectID, setSelectedObjectID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
-  const [selectedTeamID, setSelectedTeamID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   const [selectedDistrictID, setSelectedDistrictID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [selectedTeamID, setSelectedTeamID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   useEffect(() => {
+    if (selectedObjectID.value == 0) {
+      setAllTeamsInObject([])
+      setSelectedTeamID({label: "", value: 0})
+    }
     setMutationData({
       ...mutationData,
       warehouseManagerWorkerID: selectedWarehouseManagerWorkerID.value,
@@ -64,6 +69,21 @@ export default function MutationInvoiceOutputInProject({ mutationType, setShowMu
     selectedTeamID,
     selectedWarehouseManagerWorkerID
   ])
+
+  const [allTeamsInObject, setAllTeamsInObject] = useState<IReactSelectOptions<number>[]>([])
+  const allTeamsInObjectQuery = useQuery<ITeam[], Error, ITeam[]>({
+    queryKey: ["teams-in-object", selectedObjectID.value],
+    queryFn: () => getTeamsByObjectID(selectedObjectID.value),
+    enabled: selectedObjectID.value != 0,
+  })
+  useEffect(() => {
+    if (allTeamsInObjectQuery.data && allTeamsInObjectQuery.isSuccess) {
+      setAllTeamsInObject(allTeamsInObjectQuery.data.map<IReactSelectOptions<number>>((val) => ({
+        label: val.number,
+        value: val.id,
+      })))
+    }
+  }, [allTeamsInObjectQuery.data])
 
   //INVOICE MATERIAL DATA
   const [invoiceMaterials, setInvoiceMaterials] = useState<IInvoiceOutputMaterials[]>([])
@@ -169,7 +189,7 @@ export default function MutationInvoiceOutputInProject({ mutationType, setShowMu
     }
 
     setInvoiceMaterials([invoiceMaterial, ...invoiceMaterials,])
-    setSelectedMaterial({label: "", value: 0})
+    setSelectedMaterial({ label: "", value: 0 })
     setInvoiceMaterial({
       amount: 0,
       materialName: "",
@@ -285,10 +305,26 @@ export default function MutationInvoiceOutputInProject({ mutationType, setShowMu
               selectedObjectID={selectedObjectID}
               setSelectedObjectID={setSelectedObjectID}
             />
-            <TeamSelect
-              selectedTeamID={selectedTeamID}
-              setSelectedTeamID={setSelectedTeamID}
-            />
+            <div className="flex flex-col space-y-1">
+              <label htmlFor={"teams"}>Бригады</label>
+              <div className="w-[200px]">
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  menuPosition="fixed"
+                  name={"teams"}
+                  placeholder={""}
+                  value={selectedTeamID}
+                  options={allTeamsInObject}
+                  onChange={(value) => setSelectedTeamID({
+                    label: value!.label ?? "",
+                    value: value!.value ?? 0,
+                  })}
+                />
+              </div>
+            </div>
             <div className="flex flex-col space-y-1">
               <label htmlFor="dateOfInvoice">Дата накладной</label>
               <div className="py-[4px] px-[8px] border-[#cccccc] border rounded-[4px]">

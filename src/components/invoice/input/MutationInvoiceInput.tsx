@@ -24,12 +24,10 @@ import LoadingDots from "../../UI/loadingDots";
 
 interface Props {
   setShowMutationModal: React.Dispatch<React.SetStateAction<boolean>>
-  mutationType: "create" | "update"
 }
 
 export default function MutationInvoiceInput({
   setShowMutationModal,
-  mutationType,
 }: Props) {
 
   // Main invoice information
@@ -246,40 +244,30 @@ export default function MutationInvoiceInput({
       return
     }
 
-    switch (mutationType) {
-      case "create":
-        createMaterialMutation.mutate({
-          details: mutationData,
-          items: [
-            ...invoiceMaterials.map<InvoiceInputMaterial>((value) => ({
-              materialData: {
-                id: 0,
-                amount: value.amount,
-                invoiceID: 0,
-                invoiceType: "input",
-                materialCostID: value.materialCostID,
-                notes: value.notes,
-              },
-              serialNumbers: value.serialNumbers,
-            }))
-          ],
-        })
-        return
-      case "update":
-        // updateMaterialMutation.mutate(mutationData)
-        return
+    createMaterialMutation.mutate({
+      details: mutationData,
+      items: [
+        ...invoiceMaterials.map<InvoiceInputMaterial>((value) => ({
+          materialData: {
+            id: 0,
+            amount: value.amount,
+            invoiceID: 0,
+            invoiceType: "input",
+            materialCostID: value.materialCostID,
+            notes: value.notes,
+          },
+          serialNumbers: value.serialNumbers,
+        }))
+      ],
+    })
 
-      default:
-        throw new Error("Неправильная операция была выбрана")
-    }
   }
 
   return (
     <Modal setShowModal={setShowMutationModal} bigModal>
       <div className="mb-2">
         <h3 className="text-2xl font-medium text-gray-800">
-          {mutationType == "create" && "Добавление накладной"}
-          {mutationType == "update" && "Изменение накладной"}
+          Добавление накладной
         </h3>
       </div>
       <div className="flex flex-col w-full max-h-[85vh] ">
@@ -310,12 +298,7 @@ export default function MutationInvoiceInput({
               onClick={() => onMutationSubmit()}
               className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
             >
-              {createMaterialMutation.isLoading 
-                ?
-                  <LoadingDots height={30}/>
-                :
-                  "Опубликовать"
-              }
+              {createMaterialMutation.isLoading ? <LoadingDots height={30} /> : "Опубликовать"}
             </div>
           </div>
         </div>
