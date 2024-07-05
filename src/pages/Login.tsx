@@ -10,7 +10,7 @@ import IReactSelectOptions from "../services/interfaces/react-select"
 import Select from 'react-select'
 import Project from "../services/interfaces/project"
 import { GetAllProjects } from "../services/api/project"
-import { HOME } from "../URLs"
+import { ADMINISTRATOR_HOME_PAGE, HOME } from "../URLs"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -70,7 +70,7 @@ export default function Login() {
     loginMutation.mutate(loginData, {
       onSuccess: (data, _, __) => {
 
-        localStorage.setItem("token", data.toString())
+        localStorage.setItem("token", data.token.toString())
         localStorage.setItem("username", loginData.username)
 
         authContext.setUsername(loginData.username)
@@ -80,7 +80,8 @@ export default function Login() {
         
         // browser does not save token localStorage immediately
         setTimeout(() => {
-          navigate(HOME)
+          if (!data.admin) navigate(HOME)
+          else navigate(ADMINISTRATOR_HOME_PAGE)
           toast.dismiss(successToast)
         }, 1500)
 

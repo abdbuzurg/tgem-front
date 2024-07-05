@@ -12,7 +12,7 @@ export default function Layout() {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const [resourceURL, setResourceURL] = useState("ignore");
+  const [resourceURL, setResourceURL] = useState("");
 
   const hasAccessQuery = useQuery<boolean, Error, string>({
     queryKey: [`permission-to-resource-${resourceURL}`, resourceURL],

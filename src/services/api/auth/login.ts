@@ -10,6 +10,7 @@ export interface LoginRequestData{
 
 export interface LoginResponseData {
   token: string
+  admin: boolean
 }
 
 export default async function loginUser(data: LoginRequestData): Promise<LoginResponseData> {

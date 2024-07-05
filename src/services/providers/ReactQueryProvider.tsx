@@ -18,6 +18,7 @@ export const ReactQueryProvider = ({children}: Props) => {
         toast.error(error.message)
       },
     }),
+
     defaultOptions: {
       queries: {
         refetchOnWindowFocus: false,

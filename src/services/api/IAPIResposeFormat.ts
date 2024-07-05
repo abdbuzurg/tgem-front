@@ -4,3 +4,8 @@ export default interface IAPIResposeFormat<T> {
   success: boolean
   permission: boolean
 }
+
+export interface IAPIRequestFormat<T>{
+  requestURL: string
+  data: T
+}

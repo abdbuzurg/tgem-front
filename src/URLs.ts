@@ -3,6 +3,7 @@ export const ADMIN_USERS_PAGE = "/admin/user"
 export const PERMISSION_DENIED = "/permission-denied"
 export const PAGE_NOT_FOUND = "/404"
 export const LOGIN = "/"
+
 export const INVOICE = "/invoice"
 export const INVOICE_INPUT = "/invoice/input"
 export const INVOICE_OUTPUT_IN_PROJECT = "/invoice/output-in-project"
@@ -14,6 +15,7 @@ export const INVOICE_OBJECT = "/invoice/object"
 export const INVOICE_OBJECT_MUTATION_ADD = "/invoice/object/add"
 export const INVOICE_OBJECT_DETIALS ="/invoice/object/:id"
 export const INVOICE_CORRECTION = "/invoice/correction"
+
 export const REFERENCE_BOOK = "/reference-book"
 export const REFERENCE_BOOK_WORKER = "/reference-book/worker"
 export const REFERENCE_BOOK_TEAM = "/reference-book/team"
@@ -28,8 +30,12 @@ export const REFERENCE_BOOK_SUBSTATION_OBJECT = "/reference-book/object/substati
 export const REFERENCE_BOOK_OPERATIONS = "/reference-book/operation"
 export const REFERENCE_BOOK_MATERIAL_COST = "/reference-book/material-cost"
 export const REFERENCE_BOOK_DISTRICT = "/reference-book/district"
+
 export const REPORT = "/report"
 export const REPORT_BALANCE = "/report/balance"
 export const REPORT_INVOICE_INPUT = "/report/invoice/input"
 export const REPORT_INVOICE_OUTPUT = "/report/invoice/output"
 export const REPORT_INVOICE_RETURN = "/report/invoice/return"
+
+export const ADMINISTRATOR_HOME_PAGE = "/admin/home"
+export const ADMINISTRATOR_PROJECT = "/admin/project"
