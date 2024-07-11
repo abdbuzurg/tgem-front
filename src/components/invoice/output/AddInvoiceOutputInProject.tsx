@@ -1,7 +1,6 @@
 import { Fragment, useEffect, useState } from "react";
 import DistrictSelect from "../../DistrictSelect";
 import Modal from "../../Modal";
-import ObjectSelect from "../../ObjectSelect";
 import WorkerSelect from "../../WorkerSelect";
 import IReactSelectOptions from "../../../services/interfaces/react-select";
 import DatePicker from "react-datepicker";
@@ -17,14 +16,14 @@ import { FaBarcode } from "react-icons/fa";
 import { IoIosAddCircleOutline } from "react-icons/io";
 import { IInvoiceOutputInProject, IInvoiceOutputMaterials } from "../../../services/interfaces/invoiceOutputInProject";
 import { AvailableMaterial, InvoiceOutputInProjectMutation, InvoiceOutputItem, createInvoiceOutputInProject, getAvailableMaterialsInWarehouse } from "../../../services/api/invoiceOutputInProject";
-import { getTeamsByObjectID } from "../../../services/api/object";
-import {  TeamDataForSelect } from "../../../services/interfaces/teams";
+import { TeamDataForSelect } from "../../../services/interfaces/teams";
+import { getAllTeamsForSelect } from "../../../services/api/team";
+import LoadingDots from "../../UI/loadingDots";
 
 interface Props {
-  setShowMutationModal: React.Dispatch<React.SetStateAction<boolean>>
-  mutationType: "create" | "update"
+  setShowAddModal: React.Dispatch<React.SetStateAction<boolean>>
 }
-export default function MutationInvoiceOutputInProject({ mutationType, setShowMutationModal }: Props) {
+export default function AddInvoiceOutputInProject({ setShowAddModal }: Props) {
   const queryClient = useQueryClient()
 
   // MAIN INVOICE INFORMATION
@@ -34,7 +33,6 @@ export default function MutationInvoiceOutputInProject({ mutationType, setShowMu
     districtID: 0,
     id: 0,
     notes: "",
-    objectID: 0,
     projectID: 0,
     recipientWorkerID: 0,
     releasedWorkerID: 0,
@@ -46,44 +44,36 @@ export default function MutationInvoiceOutputInProject({ mutationType, setShowMu
   // ALL SELECTABLE IN MAIN INVOICE INFORMATION
   const [selectedWarehouseManagerWorkerID, setSelectedWarehouseManagerWorkerID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   const [selectedRecipientWorkerID, setSelectedRecipientWorkerID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
-  const [selectedObjectID, setSelectedObjectID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   const [selectedDistrictID, setSelectedDistrictID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   const [selectedTeamID, setSelectedTeamID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   useEffect(() => {
-    if (selectedObjectID.value == 0) {
-      setAllTeamsInObject([])
-      setSelectedTeamID({label: "", value: 0})
-    }
     setMutationData({
       ...mutationData,
       warehouseManagerWorkerID: selectedWarehouseManagerWorkerID.value,
       recipientWorkerID: selectedRecipientWorkerID.value,
-      objectID: selectedObjectID.value,
       teamID: selectedTeamID.value,
       districtID: selectedDistrictID.value,
     })
   }, [
     selectedDistrictID,
-    selectedObjectID,
     selectedRecipientWorkerID,
     selectedTeamID,
     selectedWarehouseManagerWorkerID
   ])
 
-  const [allTeamsInObject, setAllTeamsInObject] = useState<IReactSelectOptions<number>[]>([])
-  const allTeamsInObjectQuery = useQuery<TeamDataForSelect[], Error, TeamDataForSelect[]>({
-    queryKey: ["teams-in-object", selectedObjectID.value],
-    queryFn: () => getTeamsByObjectID(selectedObjectID.value),
-    enabled: selectedObjectID.value != 0,
+  const [allTeams, setAllTeams] = useState<IReactSelectOptions<number>[]>([])
+  const allTeamsQuery = useQuery<TeamDataForSelect[], Error, TeamDataForSelect[]>({
+    queryKey: ["all-teams-for-select"],
+    queryFn: getAllTeamsForSelect,
   })
   useEffect(() => {
-    if (allTeamsInObjectQuery.data && allTeamsInObjectQuery.isSuccess) {
-      setAllTeamsInObject(allTeamsInObjectQuery.data.map<IReactSelectOptions<number>>((val) => ({
+    if (allTeamsQuery.data && allTeamsQuery.isSuccess) {
+      setAllTeams(allTeamsQuery.data.map<IReactSelectOptions<number>>((val) => ({
         label: val.teamNumber + " (" + val.teamLeaderName + ")",
         value: val.id,
       })))
     }
-  }, [allTeamsInObjectQuery.data])
+  }, [allTeamsQuery.data])
 
   //INVOICE MATERIAL DATA
   const [invoiceMaterials, setInvoiceMaterials] = useState<IInvoiceOutputMaterials[]>([])
@@ -212,7 +202,7 @@ export default function MutationInvoiceOutputInProject({ mutationType, setShowMu
     mutationFn: createInvoiceOutputInProject,
     onSettled: () => {
       queryClient.invalidateQueries(["invoice-output-in-project"])
-      setShowMutationModal(false)
+      setShowAddModal(false)
     }
   })
 
@@ -225,11 +215,6 @@ export default function MutationInvoiceOutputInProject({ mutationType, setShowMu
 
     if (mutationData.districtID == 0) {
       toast.error("Не указан район")
-      return
-    }
-
-    if (mutationData.objectID == 0) {
-      toast.error("Не указан объект")
       return
     }
 
@@ -248,35 +233,24 @@ export default function MutationInvoiceOutputInProject({ mutationType, setShowMu
       return
     }
 
-    switch (mutationType) {
-      case "create":
-        console.log(invoiceMaterials)
-        createInvoiceOutputMutation.mutate({
-          details: mutationData,
-          items: [
-            ...invoiceMaterials.map<InvoiceOutputItem>((value) => ({
-              materialID: value.materialID,
-              amount: value.amount,
-              serialNumbers: value.serialNumbers,
-            }))
-          ],
-        })
-        return
-      case "update":
-        // updateMaterialMutation.mutate(mutationData)
-        return
-
-      default:
-        throw new Error("Неправильная операция была выбрана")
-    }
+    createInvoiceOutputMutation.mutate({
+      details: mutationData,
+      items: [
+        ...invoiceMaterials.map<InvoiceOutputItem>((value) => ({
+          materialID: value.materialID,
+          amount: value.amount,
+          serialNumbers: value.serialNumbers,
+        }))
+      ],
+    })
+    return
   }
 
   return (
-    <Modal setShowModal={setShowMutationModal} bigModal>
+    <Modal setShowModal={setShowAddModal} bigModal>
       <div className="mb-2">
         <h3 className="text-2xl font-medium text-gray-800">
-          {mutationType == "create" && "Добавление накладной"}
-          {mutationType == "update" && "Изменение накладной"}
+          Добавление накладной
         </h3>
       </div>
       <div className="flex flex-col w-full max-h-[80vh]">
@@ -301,10 +275,6 @@ export default function MutationInvoiceOutputInProject({ mutationType, setShowMu
             />
           </div>
           <div className="flex space-x-2 items-center w-full">
-            <ObjectSelect
-              selectedObjectID={selectedObjectID}
-              setSelectedObjectID={setSelectedObjectID}
-            />
             <div className="flex flex-col space-y-1">
               <label htmlFor={"teams"}>Бригады</label>
               <div className="w-[200px]">
@@ -317,10 +287,10 @@ export default function MutationInvoiceOutputInProject({ mutationType, setShowMu
                   name={"teams"}
                   placeholder={""}
                   value={selectedTeamID}
-                  options={allTeamsInObject}
+                  options={allTeams}
                   onChange={(value) => setSelectedTeamID({
-                    label: value!.label ?? "",
-                    value: value!.value ?? 0,
+                    label: value?.label ?? "",
+                    value: value?.value ?? 0,
                   })}
                 />
               </div>
@@ -338,8 +308,13 @@ export default function MutationInvoiceOutputInProject({ mutationType, setShowMu
               </div>
             </div>
           </div>
-          <div className="mt-4">
-            <Button text="Опубликовать" onClick={() => onMutationSubmit()} />
+          <div className="mt-4 flex">
+            <div
+              onClick={() => onMutationSubmit()}
+              className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+            >
+              {createInvoiceOutputMutation.isLoading ? <LoadingDots height={30} /> : "Опубликовать"}
+            </div>
           </div>
         </div>
         <div>

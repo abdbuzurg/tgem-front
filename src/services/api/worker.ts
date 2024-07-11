@@ -16,7 +16,7 @@ export async function getWorkerByJobTitle(jobTitle: string): Promise<IWorker[]> 
   }
 }
 
-export async function createWorker(data: IWorker):Promise<IWorker> {
+export async function createWorker(data: IWorker): Promise<IWorker> {
   const responseRaw = await axiosClient.post<IAPIResposeFormat<IWorker>>(`${URL}/`, data)
   const response = responseRaw.data
   if (response.permission && response.success) {
@@ -48,17 +48,17 @@ export interface WorkerPaginatedData {
   page: number
 }
 
-export async function getPaginatedWorker({pageParam = 1}):Promise<WorkerPaginatedData> {
+export async function getPaginatedWorker({ pageParam = 1 }): Promise<WorkerPaginatedData> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<WorkerPaginatedData>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
   const response = responseRaw.data
   if (response.success && response.permission) {
-    return {...response.data, page: pageParam}
+    return { ...response.data, page: pageParam }
   } else {
     throw new Error(response.error)
   }
 }
 
-export async function updateWorker(data: IWorker):Promise<IWorker> {
+export async function updateWorker(data: IWorker): Promise<IWorker> {
   const responseRaw = await axiosClient.patch<IAPIResposeFormat<IWorker>>(`${URL}/`, data)
   const response = responseRaw.data
   if (response.permission && response.success) {

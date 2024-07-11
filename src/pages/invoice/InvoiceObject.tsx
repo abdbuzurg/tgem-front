@@ -18,9 +18,7 @@ export default function InvoiceObject() {
   const [tableData, setTableData] = useState<InvoiceObjectPaginatedView[]>([])
   useEffect(() => {
     if (tableDataQuery.isSuccess && tableDataQuery.data) {
-      console.log(tableDataQuery.data.pages)
       const data: InvoiceObjectPaginatedView[] = tableDataQuery.data.pages.reduce<InvoiceObjectPaginatedView[]>((acc, page) => [...acc, ...page.data], [])
-      console.log(data)
       setTableData(data)
     }
   }, [tableDataQuery.data])

@@ -23,11 +23,11 @@ import { IoIosAddCircleOutline } from "react-icons/io";
 import LoadingDots from "../../UI/loadingDots";
 
 interface Props {
-  setShowMutationModal: React.Dispatch<React.SetStateAction<boolean>>
+  setShowAddModal: React.Dispatch<React.SetStateAction<boolean>>
 }
 
-export default function MutationInvoiceInput({
-  setShowMutationModal,
+export default function AddInvoiceInput({
+  setShowAddModal,
 }: Props) {
 
   // Main invoice information
@@ -216,7 +216,7 @@ export default function MutationInvoiceInput({
     mutationFn: createInvoiceInput,
     onSettled: () => {
       queryClient.invalidateQueries(["invoice-input"])
-      setShowMutationModal(false)
+      setShowAddModal(false)
     }
   })
   // const updateMaterialMutation = useMutation<InvoiceInputMutation, Error, InvoiceInputMutation>({
@@ -264,7 +264,7 @@ export default function MutationInvoiceInput({
   }
 
   return (
-    <Modal setShowModal={setShowMutationModal} bigModal>
+    <Modal setShowModal={setShowAddModal} bigModal>
       <div className="mb-2">
         <h3 className="text-2xl font-medium text-gray-800">
           Добавление накладной

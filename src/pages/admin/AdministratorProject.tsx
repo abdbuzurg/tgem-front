@@ -10,6 +10,9 @@ import Modal from "../../components/Modal"
 import Input from "../../components/UI/Input"
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
+import Select from 'react-select'
+import { CURRENSY_FOR_SELECT } from "../../services/lib/adminStatuses"
+
 
 export function AdministratorProject() {
   //FETCHING LOGIC
@@ -69,6 +72,7 @@ export function AdministratorProject() {
     name: "",
     client: "",
     budget: 0,
+    budgetCurrency: "",
     description: "",
     signedDateOfContract: new Date(),
     dateStart: new Date(),
@@ -113,7 +117,7 @@ export function AdministratorProject() {
       <table className="table-auto text-sm text-left mt-2 w-full border-box">
         <thead className="shadow-md border-t-2">
           <tr>
-            <th className="px-4 py-3 w-[100px]">
+            <th className="px-4 py-3">
               <span>Наименование</span>
             </th>
             <th className="px-4 py-3 w-[100px]">
@@ -162,16 +166,21 @@ export function AdministratorProject() {
               <tr key={index} className="border-b">
                 <td className="px-4 py-3">{row.name}</td>
                 <td className="px-4 py-3">{row.client}</td>
-                <td className="px-4 py-3">{row.budget}</td>
+                <td className="px-4 py-3 w-[150px]">{row.budget + " " +row.budgetCurrency}</td>
                 <td className="px-4 py-3">{row.description}</td>
-                <td className="px-4 py-3">{row.signedDateOfContract.toString().substring(0, 10)}</td>
-                <td className="px-4 py-3">{row.dateStart.toString().substring(0, 10)}</td>
-                <td className="px-4 py-3">{row.dateEnd.toString().substring(0, 10)}</td>
+                <td className="px-4 py-3 w-[110px]">{row.signedDateOfContract.toString().substring(0, 10)}</td>
+                <td className="px-4 py-3 w-[110px]">{row.dateStart.toString().substring(0, 10)}</td>
+                <td className="px-4 py-3 w-[110px]">{row.dateEnd.toString().substring(0, 10)}</td>
                 <td className="px-4 py-3 border-box flex space-x-3">
                   <Button text="Изменить" buttonType="default" onClick={() => {
                     setShowMutationModal(true)
                     setMutationModalType("update")
-                    setProjectMutationData(row)
+                    setProjectMutationData({
+                      ...row,
+                      dateStart: new Date(row.dateStart),
+                      dateEnd: new Date(row.dateEnd),
+                      signedDateOfContract: new Date(row.signedDateOfContract)
+                    })
                   }}
                   />
                   <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)} />
@@ -221,6 +230,27 @@ export function AdministratorProject() {
                   onChange={(e) => setProjectMutationData({ ...projectMutationData, [e.target.name]: e.target.valueAsNumber })}
                 />
               </div>
+              <div>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  menuPosition="fixed"
+                  name={"materials-costs"}
+                  placeholder={""}
+                  value={{
+                    label: projectMutationData.budgetCurrency,
+                    value: projectMutationData.budgetCurrency,
+                  }}
+                  options={CURRENSY_FOR_SELECT}
+                  onChange={(value) => setProjectMutationData({
+                    ...projectMutationData,
+                    budgetCurrency: value?.value ?? "",
+                  })}
+                />
+              </div>
+
               <div className="flex flex-col space-y-1">
                 <label htmlFor="description">Описание</label>
                 <textarea
@@ -231,7 +261,7 @@ export function AdministratorProject() {
                 >
                 </textarea>
               </div>
-              <div className="flex flex-col space-y-1">
+              <div className="flex flex-col space-y-1 ">
                 <label htmlFor="dateOfInvoice">Дата подписания договора</label>
                 <div className="py-[4px] px-[8px] border-[#cccccc] border rounded-[4px]">
                   <DatePicker
@@ -267,11 +297,16 @@ export function AdministratorProject() {
                   />
                 </div>
               </div>
-              <div>
-                <Button
-                  text={mutationModalType == "create" ? "Добавить" : "Подтвердить изменения"}
-                  onClick={onMutationSubmit}
-                />
+              <div className="flex">
+                <div
+                  onClick={() => onMutationSubmit()}
+                  className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+                >
+                  {createProjectMutation.isLoading && mutationModalType == "create" && <LoadingDots height={30} />}
+                  {!createProjectMutation.isLoading && mutationModalType == "create" && "Опубликовать"}
+                  {updateProjectMutation.isLoading && mutationModalType == "update" && <LoadingDots height={30} />}
+                  {!updateProjectMutation.isLoading && mutationModalType == "update" && "Изменить"}
+                </div>
               </div>
             </div>
           </div>

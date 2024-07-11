@@ -6,7 +6,7 @@ import Button from "../../UI/button";
 import IReactSelectOptions from "../../../services/interfaces/react-select";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
-import { InvoiceOutputReportFilter, buildReport, getAllUniqueCode, getAllUniqueObject, getAllUniqueRecieved, getAllUniqueDistrict, getAllUniqueTeam, getAllUniqueWarehouseManager } from "../../../services/api/invoiceOutputInProject";
+import { InvoiceOutputReportFilter, buildReport, getAllUniqueCode, getAllUniqueRecieved, getAllUniqueDistrict, getAllUniqueTeam, getAllUniqueWarehouseManager } from "../../../services/api/invoiceOutputInProject";
 import ErrorModal from "../../errorModal";
 import LoadingDots from "../../UI/loadingDots";
 
@@ -63,18 +63,6 @@ export default function ReportInvoiceOutput({ setShowReportModal }: Props) {
       setReceiveds([...recievedsQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
     }
   }, [recievedsQuery.data])
-
-  //Logic for all Objects
-  const [objects, setObjets] = useState<IReactSelectOptions<string>[]>([])
-  const objectQuery = useQuery<string[], Error, string[]>({
-    queryKey: ["invoice-output-objects"],
-    queryFn: getAllUniqueObject
-  })
-  useEffect(() => {
-    if (objectQuery.isSuccess && objectQuery.data) {
-      setObjets([...objectQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
-    }
-  }, [objectQuery.data])
 
   //Logic for all Teams
   const [teams, setTeams] = useState<IReactSelectOptions<string>[]>([])
@@ -205,22 +193,6 @@ export default function ReportInvoiceOutput({ setShowReportModal }: Props) {
             value={{ label: filter.recieved, value: filter.recieved }}
             options={recieveds}
             onChange={(value: null | IReactSelectOptions<string>) => setFilter({ ...filter, recieved: value?.value ?? "" })}
-          />
-        </div>
-        <div className="flex flex-col space-y-1">
-          <label htmlFor="object">Объект</label>
-          <Select
-            id="object"
-            className="basic-single"
-            classNamePrefix="select"
-            isSearchable={true}
-            isClearable={true}
-            menuPosition="fixed"
-            name={"object"}
-            placeholder={""}
-            value={{ label: filter.object, value: filter.object }}
-            options={objects}
-            onChange={(value: null | IReactSelectOptions<string>) => setFilter({ ...filter, object: value?.value ?? "" })}
           />
         </div>
         <div className="flex flex-col space-y-1">

@@ -1,5 +1,5 @@
 import fileDownload from "js-file-download"
-import { IInvoiceInput, IInvoiceInputView } from "../interfaces/invoiceInput"
+import { IInvoiceInput, IInvoiceInputMaterials, IInvoiceInputView } from "../interfaces/invoiceInput"
 import { InvoiceMaterial, InvoiceMaterialViewWithSerialNumbers, InvoiceMaterialViewWithoutSerialNumbers, } from "../interfaces/invoiceMaterial"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
@@ -191,6 +191,16 @@ export async function getInvoiceInputMaterilsWithoutSerialNumbersByID(id: number
 
 export async function getInvoiceInputMaterilsWithSerialNumbersByID(id: number): Promise<InvoiceMaterialViewWithSerialNumbers[]> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceMaterialViewWithSerialNumbers[]>>(`${URL}/${id}/materials/with-serial-number`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export async function getInvoiceInputMaterialsForEdit(id: number): Promise<IInvoiceInputMaterials[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IInvoiceInputMaterials[]>>(`${URL}/invoice-materials/${id}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
     return response.data

@@ -5,11 +5,12 @@ import { ENTRY_LIMIT } from "../../services/api/constants";
 import DeleteModal from "../../components/deleteModal";
 import ReportInvoiceOutput from "../../components/invoice/output/ReportInvoiceOutput";
 import IconButton from "../../components/IconButtons";
-import { FaDownload, FaRegListAlt, FaRegTrashAlt, FaUpload } from "react-icons/fa";
+import { FaDownload, FaEdit, FaRegListAlt, FaRegTrashAlt, FaUpload } from "react-icons/fa";
 import ShowInvoiceOutputInProjectDetails from "../../components/invoice/output/ShowInvoiceOutputInProjectDetails";
 import { InvoiceOutputInProjectConfirmation, InvoiceOutputInProjectPagianted, deleteInvoiceOutputInProject, getInvoiceOutputInProjectDocument, getPaginatedInvoiceOutputInProject, sendInvoiceOutputInProjectConfirmationExcel } from "../../services/api/invoiceOutputInProject";
 import { IInvoiceOutputInProjectView } from "../../services/interfaces/invoiceOutputInProject";
-import MutationInvoiceOutputInProject from "../../components/invoice/output/MutationInvoiceOutputInProject";
+import AddInvoiceOutputInProject from "../../components/invoice/output/AddInvoiceOutputInProject";
+import EditInvoiceOutputInProject from "../../components/invoice/output/EditInvoiceOutputInProject";
 
 export default function InvoiceOutputInProject() {
   //FETCHING LOGIC
@@ -79,8 +80,9 @@ export default function InvoiceOutputInProject() {
   }
 
   //Mutation LOGIC
-  const [mutationModalType, setMutationModalType] = useState<"update" | "create">("create")
-  const [showMutationModal, setShowMutationModal] = useState(false)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [rowToEdit, setRowToEdit] = useState<IInvoiceOutputInProjectView>()
 
   //Details logic
   const [showDetailsModal, setShowDetailsModal] = useState(false)
@@ -92,7 +94,6 @@ export default function InvoiceOutputInProject() {
     releasedName: "",
     warehouseManagerName: "",
     teamName: "",
-    objectName: "",
     confirmation: false,
     districtName: "",
     recipientName: "",
@@ -124,9 +125,6 @@ export default function InvoiceOutputInProject() {
               <span>Район</span>
             </th>
             <th className="px-4 py-3">
-              <span>Объект</span>
-            </th>
-            <th className="px-4 py-3">
               <span>Бригада</span>
             </th>
             <th className="px-4 py-3 min-w-[110px]">
@@ -139,10 +137,7 @@ export default function InvoiceOutputInProject() {
               <span>Дата</span>
             </th>
             <th className="px-4 py-3">
-              <Button text="Добавить" onClick={() => {
-                setMutationModalType("create")
-                setShowMutationModal(true)
-              }} />
+              <Button text="Добавить" onClick={() => setShowAddModal(true)} />
             </th>
           </tr>
         </thead>
@@ -151,7 +146,6 @@ export default function InvoiceOutputInProject() {
             <tr key={index} className="text-sm">
               <td className="px-4 py-3">{row.deliveryCode}</td>
               <td className="px-4 py-3">{row.districtName}</td>
-              <td className="px-4 py-3">{row.objectName}</td>
               <td className="px-4 py-3">{row.teamName}</td>
               <td className="px-4 py-3">{row.warehouseManagerName}</td>
               <td className="px-4 py-3">{row.releasedName}</td>
@@ -195,6 +189,14 @@ export default function InvoiceOutputInProject() {
                     {/* /> */}
                     <IconButton
                       type="delete"
+                      icon={<FaEdit size="20px" title={`Изменение данных накладной ${row.deliveryCode}`} />}
+                      onClick={() => {
+                        setRowToEdit(row)
+                        setShowEditModal(true)
+                      }}
+                    />
+                    <IconButton
+                      type="delete"
                       icon={<FaRegTrashAlt size="20px" title={`Удалить все данные накладной ${row.deliveryCode}`} />}
                       onClick={() => onDeleteButtonClick(row)}
                     />
@@ -211,7 +213,8 @@ export default function InvoiceOutputInProject() {
           <span>При подтверждении накладая уход с кодом {modalProps.no_delivery} и все связанные материалы будут удалены</span>
         </DeleteModal>
       }
-      {showMutationModal && <MutationInvoiceOutputInProject mutationType={mutationModalType} setShowMutationModal={setShowMutationModal} />}
+      {showAddModal && <AddInvoiceOutputInProject setShowAddModal={setShowAddModal} />}
+      {showEditModal && <EditInvoiceOutputInProject setShowEditModal={setShowEditModal} invoiceOutputInProject={rowToEdit!} />}
       {showReportModal && <ReportInvoiceOutput setShowReportModal={setShowReportModal} />}
     </main>
   )

@@ -63,10 +63,6 @@ export default function ShowInvoiceOutputInProjectDetails({ setShowModal, data }
               <p className="text-xl italic">{data.releasedName}</p>
             </div>
             <div className="flex flex-col">
-              <p className="text-sm font-bold">Объект</p>
-              <p className="text-xl italic">{data.objectName}</p>
-            </div>
-            <div className="flex flex-col">
               <p className="text-sm font-bold">Бригада</p>
               <p className="text-xl italic">{data.teamName}</p>
             </div>

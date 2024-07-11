@@ -3,7 +3,7 @@ import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
 import { InvoiceMaterialViewWithSerialNumbers, InvoiceMaterialViewWithoutSerialNumbers } from "../interfaces/invoiceMaterial"
-import { IInvoiceOutputInProject, IInvoiceOutputInProjectView } from "../interfaces/invoiceOutputInProject"
+import { IInvoiceOutputInProject, IInvoiceOutputInProjectView, IInvoiceOutputMaterials } from "../interfaces/invoiceOutputInProject"
 
 const URL = "/output"
 
@@ -251,3 +251,15 @@ export async function getInvoiceOutputMaterilsWithSerialNumbersByID(id: number):
     throw new Error(response.error)
   }
 }
+
+export async function getInvoiceOutputInProjectMaterialsForEdit(id: number): Promise<IInvoiceOutputMaterials[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IInvoiceOutputMaterials[]>>(`${URL}/invoice-materials/${id}`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+

@@ -5,13 +5,14 @@ import { useEffect, useState } from "react";
 import LoadingDots from "../../components/UI/loadingDots";
 import DeleteModal from "../../components/deleteModal";
 import "react-datepicker/dist/react-datepicker.css";
-import MutationInvoiceInput from "../../components/invoice/input/MutationInvoiceInput";
 import ReportInvoiceInput from "../../components/invoice/input/ReportInvoiceInput";
 import { InvoiceInputConfirmationData, InvoiceInputPagianted, deleteInvoiceInput, getInvoiceInputDocument, getPaginatedInvoiceInput, sendInvoiceInputConfirmationExcel } from "../../services/api/invoiceInput";
 import { IInvoiceInputView } from "../../services/interfaces/invoiceInput";
-import { FaUpload, FaDownload, FaRegListAlt, FaRegTrashAlt } from "react-icons/fa";
+import { FaUpload, FaDownload, FaRegListAlt, FaRegTrashAlt, FaEdit } from "react-icons/fa";
 import IconButton from "../../components/IconButtons";
 import ShowInvoiceInputDetails from "../../components/invoice/input/ShowInvoiceInputDetails";
+import AddInvoiceInput from "../../components/invoice/input/AddInvoiceInput";
+import EditInvoiceInput from "../../components/invoice/input/EditInvoiceInput";
 
 export default function InvoiceInput() {
   //FETCHING LOGIC
@@ -84,7 +85,9 @@ export default function InvoiceInput() {
   }
 
   //Mutation Logic
-  const [showMutationModal, setShowMutationModal] = useState(false)
+  const [showAddModal, setShowAddModal] = useState(false)
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [rowToEdit, setRowToEdit] = useState<IInvoiceInputView>()
 
   //Details logic
   const [showDetailsModal, setShowDetailsModal] = useState(false)
@@ -131,7 +134,7 @@ export default function InvoiceInput() {
               <span>Дата</span>
             </th>
             <th className="px-4 py-3">
-              <Button text="Добавить" onClick={() => setShowMutationModal(true)} />
+              <Button text="Добавить" onClick={() => setShowAddModal(true)} />
             </th>
           </tr>
         </thead>
@@ -193,6 +196,14 @@ export default function InvoiceInput() {
                       {/* /> */}
                       <IconButton
                         type="delete"
+                        icon={<FaEdit size="20px" title={`Изменение данных накладной ${row.deliveryCode}`}/>}
+                        onClick={() => {
+                          setRowToEdit(row)
+                          setShowEditModal(true)
+                        }}
+                      />
+                      <IconButton
+                        type="delete"
                         icon={<FaRegTrashAlt size="20px" title={`Удалить все данные накладной ${row.deliveryCode}`} />}
                         onClick={() => onDeleteButtonClick(row)}
                       />
@@ -210,7 +221,8 @@ export default function InvoiceInput() {
           <span>При подтверждении накладая приход с кодом {modalProps.no_delivery} и все связанные материалы будут удалены</span>
         </DeleteModal>
       }
-      {showMutationModal && <MutationInvoiceInput setShowMutationModal={setShowMutationModal} />}
+      {showAddModal && <AddInvoiceInput setShowAddModal={setShowAddModal} />}
+      {showEditModal && <EditInvoiceInput setShowEditModal={setShowEditModal} invoiceInput={rowToEdit!}/>}
       {showReportModal && <ReportInvoiceInput setShowReportModal={setShowReportModal} />}
     </main>
   )

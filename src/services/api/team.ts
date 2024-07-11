@@ -1,5 +1,5 @@
 import fileDownload from "js-file-download"
-import { ITeam } from "../interfaces/teams"
+import { ITeam, TeamDataForSelect } from "../interfaces/teams"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
@@ -109,3 +109,14 @@ export async function importTeam(data: File): Promise<boolean> {
     throw new Error(responseRaw.data)
   }
 }
+
+export async function getAllTeamsForSelect(): Promise<TeamDataForSelect[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<TeamDataForSelect[]>>(`${URL}/all/for-select`)
+  const response = responseRaw.data
+  if (response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+

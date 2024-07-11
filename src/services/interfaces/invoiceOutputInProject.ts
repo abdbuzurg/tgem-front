@@ -5,7 +5,6 @@ export interface IInvoiceOutputInProject {
   releasedWorkerID: number
   districtID: number
   teamID: number
-  objectID: number
   recipientWorkerID: number
   deliveryCode: string
   notes: string
@@ -30,13 +29,11 @@ export interface IInvoiceOutputInProjectView extends Omit<IInvoiceOutputInProjec
   "projectID" |
   "districtID" |
   "teamID" |
-  "objectID" |
   "recipientWorkerID"
 > {
   warehouseManagerName: string
   releasedName: string
   districtName: string
   teamName: string
-  objectName: string
   recipientName: string
 }

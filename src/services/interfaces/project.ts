@@ -3,6 +3,7 @@ export default interface Project {
   name: string
   client: string
   budget: number
+  budgetCurrency: string
   description: string
   signedDateOfContract: Date
   dateStart: Date
