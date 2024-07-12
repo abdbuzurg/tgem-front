@@ -143,7 +143,7 @@ export default function InvoiceOutputInProject() {
         </thead>
         <tbody>
           {tableData.map((row, index) =>
-            <tr key={index} className="text-sm">
+            <tr key={index} className="text-sm hover:bg-gray-200">
               <td className="px-4 py-3">{row.deliveryCode}</td>
               <td className="px-4 py-3">{row.districtName}</td>
               <td className="px-4 py-3">{row.teamName}</td>

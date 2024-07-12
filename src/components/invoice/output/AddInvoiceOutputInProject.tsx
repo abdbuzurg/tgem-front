@@ -1,7 +1,5 @@
 import { Fragment, useEffect, useState } from "react";
-import DistrictSelect from "../../DistrictSelect";
 import Modal from "../../Modal";
-import WorkerSelect from "../../WorkerSelect";
 import IReactSelectOptions from "../../../services/interfaces/react-select";
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
@@ -19,6 +17,10 @@ import { AvailableMaterial, InvoiceOutputInProjectMutation, InvoiceOutputItem, c
 import { TeamDataForSelect } from "../../../services/interfaces/teams";
 import { getAllTeamsForSelect } from "../../../services/api/team";
 import LoadingDots from "../../UI/loadingDots";
+import { IDistrict } from "../../../services/interfaces/district";
+import { getAllDistricts } from "../../../services/api/district";
+import { getAllWorkers, getWorkerByJobTitle } from "../../../services/api/worker";
+import IWorker from "../../../services/interfaces/worker";
 
 interface Props {
   setShowAddModal: React.Dispatch<React.SetStateAction<boolean>>
@@ -40,27 +42,56 @@ export default function AddInvoiceOutputInProject({ setShowAddModal }: Props) {
     warehouseManagerWorkerID: 0,
     confirmation: false,
   })
-
-  // ALL SELECTABLE IN MAIN INVOICE INFORMATION
-  const [selectedWarehouseManagerWorkerID, setSelectedWarehouseManagerWorkerID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
-  const [selectedRecipientWorkerID, setSelectedRecipientWorkerID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
-  const [selectedDistrictID, setSelectedDistrictID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
-  const [selectedTeamID, setSelectedTeamID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  // Logic For District Select
+  const [selectedDistrict, setSelectedDistrict] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [allDistricts, setAllDistricts] = useState<IReactSelectOptions<number>[]>([])
+  const allDistrictsQuery = useQuery<IDistrict[], Error, IDistrict[]>({
+    queryKey: [`all-districts`],
+    queryFn: getAllDistricts,
+  })
   useEffect(() => {
-    setMutationData({
-      ...mutationData,
-      warehouseManagerWorkerID: selectedWarehouseManagerWorkerID.value,
-      recipientWorkerID: selectedRecipientWorkerID.value,
-      teamID: selectedTeamID.value,
-      districtID: selectedDistrictID.value,
-    })
-  }, [
-    selectedDistrictID,
-    selectedRecipientWorkerID,
-    selectedTeamID,
-    selectedWarehouseManagerWorkerID
-  ])
+    if (allDistrictsQuery.isSuccess && allDistrictsQuery.data) {
+      setAllDistricts([...allDistrictsQuery.data.map<IReactSelectOptions<number>>((value) => ({
+        label: value.name,
+        value: value.id
+      }))])
+    }
+  }, [allDistrictsQuery.data])
 
+  // SELECT LOGIC FOR WAREHOUSE MANAGER
+  const [selectedWarehouseManager, setSelectedWarehouseManager] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [allWarehouseManagers, setAllWarehouseManagers] = useState<IReactSelectOptions<number>[]>([])
+  const warehouseManagerQuery = useQuery<IWorker[], Error, IWorker[]>({
+    queryKey: [`worker-warehouse-manager`],
+    queryFn: () => getWorkerByJobTitle("Заведующий складом"),
+  })
+  useEffect(() => {
+    if (warehouseManagerQuery.isSuccess && warehouseManagerQuery.data) {
+      setAllWarehouseManagers(warehouseManagerQuery.data.map<IReactSelectOptions<number>>((val) => ({
+        label: val.name,
+        value: val.id,
+      })))
+    }
+  }, [warehouseManagerQuery.data])
+
+  // SELECT LOGIC FOR WAREHOUSE MANAGER
+  const [selectedRecipient, setSelectedRecipient] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [allRecipients, setAllRecipients] = useState<IReactSelectOptions<number>[]>([])
+  const allRecipientsQuery = useQuery<IWorker[], Error, IWorker[]>({
+    queryKey: ["all-worker"],
+    queryFn: getAllWorkers,
+  })
+  useEffect(() => {
+    if (allRecipientsQuery.data && allRecipientsQuery.isSuccess) {
+      setAllRecipients(allRecipientsQuery.data.map<IReactSelectOptions<number>>(val => ({
+        label: val.name,
+        value: val.id,
+      })))
+    }
+  }, [allRecipientsQuery.data])
+
+  // SELECT LOGIC FOR TEAMS
+  const [selectedTeam, setSelectedTeam] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   const [allTeams, setAllTeams] = useState<IReactSelectOptions<number>[]>([])
   const allTeamsQuery = useQuery<TeamDataForSelect[], Error, TeamDataForSelect[]>({
     queryKey: ["all-teams-for-select"],
@@ -257,44 +288,130 @@ export default function AddInvoiceOutputInProject({ setShowAddModal }: Props) {
         <div className="flex flex-col space-y-2">
           <p className="text-xl font-semibold text-gray-800">Детали накладной</p>
           <div className="flex space-x-2 items-center w-full">
-            <DistrictSelect
-              selectedDistrictID={selectedDistrictID}
-              setSelectedDistrictID={setSelectedDistrictID}
-            />
-            <WorkerSelect
-              title="Зав. Складом"
-              jobTitle="Заведующий складом"
-              selectedWorkerID={selectedWarehouseManagerWorkerID}
-              setSelectedWorkerID={setSelectedWarehouseManagerWorkerID}
-            />
-            <WorkerSelect
-              title="Получатель"
-              jobTitle="Бригадир"
-              selectedWorkerID={selectedRecipientWorkerID}
-              setSelectedWorkerID={setSelectedRecipientWorkerID}
-            />
+            {allDistrictsQuery.isLoading &&
+              <div className="flex h-full w-[200px] items-center">
+                <LoadingDots height={40} />
+              </div>
+            }
+            {allDistrictsQuery.isSuccess &&
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="teams">Район</label>
+                <div className="w-[200px]">
+                  <Select
+                    className="basic-single"
+                    classNamePrefix="select"
+                    isSearchable={true}
+                    isClearable={true}
+                    name={"teams"}
+                    placeholder={""}
+                    value={selectedDistrict}
+                    options={allDistricts}
+                    onChange={(value) => {
+                      setSelectedDistrict(value ?? { label: "", value: 0 })
+                      setMutationData({
+                        ...mutationData,
+                        districtID: value?.value ?? 0,
+                      })
+                    }}
+                  />
+                </div>
+              </div>
+            }
+
+            {warehouseManagerQuery.isLoading &&
+              <div className="flex h-full w-[200px] items-center">
+                <LoadingDots height={40} />
+              </div>
+            }
+            {warehouseManagerQuery.isSuccess &&
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="warehouse-manager">Зав. Склад</label>
+                <div className="w-[200px]">
+                  <Select
+                    className="basic-single"
+                    classNamePrefix="select"
+                    isSearchable={true}
+                    isClearable={true}
+                    name="warehouse-manager"
+                    placeholder={""}
+                    value={selectedWarehouseManager}
+                    options={allWarehouseManagers}
+                    onChange={(value) => {
+                      setSelectedWarehouseManager(value ?? { label: "", value: 0 })
+                      setMutationData({
+                        ...mutationData,
+                        warehouseManagerWorkerID: value?.value ?? 0,
+                      })
+                    }}
+                  />
+                </div>
+              </div>
+            }
+
+            {allRecipientsQuery.isLoading &&
+              <div className="flex h-full w-[200px] items-center">
+                <LoadingDots height={40} />
+              </div>
+            }
+            {allRecipientsQuery.isSuccess &&
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="recipient">Получатель</label>
+                <div className="w-[200px]">
+                  <Select
+                    className="basic-single"
+                    classNamePrefix="select"
+                    isSearchable={true}
+                    isClearable={true}
+                    name="recipient"
+                    placeholder={""}
+                    value={selectedRecipient}
+                    options={allRecipients}
+                    onChange={(value) => {
+                      setSelectedRecipient(value ?? { label: "", value: 0 })
+                      setMutationData({
+                        ...mutationData,
+                        recipientWorkerID: value?.value ?? 0,
+                      })
+                    }}
+                  />
+                </div>
+              </div>
+            }
+
           </div>
           <div className="flex space-x-2 items-center w-full">
-            <div className="flex flex-col space-y-1">
-              <label htmlFor={"teams"}>Бригады</label>
-              <div className="w-[200px]">
-                <Select
-                  className="basic-single"
-                  classNamePrefix="select"
-                  isSearchable={true}
-                  isClearable={true}
-                  menuPosition="fixed"
-                  name={"teams"}
-                  placeholder={""}
-                  value={selectedTeamID}
-                  options={allTeams}
-                  onChange={(value) => setSelectedTeamID({
-                    label: value?.label ?? "",
-                    value: value?.value ?? 0,
-                  })}
-                />
+
+            {allTeamsQuery.isLoading &&
+              <div className="flex h-full w-[200px] items-center">
+                <LoadingDots height={40} />
               </div>
-            </div>
+            }
+            {allTeamsQuery.isSuccess &&
+              <div className="flex flex-col space-y-1">
+                <label htmlFor={"teams"}>Бригады</label>
+                <div className="w-[200px]">
+                  <Select
+                    className="basic-single"
+                    classNamePrefix="select"
+                    isSearchable={true}
+                    isClearable={true}
+                    menuPosition="fixed"
+                    name={"teams"}
+                    placeholder={""}
+                    value={selectedTeam}
+                    options={allTeams}
+                    onChange={(value) => {
+                      setSelectedTeam(value ?? { label: "", value: 0 })
+                      setMutationData({
+                        ...mutationData,
+                        teamID: value?.value ?? 0,
+                      })
+                    }}
+                  />
+                </div>
+              </div>
+            }
+
             <div className="flex flex-col space-y-1">
               <label htmlFor="dateOfInvoice">Дата накладной</label>
               <div className="py-[4px] px-[8px] border-[#cccccc] border rounded-[4px]">
@@ -339,22 +456,31 @@ export default function AddInvoiceOutputInProject({ setShowAddModal }: Props) {
             {/* table head END */}
           </div>
           <div className="grid grid-cols-6 text-sm text-left mt-2 w-full border-box ">
-            <div className="px-4 py-3">
-              <Select
-                className="basic-single"
-                classNamePrefix="select"
-                isSearchable={true}
-                isClearable={true}
-                menuPosition="fixed"
-                name={"materials"}
-                placeholder={""}
-                value={selectedMaterial}
-                options={allMaterialData}
-                onChange={(value) => onMaterialSelect(value)}
-              />
-            </div>
+            {materialQuery.isLoading &&
+              <div className="flex h-full items-center px-4 py-3">
+                <LoadingDots height={40} />
+              </div>
+            }
+            {materialQuery.isSuccess &&
+              <div className="px-4 py-3">
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  menuPosition="fixed"
+                  name={"materials"}
+                  placeholder={""}
+                  value={selectedMaterial}
+                  options={allMaterialData}
+                  onChange={(value) => onMaterialSelect(value)}
+                />
+              </div>
+            }
             <div className="px-4 py-3 flex items-center">{invoiceMaterial.unit}</div>
-            <div className="px-4 py-3 flex items-center">{invoiceMaterial.warehouseAmount}</div>
+            <div className="px-4 py-3 flex items-center">
+              {invoiceMaterial.warehouseAmount}
+            </div>
             <div className="px-4 py-3">
               <Input
                 name="amount"

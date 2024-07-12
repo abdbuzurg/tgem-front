@@ -350,7 +350,7 @@ export default function EditInvoiceOutputInProject({
     <Modal setShowModal={setShowEditModal} bigModal>
       <div className="mb-2">
         <h3 className="text-2xl font-medium text-gray-800">
-          Добавление накладной
+          Изменение накладной {editInvoiceOutputInProject.deliveryCode}
         </h3>
       </div>
       <div className="flex flex-col w-full max-h-[80vh]">
@@ -358,100 +358,128 @@ export default function EditInvoiceOutputInProject({
           <p className="text-xl font-semibold text-gray-800">Детали накладной</p>
           <div className="flex space-x-2 items-center w-full">
 
-            <div className="flex flex-col space-y-1">
-              <label htmlFor="districts">Район</label>
-              <div className="w-[200px]">
-                <Select
-                  className="basic-single"
-                  classNamePrefix="select"
-                  isSearchable={true}
-                  isClearable={true}
-                  name={"districts"}
-                  placeholder={""}
-                  value={selectedDistrict}
-                  options={allDistricts}
-                  onChange={(value) => {
-                    setSelectedDistrict(value ?? { label: "", value: 0 })
-                    setEditInvoiceOutputInProject({
-                      ...editInvoiceOutputInProject,
-                      districtID: value?.value ?? 0,
-                    })
-                  }}
-                />
+            {allDistrictsQuery.isLoading &&
+              <div className="flex h-full w-[200px] items-center">
+                <LoadingDots height={40} />
               </div>
-            </div>
+            }
+            {allDistrictsQuery.isSuccess &&
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="districts">Район</label>
+                <div className="w-[200px]">
+                  <Select
+                    className="basic-single"
+                    classNamePrefix="select"
+                    isSearchable={true}
+                    isClearable={true}
+                    name={"districts"}
+                    placeholder={""}
+                    value={selectedDistrict}
+                    options={allDistricts}
+                    onChange={(value) => {
+                      setSelectedDistrict(value ?? { label: "", value: 0 })
+                      setEditInvoiceOutputInProject({
+                        ...editInvoiceOutputInProject,
+                        districtID: value?.value ?? 0,
+                      })
+                    }}
+                  />
+                </div>
+              </div>
+            }
 
-            <div className="flex flex-col space-y-1">
-              <label htmlFor="warehouse-manager">Зав. склад</label>
-              <div className="w-[200px]">
-                <Select
-                  className="basic-single"
-                  classNamePrefix="select"
-                  isSearchable={true}
-                  isClearable={true}
-                  name={"warehouse-manager"}
-                  placeholder={""}
-                  value={selectedWarehouseManager}
-                  options={allWarehouseManagers}
-                  onChange={(value) => {
-                    setSelectedWarehouseManager(value ?? { label: "", value: 0 })
-                    setEditInvoiceOutputInProject({
-                      ...editInvoiceOutputInProject,
-                      warehouseManagerWorkerID: value?.value ?? 0,
-                    })
-                  }}
-                />
+            {warehouseManagerQuery.isLoading &&
+              <div className="flex h-full w-[200px] items-center">
+                <LoadingDots height={40} />
               </div>
-            </div>
+            }
+            {warehouseManagerQuery.isSuccess &&
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="warehouse-manager">Зав. склад</label>
+                <div className="w-[200px]">
+                  <Select
+                    className="basic-single"
+                    classNamePrefix="select"
+                    isSearchable={true}
+                    isClearable={true}
+                    name={"warehouse-manager"}
+                    placeholder={""}
+                    value={selectedWarehouseManager}
+                    options={allWarehouseManagers}
+                    onChange={(value) => {
+                      setSelectedWarehouseManager(value ?? { label: "", value: 0 })
+                      setEditInvoiceOutputInProject({
+                        ...editInvoiceOutputInProject,
+                        warehouseManagerWorkerID: value?.value ?? 0,
+                      })
+                    }}
+                  />
+                </div>
+              </div>
+            }
 
-            <div className="flex flex-col space-y-1">
-              <label htmlFor="recipient">Получатель</label>
-              <div className="w-[200px]">
-                <Select
-                  className="basic-single"
-                  classNamePrefix="select"
-                  isSearchable={true}
-                  isClearable={true}
-                  name={"recipient"}
-                  placeholder={""}
-                  value={selectedRecipient}
-                  options={allRecipients}
-                  onChange={(value) => {
-                    setSelectedRecipient(value ?? { label: "", value: 0 })
-                    setEditInvoiceOutputInProject({
-                      ...editInvoiceOutputInProject,
-                      recipientWorkerID: value?.value ?? 0,
-                    })
-                  }}
-                />
+            {recipientsQuery.isLoading &&
+              <div className="flex h-full w-[200px] items-center">
+                <LoadingDots height={40} />
               </div>
-            </div>
+            }
+            {recipientsQuery.isSuccess &&
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="recipient">Получатель</label>
+                <div className="w-[200px]">
+                  <Select
+                    className="basic-single"
+                    classNamePrefix="select"
+                    isSearchable={true}
+                    isClearable={true}
+                    name={"recipient"}
+                    placeholder={""}
+                    value={selectedRecipient}
+                    options={allRecipients}
+                    onChange={(value) => {
+                      setSelectedRecipient(value ?? { label: "", value: 0 })
+                      setEditInvoiceOutputInProject({
+                        ...editInvoiceOutputInProject,
+                        recipientWorkerID: value?.value ?? 0,
+                      })
+                    }}
+                  />
+                </div>
+              </div>
+            }
           </div>
           <div className="flex space-x-2 items-center w-full">
 
-            <div className="flex flex-col space-y-1">
-              <label htmlFor={"teams"}>Бригады</label>
-              <div className="w-[200px]">
-                <Select
-                  className="basic-single"
-                  classNamePrefix="select"
-                  isSearchable={true}
-                  isClearable={true}
-                  menuPosition="fixed"
-                  name={"teams"}
-                  placeholder={""}
-                  value={selectedTeam}
-                  options={allTeams}
-                  onChange={(value) => {
-                    setSelectedTeam(value ?? { label: "", value: 0 })
-                    setEditInvoiceOutputInProject({
-                      ...editInvoiceOutputInProject,
-                      teamID: value?.value ?? 0,
-                    })
-                  }}
-                />
+            {allTeamsQuery.isLoading &&
+              <div className="flex h-full w-[200px] items-center">
+                <LoadingDots height={40} />
               </div>
-            </div>
+            }
+            {allTeamsQuery.isSuccess &&
+              <div className="flex flex-col space-y-1">
+                <label htmlFor={"teams"}>Бригады</label>
+                <div className="w-[200px]">
+                  <Select
+                    className="basic-single"
+                    classNamePrefix="select"
+                    isSearchable={true}
+                    isClearable={true}
+                    menuPosition="fixed"
+                    name={"teams"}
+                    placeholder={""}
+                    value={selectedTeam}
+                    options={allTeams}
+                    onChange={(value) => {
+                      setSelectedTeam(value ?? { label: "", value: 0 })
+                      setEditInvoiceOutputInProject({
+                        ...editInvoiceOutputInProject,
+                        teamID: value?.value ?? 0,
+                      })
+                    }}
+                  />
+                </div>
+              </div>
+            }
 
             <div className="flex flex-col space-y-1">
               <label htmlFor="dateOfInvoice">Дата накладной</label>

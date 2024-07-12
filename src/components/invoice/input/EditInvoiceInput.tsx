@@ -97,7 +97,7 @@ export default function EditInvoiceInput({
   // LOGIC OF ADDING NEW MATERIAL
   const [showAddNewMaterialDetaisModal, setShowAddNewMaterialDetailsModal] = useState(false)
   useEffect(() => {
-    materailCostQuery.refetch()
+    materialCostQuery.refetch()
     materialQuery.refetch()
   }, [showAddNewMaterialDetaisModal])
 
@@ -144,25 +144,25 @@ export default function EditInvoiceInput({
   }
 
   // MATERIAL COST SELECT LOGIC
-  const materailCostQuery = useQuery<IMaterialCost[], Error>({
+  const materialCostQuery = useQuery<IMaterialCost[], Error>({
     queryKey: ["material-cost", invoiceMaterial.materialID],
     queryFn: () => getMaterailCostByMaterialID(invoiceMaterial.materialID),
   })
   const [allMaterialCostData, setAllMaterialCostData] = useState<IReactSelectOptions<number>[]>([])
   const [selectedMaterialCost, setSelectedMaterialCost] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   useEffect(() => {
-    if (materailCostQuery.isSuccess && materailCostQuery.data) {
-      setAllMaterialCostData([...materailCostQuery.data.map<IReactSelectOptions<number>>((value) => ({ label: value.costM19.toString(), value: value.id }))])
-      if (materailCostQuery.data.length == 1) {
-        setSelectedMaterialCost({ label: materailCostQuery.data[0].costM19.toString(), value: materailCostQuery.data[0].id })
+    if (materialCostQuery.isSuccess && materialCostQuery.data) {
+      setAllMaterialCostData([...materialCostQuery.data.map<IReactSelectOptions<number>>((value) => ({ label: value.costM19.toString(), value: value.id }))])
+      if (materialCostQuery.data.length == 1) {
+        setSelectedMaterialCost({ label: materialCostQuery.data[0].costM19.toString(), value: materialCostQuery.data[0].id })
         setInvoiceMaterial({
           ...invoiceMaterial,
-          materialCost: materailCostQuery.data[0].costM19,
-          materialCostID: materailCostQuery.data[0].id,
+          materialCost: materialCostQuery.data[0].costM19,
+          materialCostID: materialCostQuery.data[0].id,
         })
       }
     }
-  }, [materailCostQuery.data])
+  }, [materialCostQuery.data])
   const onMaterialCostSelect = (value: IReactSelectOptions<number> | null) => {
     if (!value) {
       setSelectedMaterialCost({ label: "", value: 0 })
@@ -171,8 +171,8 @@ export default function EditInvoiceInput({
     }
 
     setSelectedMaterialCost(value)
-    if (materailCostQuery.isSuccess && materailCostQuery.data) {
-      const materialCost = materailCostQuery.data!.find((cost) => cost.id == value.value)!
+    if (materialCostQuery.isSuccess && materialCostQuery.data) {
+      const materialCost = materialCostQuery.data!.find((cost) => cost.id == value.value)!
       setInvoiceMaterial({ ...invoiceMaterial, materialCostID: materialCost.id, materialCost: materialCost.costM19 })
     }
   }
@@ -288,35 +288,42 @@ export default function EditInvoiceInput({
     <Modal setShowModal={setShowEditModal} bigModal>
       <div className="mb-2">
         <h3 className="text-2xl font-medium text-gray-800">
-          Изменение накладной
+          Изменение накладной {editInvoiceInput.deliveryCode}
         </h3>
       </div>
       <div className="flex flex-col w-full max-h-[85vh] ">
         <div className="flex flex-col">
           <p className="text-xl font-semibold text-gray-800">Детали накладной</p>
           <div className="flex space-x-2 items-center w-full">
-            <div className="flex flex-col space-y-1">
-              <label htmlFor="Заведующий складом">Зав. Склад</label>
-              <div className="w-[200px]">
-                <Select
-                  className="basic-single"
-                  classNamePrefix="select"
-                  isSearchable={true}
-                  isClearable={true}
-                  name="Заведующий складом"
-                  placeholder={""}
-                  value={selectedWarehouseManager}
-                  options={allWarehouseManagers}
-                  onChange={(value) => {
-                    setSelectedWarehouseManager(value ?? { label: "", value: 0 })
-                    setEditInvoiceInput({
-                      ...editInvoiceInput,
-                      warehouseManagerWorkerID: value?.value ?? 0,
-                    })
-                  }}
-                />
+            {warehouseManagerQuery.isLoading &&
+              <div className="flex h-full w-[200px] items-center">
+                <LoadingDots height={40} />
               </div>
-            </div>
+            }
+            {warehouseManagerQuery.isSuccess &&
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="Заведующий складом">Зав. Склад</label>
+                <div className="w-[200px]">
+                  <Select
+                    className="basic-single"
+                    classNamePrefix="select"
+                    isSearchable={true}
+                    isClearable={true}
+                    name="Заведующий складом"
+                    placeholder={""}
+                    value={selectedWarehouseManager}
+                    options={allWarehouseManagers}
+                    onChange={(value) => {
+                      setSelectedWarehouseManager(value ?? { label: "", value: 0 })
+                      setEditInvoiceInput({
+                        ...editInvoiceInput,
+                        warehouseManagerWorkerID: value?.value ?? 0,
+                      })
+                    }}
+                  />
+                </div>
+              </div>
+            }
             <div className="flex flex-col space-y-1">
               <label htmlFor="dateOfInvoice">Дата накладной</label>
               <div className="py-[4px] px-[8px] border-[#cccccc] border rounded-[4px]">
@@ -367,20 +374,27 @@ export default function EditInvoiceInput({
             {/* table head END */}
           </div>
           <div className="grid grid-cols-6 text-sm text-left mt-2 w-full border-box items-center">
-            <div className="px-4 py-3">
-              <Select
-                className="basic-single"
-                classNamePrefix="select"
-                isSearchable={true}
-                isClearable={true}
-                menuPosition="fixed"
-                name={"materials"}
-                placeholder={""}
-                value={selectedMaterial}
-                options={allMaterialData}
-                onChange={(value) => onMaterialSelect(value)}
-              />
-            </div>
+            {materialQuery.isLoading &&
+              <div className="px-4 py-3">
+                <LoadingDots height={36} />
+              </div>
+            }
+            {materialQuery.isSuccess &&
+              <div className="px-4 py-3">
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  menuPosition="fixed"
+                  name={"materials"}
+                  placeholder={""}
+                  value={selectedMaterial}
+                  options={allMaterialData}
+                  onChange={(value) => onMaterialSelect(value)}
+                />
+              </div>
+            }
             <div className="px-4 py-3 flex items-center">{invoiceMaterial.unit}</div>
             <div className="px-4 py-3">
               <Input
@@ -390,20 +404,27 @@ export default function EditInvoiceInput({
                 onChange={(e) => setInvoiceMaterial((prev) => ({ ...prev, amount: e.target.valueAsNumber }))}
               />
             </div>
-            <div className="px-4 py-3">
-              <Select
-                className="basic-single"
-                classNamePrefix="select"
-                isSearchable={true}
-                isClearable={true}
-                menuPosition="fixed"
-                name={"materials-costs"}
-                placeholder={""}
-                value={selectedMaterialCost}
-                options={allMaterialCostData}
-                onChange={(value) => onMaterialCostSelect(value)}
-              />
-            </div>
+            {materialCostQuery.isLoading &&
+              <div className="px-4 py-3">
+                <LoadingDots height={36} />
+              </div>
+            }
+            {materialCostQuery.isSuccess &&
+              <div className="px-4 py-3">
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  menuPosition="fixed"
+                  name={"materials-costs"}
+                  placeholder={""}
+                  value={selectedMaterialCost}
+                  options={allMaterialCostData}
+                  onChange={(value) => onMaterialCostSelect(value)}
+                />
+              </div>
+            }
             <div className="px-4 py-3">
               <Input
                 name="notes"

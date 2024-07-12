@@ -22,16 +22,13 @@ export default function InvoiceObjectMutationAdd() {
     label: "",
     value: 0,
   })
-
   const [availableObjects, setAvailableObject] = useState<IReactSelectOptions<number>[]>([])
   const allObjectsQuery = useQuery<IObject[], Error, IObject[]>({
     queryKey: ["all-objects"],
     queryFn: getAllObjects,
   })
   useEffect(() => {
-
     if (allObjectsQuery.isSuccess && allObjectsQuery.data) {
-
       setAvailableObject([
         ...allObjectsQuery.data.map<IReactSelectOptions<number>>((val) => {
           const objectType = objectTypeIntoRus(val.type)
@@ -41,9 +38,7 @@ export default function InvoiceObjectMutationAdd() {
           }
         })
       ])
-
     }
-
   }, [allObjectsQuery.data])
 
   // Select Team Logic
@@ -51,7 +46,6 @@ export default function InvoiceObjectMutationAdd() {
     label: "",
     value: 0,
   })
-
   const [availableTeams, setAvailableTeams] = useState<IReactSelectOptions<number>[]>([])
   const allTeamsQuery = useQuery<TeamDataForSelect[], Error, TeamDataForSelect[]>({
     queryKey: ["all-teams-in-object", selectedObject.value],
@@ -59,18 +53,14 @@ export default function InvoiceObjectMutationAdd() {
     enabled: selectedObject.value != 0,
   })
   useEffect(() => {
-
     if (allTeamsQuery.isSuccess && allTeamsQuery.data) {
-
       setAvailableTeams([
         ...allTeamsQuery.data.map<IReactSelectOptions<number>>((val) => ({
           label: val.teamNumber + " (" + val.teamLeaderName + ")",
           value: val.id
         }))
       ])
-
     }
-
   }, [allTeamsQuery.data])
 
   // Select Material Logic
@@ -78,8 +68,6 @@ export default function InvoiceObjectMutationAdd() {
     label: "",
     value: 0,
   })
-
-
   const [availableMaterials, setAvailableMaterials] = useState<IReactSelectOptions<number>[]>([])
   const allMaterialsQuery = useQuery<Material[], Error, Material[]>({
     queryKey: [`materials-in-team`, selectedTeam.value],
@@ -87,18 +75,14 @@ export default function InvoiceObjectMutationAdd() {
     enabled: selectedTeam.value != 0,
   })
   useEffect(() => {
-
     if (allMaterialsQuery.isSuccess && allMaterialsQuery.data) {
-
       setAvailableMaterials([
         ...allMaterialsQuery.data.map<IReactSelectOptions<number>>((val) => ({
           label: val.name,
           value: val.id,
         }))
       ])
-
     }
-
   }, [allMaterialsQuery.data])
 
   const onMaterialSelect = (value: IReactSelectOptions<number> | null) => {
@@ -320,62 +304,20 @@ export default function InvoiceObjectMutationAdd() {
             onClick={() => submitInvoice()}
             className="text-white py-2.5 px-5 rounded-lg bg-gray-800 hover:bg-gray-700 hover:cursor-pointer"
           >
-            {createInvoiceObjectMutation.isLoading ? <LoadingDots height={30} /> : "Опубликовать" }
+            {createInvoiceObjectMutation.isLoading ? <LoadingDots height={30} /> : "Опубликовать"}
           </div>
         </div>
         <span className="font-semibold text-lg">Основная информация</span>
         <div className="px-3 py-4 bg-gray-800 text-white rounded-md ">
-          <div className="flex flex-col space-y-1">
-            <span className="font-semibold">Объект</span>
-            <Select
-              className="basic-single text-black"
-              classNamePrefix="select"
-              isSearchable={true}
-              isClearable={true}
-              name={"material-cost-material-select"}
-              placeholder={""}
-              value={selectedObject}
-              options={availableObjects}
-              onChange={(value) => {
-                setSelectedObject({
-                  label: value?.label ?? "",
-                  value: value?.value ?? 0,
-                })
-                setSelectedTeam({ value: 0, label: "" })
-                setSelectedMaterial({ value: 0, label: "" })
-                resetInvoiceMaterialObject()
-              }}
-            />
-          </div>
-          <div className="flex flex-col space-y-1">
-            <span className="font-semibold">Бригада</span>
-            <Select
-              className="basic-single text-black"
-              classNamePrefix="select"
-              isSearchable={true}
-              isClearable={true}
-              name={"material-cost-material-select"}
-              placeholder={""}
-              value={selectedTeam}
-              options={availableTeams}
-              onChange={(value) => {
-                setSelectedTeam({
-                  label: value?.label ?? "",
-                  value: value?.value ?? 0,
-                })
-                setSelectedMaterial({ value: 0, label: "" })
-                resetInvoiceMaterialObject()
-              }}
-            />
-          </div>
-        </div>
-      </div>
-      <div className="px-2 py-1">
-        <span className="font-semibold text-lg">Материалы</span>
-        <div className="grid grid-cols-1 gap-2">
-          <div className="flex flex-col space-y-3 px-3 py-2 bg-gray-800 text-white rounded-md">
+
+          {allObjectsQuery.isLoading &&
+            <div className="flex items-center">
+              <LoadingDots height={40} />
+            </div>
+          }
+          {allObjectsQuery.isSuccess &&
             <div className="flex flex-col space-y-1">
-              <span className="font-semibold">Материалы</span>
+              <span className="font-semibold">Объект</span>
               <Select
                 className="basic-single text-black"
                 classNamePrefix="select"
@@ -383,11 +325,78 @@ export default function InvoiceObjectMutationAdd() {
                 isClearable={true}
                 name={"material-cost-material-select"}
                 placeholder={""}
-                value={selectedMaterial}
-                options={availableMaterials}
-                onChange={(value) => onMaterialSelect(value)}
+                value={selectedObject}
+                options={availableObjects}
+                onChange={(value) => {
+                  setSelectedObject({
+                    label: value?.label ?? "",
+                    value: value?.value ?? 0,
+                  })
+                  setSelectedTeam({ value: 0, label: "" })
+                  setSelectedMaterial({ value: 0, label: "" })
+                  resetInvoiceMaterialObject()
+                }}
               />
             </div>
+          }
+
+          {allTeamsQuery.isLoading && allTeamsQuery.fetchStatus == "fetching" &&
+            <div className="flex items-center h-[40px]">
+              <LoadingDots height={40} />
+            </div>
+          }
+          {(allTeamsQuery.isSuccess || allTeamsQuery.fetchStatus == "idle") &&
+            <div className="flex flex-col space-y-1">
+              <span className="font-semibold">Бригада</span>
+              <Select
+                className="basic-single text-black"
+                classNamePrefix="select"
+                isSearchable={true}
+                isClearable={true}
+                name={"material-cost-material-select"}
+                placeholder={""}
+                value={selectedTeam}
+                options={availableTeams}
+                onChange={(value) => {
+                  setSelectedTeam({
+                    label: value?.label ?? "",
+                    value: value?.value ?? 0,
+                  })
+                  setSelectedMaterial({ value: 0, label: "" })
+                  resetInvoiceMaterialObject()
+                }}
+              />
+            </div>
+          }
+        </div>
+      </div>
+      <div className="px-2 py-1">
+        <span className="font-semibold text-lg">Материалы</span>
+        <div className="grid grid-cols-1 gap-2">
+          <div className="flex flex-col space-y-3 px-3 py-2 bg-gray-800 text-white rounded-md">
+
+            {allMaterialsQuery.isLoading && allMaterialsQuery.fetchStatus == "fetching" &&
+              <div className="flex items-center">
+                <LoadingDots height={40} />
+              </div>
+            }
+            {(allMaterialsQuery.isSuccess || allMaterialsQuery.fetchStatus == "idle") &&
+              <div className="flex flex-col space-y-1">
+                <span className="font-semibold">Материалы</span>
+                <Select
+                  className="basic-single text-black"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"material-cost-material-select"}
+                  placeholder={""}
+                  value={selectedMaterial}
+                  options={availableMaterials}
+                  onChange={(value) => onMaterialSelect(value)}
+                />
+              </div>
+            }
+
             <div className="flex flex-col space-y-1">
               <span className="font-semibold">Кол-во</span>
               <div className="flex space-x-2 items-center">

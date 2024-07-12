@@ -155,7 +155,7 @@ export default function InvoiceInput() {
           }
           {tableDataQuery.isSuccess &&
             tableData.map((row, index) => (
-              <tr key={index} className="border-b">
+              <tr key={index} className="border-b hover:bg-gray-200">
                 <td className="px-4 py-3">{row.deliveryCode}</td>
                 <td className="px-4 py-3">{row.warehouseManagerName}</td>
                 <td className="px-4 py-3">{row.releasedName}</td>
