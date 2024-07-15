@@ -4,7 +4,7 @@ import toast, { Toaster } from "react-hot-toast";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { getPermissionByResourceURL } from "../services/api/permission";
-import { ADMIN_USERS_PAGE, HOME, LOGIN, PERMISSION_DENIED, REFERENCE_BOOK, REPORT } from "../URLs";
+import {  HOME, LOGIN, PERMISSION_DENIED, REFERENCE_BOOK, REPORT } from "../URLs";
 import LoadingDots from "./UI/loadingDots";
 
 export default function Layout() {
@@ -68,11 +68,6 @@ export default function Layout() {
             <li>
               <Link to={`${REPORT}`} className="block text-white bg-transparent p-0 hover:text-gray-400">
                 Отчет
-              </Link>
-            </li>
-            <li>
-              <Link to={`${ADMIN_USERS_PAGE}`} className="block text-white bg-transparent p-0 hover:text-gray-400">
-                Пользователи
               </Link>
             </li>
             <li>

@@ -7,8 +7,8 @@ import IReactSelectOptions from "../../../services/interfaces/react-select";
 import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { InvoiceOutputReportFilter, buildReport, getAllUniqueCode, getAllUniqueRecieved, getAllUniqueDistrict, getAllUniqueTeam, getAllUniqueWarehouseManager } from "../../../services/api/invoiceOutputInProject";
-import ErrorModal from "../../errorModal";
 import LoadingDots from "../../UI/loadingDots";
+import toast from "react-hot-toast";
 
 interface Props {
   setShowReportModal: React.Dispatch<React.SetStateAction<boolean>>
@@ -17,62 +17,67 @@ interface Props {
 export default function ReportInvoiceOutput({ setShowReportModal }: Props) {
 
   //Logic for all the districts
-  const [districts, setDistricts] = useState<IReactSelectOptions<string>[]>([])
-  const districtQuery = useQuery<string[], Error, string[]>({
+  const [selectedDistrict, setSelectedDistrict] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [districts, setDistricts] = useState<IReactSelectOptions<number>[]>([])
+  const districtQuery = useQuery<IReactSelectOptions<number>[], Error, IReactSelectOptions<number>[]>({
     queryKey: ["invoice-output-districts"],
     queryFn: getAllUniqueDistrict
   })
   useEffect(() => {
     if (districtQuery.isSuccess && districtQuery.data) {
-      setDistricts([...districtQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
+      setDistricts(districtQuery.data)
     }
   }, [districtQuery.data])
 
   //Logic for All the codes(serial codes)
+  const [selectedCode, setSelectedCode] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
   const [codes, setCodes] = useState<IReactSelectOptions<string>[]>([])
-  const codesQuery = useQuery<string[], Error, string[]>({
+  const codesQuery = useQuery<IReactSelectOptions<string>[], Error, IReactSelectOptions<string>[]>({
     queryKey: ["invoice-output-codes"],
     queryFn: getAllUniqueCode
   })
   useEffect(() => {
     if (codesQuery.isSuccess && codesQuery.data) {
-      setCodes([...codesQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
+      setCodes(codesQuery.data)
     }
   }, [codesQuery.data])
 
   //Logic for all the warehouse managers
-  const [warehouseManagers, setWarehouseManagers] = useState<IReactSelectOptions<string>[]>([])
-  const warehouseManagersQuery = useQuery<string[], Error, string[]>({
+  const [selectedWarehouseManager, setSelectedWarehouseManager] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [warehouseManagers, setWarehouseManagers] = useState<IReactSelectOptions<number>[]>([])
+  const warehouseManagersQuery = useQuery<IReactSelectOptions<number>[], Error, IReactSelectOptions<number>[]>({
     queryKey: ["invoice-output-warehouse-managers"],
     queryFn: getAllUniqueWarehouseManager
   })
   useEffect(() => {
     if (warehouseManagersQuery.isSuccess && warehouseManagersQuery.data) {
-      setWarehouseManagers([...warehouseManagersQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
+      setWarehouseManagers(warehouseManagersQuery.data)
     }
   }, [warehouseManagersQuery.data])
 
   //Logic for all Released
-  const [recieveds, setReceiveds] = useState<IReactSelectOptions<string>[]>([])
-  const recievedsQuery = useQuery<string[], Error, string[]>({
+  const [selectedRecieved, setSelectedRecieved] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [recieveds, setReceiveds] = useState<IReactSelectOptions<number>[]>([])
+  const recievedsQuery = useQuery<IReactSelectOptions<number>[], Error, IReactSelectOptions<number>[]>({
     queryKey: ["invoice-output-recieveds"],
     queryFn: getAllUniqueRecieved
   })
   useEffect(() => {
     if (recievedsQuery.isSuccess && recievedsQuery.data) {
-      setReceiveds([...recievedsQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
+      setReceiveds(recievedsQuery.data)
     }
   }, [recievedsQuery.data])
 
   //Logic for all Teams
-  const [teams, setTeams] = useState<IReactSelectOptions<string>[]>([])
-  const teamQuery = useQuery<string[], Error, string[]>({
+  const [selectedTeam, setSelectedTeam] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [teams, setTeams] = useState<IReactSelectOptions<number>[]>([])
+  const teamQuery = useQuery<IReactSelectOptions<number>[], Error, IReactSelectOptions<number>[]>({
     queryKey: ["invoice-output-teams"],
     queryFn: getAllUniqueTeam
   })
   useEffect(() => {
     if (teamQuery.isSuccess && teamQuery.data) {
-      setTeams([...teamQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
+      setTeams(teamQuery.data)
     }
   }, [teamQuery.data])
 
@@ -82,42 +87,21 @@ export default function ReportInvoiceOutput({ setShowReportModal }: Props) {
     code: "",
     dateFrom: null,
     dateTo: null,
-    object: "",
-    recieved: "",
-    district: "",
-    team: "",
-    warehouseManager: "",
+    recievedID: 0,
+    districtID: 0,
+    teamID: 0,
+    warehouseManagerID: 0,
   })
-  const [filterErrors, setFilterErrors] = useState({
-    date: false,
-  })
-
-  const [showErrorsModal, setShowErrorsModal] = useState(false)
 
   //Submit filter
-
   const buildInvoiceOutputReport = useMutation({
     mutationFn: () => buildReport(filter)
   })
 
   const onCreateReportClick = () => {
-    let errors = {
-      date: false,
-    };
-    if (filter.dateFrom && filter.dateTo) {
-      errors = {
-        date: filter.dateFrom > filter.dateTo
-      }
-    }
 
-    setFilterErrors(errors)
-    const isThereError = Object.keys(errors).some((value) => {
-      if (errors[value as keyof typeof errors]) {
-        return true
-      }
-    })
-    if (isThereError) {
-      setShowErrorsModal(true)
+    if (filter.dateFrom && filter.dateTo && filter.dateFrom > filter.dateTo) {
+      toast.error("Неправильно указанный диапазон для дат. ")
       return
     }
 
@@ -142,9 +126,12 @@ export default function ReportInvoiceOutput({ setShowReportModal }: Props) {
             menuPosition="fixed"
             name={"code"}
             placeholder={""}
-            value={{ value: filter.code, label: filter.code }}
+            value={selectedCode}
             options={codes}
-            onChange={(value: null | IReactSelectOptions<string>) => setFilter({ ...filter, code: value?.value ?? "" })}
+            onChange={(value) => {
+              setSelectedCode(value ?? { label: "", value: "" })
+              setFilter({ ...filter, code: value?.value ?? "" })
+            }}
           />
         </div>
         <div className="flex flex-col space-y-1">
@@ -158,9 +145,12 @@ export default function ReportInvoiceOutput({ setShowReportModal }: Props) {
             menuPosition="fixed"
             name={"district"}
             placeholder={""}
-            value={{ label: filter.district, value: filter.district }}
+            value={selectedDistrict}
             options={districts}
-            onChange={(value: null | IReactSelectOptions<string>) => setFilter({ ...filter, district: value?.value ?? "" })}
+            onChange={value => {
+              setSelectedDistrict(value ?? { label: "", value: 0 })
+              setFilter({ ...filter, districtID: value?.value ?? 0 })
+            }}
           />
         </div>
         <div className="flex flex-col space-y-1">
@@ -174,13 +164,16 @@ export default function ReportInvoiceOutput({ setShowReportModal }: Props) {
             menuPosition="fixed"
             name={"warehouseManager"}
             placeholder={""}
-            value={{ label: filter.warehouseManager, value: filter.warehouseManager }}
+            value={selectedWarehouseManager}
             options={warehouseManagers}
-            onChange={(value: null | IReactSelectOptions<string>) => setFilter({ ...filter, warehouseManager: value?.value ?? "" })}
+            onChange={value => {
+              setSelectedWarehouseManager(value ?? { label: "", value: 0 })
+              setFilter({ ...filter, warehouseManagerID: value?.value ?? 0 })
+            }}
           />
         </div>
         <div className="flex flex-col space-y-1">
-          <label htmlFor="recieved">Составил</label>
+          <label htmlFor="recieved">Получатель</label>
           <Select
             id="recieved"
             className="basic-single"
@@ -190,9 +183,12 @@ export default function ReportInvoiceOutput({ setShowReportModal }: Props) {
             menuPosition="fixed"
             name={"recieved"}
             placeholder={""}
-            value={{ label: filter.recieved, value: filter.recieved }}
+            value={selectedRecieved}
             options={recieveds}
-            onChange={(value: null | IReactSelectOptions<string>) => setFilter({ ...filter, recieved: value?.value ?? "" })}
+            onChange={value => {
+              setSelectedRecieved(value ?? { label: "", value: 0 })
+              setFilter({ ...filter, recievedID: value?.value ?? 0 })
+            }}
           />
         </div>
         <div className="flex flex-col space-y-1">
@@ -206,9 +202,12 @@ export default function ReportInvoiceOutput({ setShowReportModal }: Props) {
             menuPosition="fixed"
             name={"team"}
             placeholder={""}
-            value={{ label: filter.team, value: filter.team }}
+            value={selectedTeam}
             options={teams}
-            onChange={(value: null | IReactSelectOptions<string>) => setFilter({ ...filter, team: value?.value ?? "" })}
+            onChange={value => {
+              setSelectedTeam(value ?? {label: "", value: 0})
+              setFilter({ ...filter, teamID: value?.value ?? 0 })
+            }}
           />
         </div>
         <div className="felx flex-col space-y-1">
@@ -246,12 +245,6 @@ export default function ReportInvoiceOutput({ setShowReportModal }: Props) {
           </div>
         </div>
       </div>
-      {showErrorsModal &&
-        <ErrorModal setShowModal={setShowErrorsModal}>
-          {filterErrors.date && <span className="text-red-500 text-sm font-semibold">Неправильно указанный диапазон для дат. </span>}
-          <span className="invisible">This is just make the modal look good. DO NOT TOUCH IT!!!!!</span>
-        </ErrorModal>
-      }
     </Modal>
   )
 }

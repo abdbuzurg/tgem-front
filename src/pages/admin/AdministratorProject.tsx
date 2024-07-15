@@ -77,6 +77,7 @@ export function AdministratorProject() {
     signedDateOfContract: new Date(),
     dateStart: new Date(),
     dateEnd: new Date(),
+    projectManager: "",
   })
 
   const createProjectMutation = useMutation<Project, Error, Project>({
@@ -120,13 +121,16 @@ export function AdministratorProject() {
             <th className="px-4 py-3">
               <span>Наименование</span>
             </th>
-            <th className="px-4 py-3 w-[100px]">
-              <span>Клиент</span>
+            <th className="px-4 py-3">
+              <span>Заказчик</span>
             </th>
-            <th className="px-4 py-3 w-[100px]">
+            <th className="px-4 py-3">
               <span>Бюджет</span>
             </th>
-            <th className="px-4 py-3 w-[100px]">
+            <th className="px-4 py-3">
+              <span>Менеджер</span>
+            </th>
+            <th className="px-4 py-3">
               <span>Описание</span>
             </th>
             <th className="px-4 py-3 w-[100px]">
@@ -166,7 +170,8 @@ export function AdministratorProject() {
               <tr key={index} className="border-b">
                 <td className="px-4 py-3">{row.name}</td>
                 <td className="px-4 py-3">{row.client}</td>
-                <td className="px-4 py-3 w-[150px]">{row.budget + " " +row.budgetCurrency}</td>
+                <td className="px-4 py-3 w-[150px]">{row.budget + " " + row.budgetCurrency}</td>
+                <td className="px-4 py-3 w-[150px]">{row.projectManager}</td>
                 <td className="px-4 py-3">{row.description}</td>
                 <td className="px-4 py-3 w-[110px]">{row.signedDateOfContract.toString().substring(0, 10)}</td>
                 <td className="px-4 py-3 w-[110px]">{row.dateStart.toString().substring(0, 10)}</td>
@@ -213,7 +218,7 @@ export function AdministratorProject() {
                 />
               </div>
               <div className="flex flex-col space-y-1">
-                <label htmlFor="client">КЛИЕНТ</label>
+                <label htmlFor="client">Заказчик</label>
                 <Input
                   name="client"
                   type="text"
@@ -231,13 +236,14 @@ export function AdministratorProject() {
                 />
               </div>
               <div>
+                <label htmlFor="currency">Валюта</label>
                 <Select
                   className="basic-single"
                   classNamePrefix="select"
                   isSearchable={true}
                   isClearable={true}
                   menuPosition="fixed"
-                  name={"materials-costs"}
+                  name={"currency"}
                   placeholder={""}
                   value={{
                     label: projectMutationData.budgetCurrency,
@@ -296,6 +302,15 @@ export function AdministratorProject() {
                     onChange={(date) => setProjectMutationData({ ...projectMutationData, dateEnd: date ?? new Date(+0) })}
                   />
                 </div>
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="projectManager">Менеджер проекта </label>
+                <Input
+                  name="projectManager"
+                  type="text"
+                  value={projectMutationData.projectManager}
+                  onChange={(e) => setProjectMutationData({ ...projectMutationData, [e.target.name]: e.target.value })}
+                />
               </div>
               <div className="flex">
                 <div

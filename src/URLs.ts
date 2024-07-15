@@ -36,6 +36,7 @@ export const REPORT_BALANCE = "/report/balance"
 export const REPORT_INVOICE_INPUT = "/report/invoice/input"
 export const REPORT_INVOICE_OUTPUT = "/report/invoice/output"
 export const REPORT_INVOICE_RETURN = "/report/invoice/return"
+export const REPORT_INVOICE_OBJECT = "report/invoice/object"
 
 export const ADMINISTRATOR_HOME_PAGE = "/admin/home"
 export const ADMINISTRATOR_PROJECT = "/admin/project"

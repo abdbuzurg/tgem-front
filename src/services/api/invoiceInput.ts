@@ -5,6 +5,7 @@ import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
 import { IMaterialCost } from "../interfaces/materialCost"
+import IReactSelectOptions from "../interfaces/react-select"
 
 const URL = "/input"
 
@@ -96,8 +97,8 @@ export async function sendInvoiceInputConfirmationExcel(data: InvoiceInputConfir
   }
 }
 
-export async function getAllUniqueCode(): Promise<string[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/unique/code`)
+export async function getAllUniqueCode(): Promise<IReactSelectOptions<string>[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IReactSelectOptions<string>[]>>(`${URL}/unique/code`)
   const response = responseRaw.data
   if (response.permission || response.success) {
     return response.data
@@ -106,8 +107,8 @@ export async function getAllUniqueCode(): Promise<string[]> {
   }
 }
 
-export async function getAllUniqueWarehouseManager(): Promise<string[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/unique/warehouse-manager`)
+export async function getAllUniqueWarehouseManager(): Promise<IReactSelectOptions<number>[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IReactSelectOptions<number>[]>>(`${URL}/unique/warehouse-manager`)
   const response = responseRaw.data
   if (response.permission || response.success) {
     return response.data
@@ -116,8 +117,8 @@ export async function getAllUniqueWarehouseManager(): Promise<string[]> {
   }
 }
 
-export async function getAllUniqueReleased(): Promise<string[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/unique/released`)
+export async function getAllUniqueReleased(): Promise<IReactSelectOptions<number>[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IReactSelectOptions<number>[]>>(`${URL}/unique/released`)
   const response = responseRaw.data
   if (response.permission || response.success) {
     return response.data
@@ -128,8 +129,8 @@ export async function getAllUniqueReleased(): Promise<string[]> {
 
 export interface InvoiceInputReportFilter {
   code: string
-  warehouseManager: string
-  released: string
+  warehouseManagerID: number
+  releasedID: number
   dateFrom: Date | null
   dateTo: Date | null
 }

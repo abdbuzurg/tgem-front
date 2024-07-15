@@ -17,38 +17,41 @@ interface Props {
 export default function ReportInvoiceInput({ setShowReportModal }: Props) {
 
   //Logic for All the codes(serial codes)
+  const [selectedCode, setSelectedCode] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
   const [codes, setCodes] = useState<IReactSelectOptions<string>[]>([])
-  const codesQuery = useQuery<string[], Error, string[]>({
+  const codesQuery = useQuery<IReactSelectOptions<string>[], Error, IReactSelectOptions<string>[]>({
     queryKey: ["invoice-input-codes"],
     queryFn: getAllUniqueCode
   })
   useEffect(() => {
     if (codesQuery.isSuccess && codesQuery.data) {
-      setCodes([...codesQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
+      setCodes(codesQuery.data)
     }
   }, [codesQuery.data])
 
   //Logic for all the warehouse managers
-  const [warehouseManagers, setWarehouseManagers] = useState<IReactSelectOptions<string>[]>([])
-  const warehouseManagersQuery = useQuery<string[], Error, string[]>({
+  const [selectedWarehouseManager, setSelectedWarehouseManager] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [warehouseManagers, setWarehouseManagers] = useState<IReactSelectOptions<number>[]>([])
+  const warehouseManagersQuery = useQuery<IReactSelectOptions<number>[], Error, IReactSelectOptions<number>[]>({
     queryKey: ["invoice-input-warehouse-managers"],
     queryFn: getAllUniqueWarehouseManager
   })
   useEffect(() => {
     if (warehouseManagersQuery.isSuccess && warehouseManagersQuery.data) {
-      setWarehouseManagers([...warehouseManagersQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
+      setWarehouseManagers(warehouseManagersQuery.data)
     }
   }, [warehouseManagersQuery.data])
 
   //Logic for all Released
-  const [releaseds, setReleaseds] = useState<IReactSelectOptions<string>[]>([])
-  const releasedsQuery = useQuery<string[], Error, string[]>({
+  const [selectedReleased, setSelectedReleased] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [releaseds, setReleaseds] = useState<IReactSelectOptions<number>[]>([])
+  const releasedsQuery = useQuery<IReactSelectOptions<number>[], Error, IReactSelectOptions<number>[]>({
     queryKey: ["invoice-input-releaseds"],
     queryFn: getAllUniqueReleased
   })
   useEffect(() => {
     if (releasedsQuery.isSuccess && releasedsQuery.data) {
-      setReleaseds([...releasedsQuery.data.map<IReactSelectOptions<string>>((value) => ({ value: value, label: value }))])
+      setReleaseds(releasedsQuery.data)
     }
   }, [releasedsQuery.data])
 
@@ -57,8 +60,8 @@ export default function ReportInvoiceInput({ setShowReportModal }: Props) {
     code: "",
     dateFrom: null,
     dateTo: null,
-    released: "",
-    warehouseManager: "",
+    releasedID: 0,
+    warehouseManagerID: 0,
   })
 
   //Submit filter
@@ -95,11 +98,12 @@ export default function ReportInvoiceInput({ setShowReportModal }: Props) {
             menuPosition="fixed"
             name={"code"}
             placeholder={""}
-            value={{ value: filter.code, label: filter.code }}
+            value={selectedCode}
             options={codes}
-            onChange={(value: null | IReactSelectOptions<string>) =>
+            onChange={(value: null | IReactSelectOptions<string>) => {
+              setSelectedCode(value ?? { label: "", value: "" })
               setFilter({ ...filter, code: value?.value ?? "" })
-            }
+            }}
           />
         </div>
         <div className="flex flex-col space-y-1">
@@ -113,9 +117,12 @@ export default function ReportInvoiceInput({ setShowReportModal }: Props) {
             menuPosition="fixed"
             name={"warehouseManager"}
             placeholder={""}
-            value={{ label: filter.warehouseManager, value: filter.warehouseManager }}
+            value={selectedWarehouseManager}
             options={warehouseManagers}
-            onChange={(value: null | IReactSelectOptions<string>) => setFilter({ ...filter, warehouseManager: value?.value ?? "" })}
+            onChange={(value) => { 
+              setSelectedWarehouseManager(value ?? {label: "", value: 0})
+              setFilter({ ...filter, warehouseManagerID: value?.value ?? 0 })
+            }}
           />
         </div>
         <div className="flex flex-col space-y-1">
@@ -129,11 +136,12 @@ export default function ReportInvoiceInput({ setShowReportModal }: Props) {
             menuPosition="fixed"
             name={"released"}
             placeholder={""}
-            value={{ label: filter.released, value: filter.released }}
+            value={selectedReleased}
             options={releaseds}
-            onChange={(value: null | IReactSelectOptions<string>) =>
-              setFilter({ ...filter, released: value?.value ?? "" })
-            }
+            onChange={(value) => {
+              setSelectedReleased(value ?? {label: "", value: 0})
+              setFilter({ ...filter, releasedID: value?.value ?? 0 })
+            }}
           />
         </div>
         <div className="felx flex-col space-y-1">

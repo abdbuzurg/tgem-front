@@ -1,6 +1,9 @@
+import fileDownload from "js-file-download";
 import { IInvoiceObject } from "../interfaces/invoiceObject";
+import IReactSelectOptions from "../interfaces/react-select";
 import IAPIResposeFormat from "./IAPIResposeFormat";
 import axiosClient from "./axiosClient";
+import { ObjectDataForSelect } from "../interfaces/objects";
 
 const URL = "/invoice-correction"
 
@@ -78,5 +81,44 @@ export async function createInvoiceCorrection(data: InvoiceCorrectionMaterialMut
     return response.data
   } else {
     throw new Error(response.error)
+  }
+}
+
+export async function getInvoiceCorrectionUniqueObjects(): Promise<ObjectDataForSelect[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<ObjectDataForSelect[]>>(`${URL}/unique/object`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export async function getInvoiceCorrectionUniqueTeams(): Promise<IReactSelectOptions<number>[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IReactSelectOptions<number>[]>>(`${URL}/unique/team`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export interface InvoiceCorrectionReportFilter {
+  teamID: number
+  objectID: number
+  dateTo: Date | null
+  dateFrom: Date | null
+}
+
+export async function buildInvoiceCorrectionReport(filter: InvoiceCorrectionReportFilter): Promise<boolean> {
+  const responseRaw = await axiosClient.post(`${URL}/report`, filter, { responseType: "blob", })
+  if (responseRaw.status == 200) {
+    const date = new Date()
+    const fileName = `Отчет Расхода ${date}`
+    fileDownload(responseRaw.data, `${fileName}.xlsx`)
+    return true
+  } else {
+    throw new Error(responseRaw.data)
   }
 }

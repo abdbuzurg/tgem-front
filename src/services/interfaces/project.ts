@@ -8,4 +8,5 @@ export default interface Project {
   signedDateOfContract: Date
   dateStart: Date
   dateEnd: Date
+  projectManager: string
 }

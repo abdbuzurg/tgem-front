@@ -4,6 +4,7 @@ import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
 import { InvoiceMaterialViewWithSerialNumbers, InvoiceMaterialViewWithoutSerialNumbers } from "../interfaces/invoiceMaterial"
 import { IInvoiceOutputInProject, IInvoiceOutputInProjectView, IInvoiceOutputMaterials } from "../interfaces/invoiceOutputInProject"
+import IReactSelectOptions from "../interfaces/react-select"
 
 const URL = "/output"
 
@@ -121,8 +122,8 @@ export async function confirmationByObject(id: number): Promise<boolean> {
   }
 } 
 
-export async function getAllUniqueCode(): Promise<string[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/unique/code`)
+export async function getAllUniqueCode(): Promise<IReactSelectOptions<string>[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IReactSelectOptions<string>[]>>(`${URL}/unique/code`)
   const response = responseRaw.data
   if (response.permission || response.success) {
     return response.data
@@ -131,8 +132,8 @@ export async function getAllUniqueCode(): Promise<string[]> {
   }
 }
 
-export async function getAllUniqueDistrict(): Promise<string[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/unique/district`)
+export async function getAllUniqueDistrict(): Promise<IReactSelectOptions<number>[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IReactSelectOptions<number>[]>>(`${URL}/unique/district`)
   const response = responseRaw.data
   if (response.permission || response.success) {
     return response.data
@@ -141,8 +142,8 @@ export async function getAllUniqueDistrict(): Promise<string[]> {
   }
 }
 
-export async function getAllUniqueWarehouseManager(): Promise<string[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/unique/warehouse-manager`)
+export async function getAllUniqueWarehouseManager(): Promise<IReactSelectOptions<number>[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IReactSelectOptions<number>[]>>(`${URL}/unique/warehouse-manager`)
   const response = responseRaw.data
   if (response.permission || response.success) {
     return response.data
@@ -151,8 +152,8 @@ export async function getAllUniqueWarehouseManager(): Promise<string[]> {
   }
 }
 
-export async function getAllUniqueRecieved(): Promise<string[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/unique/recieved`)
+export async function getAllUniqueRecieved(): Promise<IReactSelectOptions<number>[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IReactSelectOptions<number>[]>>(`${URL}/unique/recieved`)
   const response = responseRaw.data
   if (response.permission || response.success) {
     return response.data
@@ -161,18 +162,8 @@ export async function getAllUniqueRecieved(): Promise<string[]> {
   }
 }
 
-export async function getAllUniqueObject(): Promise<string[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/unique/object`)
-  const response = responseRaw.data
-  if (response.permission || response.success) {
-    return response.data
-  } else {
-    throw new Error(response.error)
-  }
-}
-
-export async function getAllUniqueTeam(): Promise<string[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/unique/team`)
+export async function getAllUniqueTeam(): Promise<IReactSelectOptions<number>[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IReactSelectOptions<number>[]>>(`${URL}/unique/team`)
   const response = responseRaw.data
   if (response.permission || response.success) {
     return response.data
@@ -183,11 +174,10 @@ export async function getAllUniqueTeam(): Promise<string[]> {
 
 export interface InvoiceOutputReportFilter {
   code: string
-  warehouseManager: string
-  recieved: string
-  district: string
-  object: string
-  team: string
+  warehouseManagerID: number
+  recievedID: number
+  districtID: number
+  teamID: number
   dateFrom: Date | null
   dateTo: Date | null
 }
