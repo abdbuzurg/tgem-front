@@ -14,19 +14,19 @@ import { getWorkerByJobTitle } from "../../services/api/worker"
 import toast from "react-hot-toast"
 import { IObjectGetAllResponse, IObjectPaginated, ObjectCreateShape, createObject, deleteObject, getPaginatedObjects, updateObject } from "../../services/api/object"
 
-const objectTypes = [        
-  {label:"КЛ 04 КВ", value: "kl04kv_objects"},
-  {label:"МЖД", value: "mjd_objects"},
-  {label:"СИП", value: "sip_objects"},
-  {label:"СТВТ", value: "stvt_objects"},
-  {label:"ТП", value: "tp_objects"},
+const objectTypes = [
+  { label: "КЛ 04 КВ", value: "kl04kv_objects" },
+  { label: "МЖД", value: "mjd_objects" },
+  { label: "СИП", value: "sip_objects" },
+  { label: "СТВТ", value: "stvt_objects" },
+  { label: "ТП", value: "tp_objects" },
 ]
 
 export default function Objects() {
   //fetching data logic
   const tableDataQuery = useInfiniteQuery<IObjectGetAllResponse, Error>({
     queryKey: ["objects"],
-    queryFn: ({pageParam = 1}) => getPaginatedObjects({pageParam}),
+    queryFn: ({ pageParam = 1 }) => getPaginatedObjects({ pageParam }),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
@@ -61,7 +61,7 @@ export default function Objects() {
   const [modalProps, setModalProps] = useState({
     setShowModal: setShowModal,
     no_delivery: "",
-    deleteFunc: () => {}
+    deleteFunc: () => { }
   })
   const onDeleteButtonClick = (row: IObjectPaginated) => {
     setShowModal(true)
@@ -85,7 +85,7 @@ export default function Objects() {
   useEffect(() => {
     if (supervisorsQuery.isSuccess && supervisorsQuery.data) {
       setAvailableSupervisors([
-        ...supervisorsQuery.data.map<IReactSelectOptions<number>>((val) => ({label: val.name, value: val.id}))
+        ...supervisorsQuery.data.map<IReactSelectOptions<number>>((val) => ({ label: val.name, value: val.id }))
       ])
     }
   }, [supervisorsQuery.data])
@@ -109,9 +109,9 @@ export default function Objects() {
     amountFeeders: 0,
     length: 0,
   })
-  const [selectedObjectType, setSelectedObjectType] = useState<IReactSelectOptions<string>>({label: "", value: ""}) 
+  const [selectedObjectType, setSelectedObjectType] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
 
-  const createMaterialMutation = useMutation<IObject, Error, ObjectCreateShape >({
+  const createMaterialMutation = useMutation<IObject, Error, ObjectCreateShape>({
     mutationFn: createObject,
     onSettled: () => {
       queryClient.invalidateQueries(["objects"])
@@ -126,21 +126,21 @@ export default function Objects() {
       setShowMutationModal(false)
     }
   })
-  
+
   const onMutationSubmit = () => {
 
     if (selectedObjectType.value == "") {
       toast.error("Не указан тип объекта")
       return
     }
-    
+
     if (mutationData.name == "") {
       toast.error("Не указано имя объекта")
       return
     }
 
     if (selectedSupervisorsWorkerID.length == 0) {
-      toast.error("Не указан супервайзер(-ы)") 
+      toast.error("Не указан супервайзер(-ы)")
       return
     }
 
@@ -149,8 +149,8 @@ export default function Objects() {
       return
     }
 
-    if ((selectedObjectType.value == "mjd_objects" 
-      || selectedObjectType.value == "tp_objects") 
+    if ((selectedObjectType.value == "mjd_objects"
+      || selectedObjectType.value == "tp_objects")
       && secondaryMutationData.model == "") {
       toast.error("Не указан тип")
       return
@@ -166,49 +166,49 @@ export default function Objects() {
       return
     }
 
-    if ((selectedObjectType.value == "tp_objects" 
-      || selectedObjectType.value == "stvt_objects") 
+    if ((selectedObjectType.value == "tp_objects"
+      || selectedObjectType.value == "stvt_objects")
       && secondaryMutationData.voltageClass == "") {
       toast.error("Не указан класс напряжения")
       return
     }
 
-    if ((selectedObjectType.value == "tp_objects" 
-      || selectedObjectType.value == "kl04kv_objects") 
+    if ((selectedObjectType.value == "tp_objects"
+      || selectedObjectType.value == "kl04kv_objects")
       && secondaryMutationData.nourashes == "") {
       toast.error("Не указано кого питает")
       return
     }
 
-    if (selectedObjectType.value =="stvt_objects" && secondaryMutationData.ttCoefficient == "") {
+    if (selectedObjectType.value == "stvt_objects" && secondaryMutationData.ttCoefficient == "") {
       toast.error("Не указан коэффицент ТТ")
       return
     }
 
-    if (selectedObjectType.value =="sip_objects" && secondaryMutationData.amountFeeders == 0) {
+    if (selectedObjectType.value == "sip_objects" && secondaryMutationData.amountFeeders == 0) {
       toast.error("Не указано количество питающих")
       return
     }
 
-    if (selectedObjectType.value =="kl04kv_objects" && secondaryMutationData.length == 0) {
+    if (selectedObjectType.value == "kl04kv_objects" && secondaryMutationData.length == 0) {
       toast.error("Не указана длина для КЛ 04 КВ")
       return
     }
 
-    switch(mutationModalType) {
+    switch (mutationModalType) {
       case "create":
         createMaterialMutation.mutate({
-          ...mutationData, 
+          ...mutationData,
           ...secondaryMutationData,
           supervisors: [...selectedSupervisorsWorkerID.map<number>(val => val.value)],
           type: selectedObjectType.value,
         })
-        
+
         return
       case "update":
         updateMaterialMutation.mutate(mutationData)
         return
-      
+
       default:
         throw new Error("Неправильная операция была выбрана")
     }
@@ -237,28 +237,28 @@ export default function Objects() {
             </th>
             <th className="px-4 py-3">
               <Button text="Добавить" onClick={() => {
-                  setMutationModalType("create")
-                  setShowMutationModal(true)
-              }}/>
+                setMutationModalType("create")
+                setShowMutationModal(true)
+              }} />
             </th>
           </tr>
         </thead>
         <tbody>
-          {tableDataQuery.isLoading && 
+          {tableDataQuery.isLoading &&
             <tr>
               <td colSpan={6}>
                 <LoadingDots />
               </td>
             </tr>
           }
-          {tableDataQuery.isError && 
+          {tableDataQuery.isError &&
             <tr>
               <td colSpan={6} className="text-red font-bold text-center">
                 {tableDataQuery.error.message}
               </td>
             </tr>
           }
-          {tableDataQuery.isSuccess && tableData.length != 0 && 
+          {tableDataQuery.isSuccess && tableData.length != 0 &&
             tableData.map((row, index) => (
               <tr key={index} className="border-b">
                 <td className="px-4 py-3">{row.type}</td>
@@ -269,26 +269,41 @@ export default function Objects() {
                 </td>
                 <td className="px-4 py-3 border-box flex space-x-3">
                   <Button text="Изменить" buttonType="default" onClick={() => {
-                      setShowMutationModal(true)
-                      setMutationModalType("update")
-                      // setMutationData({
-                      //   id: row.id,
-                      //   name: row.name,
-                      //   status: row.status,
-                      //   type: row.type,
-                      // })
-                      setSelectedObjectType({label: row.type, value: row.type})
-                    }}
+                    setShowMutationModal(true)
+                    setMutationModalType("update")
+                    // setMutationData({
+                    //   id: row.id,
+                    //   name: row.name,
+                    //   status: row.status,
+                    //   type: row.type,
+                    // })
+                    setSelectedObjectType({ label: row.type, value: row.type })
+                  }}
                   />
-                  <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)}/>
+                  <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)} />
                 </td>
               </tr>
             ))
           }
+          {tableDataQuery.hasNextPage &&
+            <tr>
+              <td colSpan={5}>
+                <div className="w-full py-4 flex justify-center">
+                  <div
+                    onClick={() => tableDataQuery.fetchNextPage()}
+                    className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+                  >
+                    {tableDataQuery.isLoading && <LoadingDots height={30} />}
+                    {!tableDataQuery.isLoading && "Загрузить еще"}
+                  </div>
+                </div>
+              </td>
+            </tr>
+          }
         </tbody>
       </table>
-      {showModal && 
-        <DeleteModal {...modalProps}> 
+      {showModal &&
+        <DeleteModal {...modalProps}>
           <span>При подтверждении бригада под номером {modalProps.no_delivery} и все их данные будут удалены</span>
         </DeleteModal>
       }
@@ -319,11 +334,11 @@ export default function Objects() {
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="name">Наименование</label>
-                <Input 
+                <Input
                   name="name"
                   type="text"
                   value={mutationData.name}
-                  onChange={(e) => setMutationData({...mutationData, [e.target.name]: e.target.value})}
+                  onChange={(e) => setMutationData({ ...mutationData, [e.target.name]: e.target.value })}
                 />
               </div>
               <div>
@@ -343,43 +358,43 @@ export default function Objects() {
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="status">Статус</label>
-                <Input 
+                <Input
                   name="status"
                   type="text"
                   value={mutationData.status}
-                  onChange={(e) => setMutationData({...mutationData, [e.target.name]: e.target.value})}
+                  onChange={(e) => setMutationData({ ...mutationData, [e.target.name]: e.target.value })}
                 />
               </div>
-              {(selectedObjectType.value == "mjd_objects" || selectedObjectType.value == "tp_objects") && 
+              {(selectedObjectType.value == "mjd_objects" || selectedObjectType.value == "tp_objects") &&
                 <div className="flex flex-col space-y-1">
                   <label htmlFor="model">Тип</label>
-                  <Input 
+                  <Input
                     name="model"
                     type="text"
                     value={secondaryMutationData.model}
-                    onChange={(e) => setSecondaryMutation({...secondaryMutationData, [e.target.name]: e.target.value})}
+                    onChange={(e) => setSecondaryMutation({ ...secondaryMutationData, [e.target.name]: e.target.value })}
                   />
                 </div>
               }
               {selectedObjectType.value == "mjd_objects" &&
                 <div className="flex flex-col space-y-1">
                   <label htmlFor="amountStores">Количество этажей</label>
-                  <Input 
+                  <Input
                     name="amountStores"
                     type="number"
                     value={secondaryMutationData.amountStores}
-                    onChange={(e) => setSecondaryMutation({...secondaryMutationData, [e.target.name]: +e.target.value})}
+                    onChange={(e) => setSecondaryMutation({ ...secondaryMutationData, [e.target.name]: +e.target.value })}
                   />
                 </div>
               }
               {selectedObjectType.value == "mjd_objects" &&
                 <div className="flex flex-col space-y-1">
                   <label htmlFor="amountEntrances">Количество подъездов</label>
-                  <Input 
+                  <Input
                     name="amountEntrances"
                     type="number"
                     value={secondaryMutationData.amountEntrances}
-                    onChange={(e) => setSecondaryMutation({...secondaryMutationData, [e.target.name]: +e.target.value})}
+                    onChange={(e) => setSecondaryMutation({ ...secondaryMutationData, [e.target.name]: +e.target.value })}
                   />
                 </div>
               }
@@ -388,22 +403,22 @@ export default function Objects() {
                   <label htmlFor="amountEntrances">Присутсвует падвал?</label>
                   <div className="flex space-x-3">
                     <div className="flex space-x-1">
-                      <input 
+                      <input
                         type="radio"
-                        name="hasBasement" 
+                        name="hasBasement"
                         value={"1"}
-                        onChange={() => setSecondaryMutation({...secondaryMutationData, hasBasement: true})}
+                        onChange={() => setSecondaryMutation({ ...secondaryMutationData, hasBasement: true })}
                         checked={secondaryMutationData.hasBasement}
                         id="hasBasementTrue"
                       />
                       <label htmlFor="hasBasementTrue">Да</label>
                     </div>
                     <div className="flex space-x-1">
-                      <input 
+                      <input
                         type="radio"
-                        name="hasBasement" 
+                        name="hasBasement"
                         value={"2"}
-                        onChange={() => setSecondaryMutation({...secondaryMutationData, hasBasement: false})}
+                        onChange={() => setSecondaryMutation({ ...secondaryMutationData, hasBasement: false })}
                         checked={!secondaryMutationData.hasBasement}
                         id="hasBasementFalse"
                       />
@@ -415,61 +430,61 @@ export default function Objects() {
               {(selectedObjectType.value == "tp_objects" || selectedObjectType.value == "stvt_objects") &&
                 <div className="flex flex-col space-y-1">
                   <label htmlFor="voltageClass">Класс напряжения</label>
-                  <Input 
+                  <Input
                     name="voltageClass"
                     type="text"
                     value={secondaryMutationData.voltageClass}
-                    onChange={(e) => setSecondaryMutation({...secondaryMutationData, [e.target.name]: e.target.value})}
+                    onChange={(e) => setSecondaryMutation({ ...secondaryMutationData, [e.target.name]: e.target.value })}
                   />
                 </div>
               }
               {(selectedObjectType.value == "tp_objects" || selectedObjectType.value == "kl04kv_objects") &&
                 <div className="flex flex-col space-y-1">
                   <label htmlFor="nourashes">Питает</label>
-                  <Input 
+                  <Input
                     name="nourashes"
                     type="text"
                     value={secondaryMutationData.nourashes}
-                    onChange={(e) => setSecondaryMutation({...secondaryMutationData, [e.target.name]: e.target.value})}
+                    onChange={(e) => setSecondaryMutation({ ...secondaryMutationData, [e.target.name]: e.target.value })}
                   />
                 </div>
               }
-              {selectedObjectType.value =="stvt_objects" && 
+              {selectedObjectType.value == "stvt_objects" &&
                 <div className="flex flex-col space-y-1">
                   <label htmlFor="ttCoefficient">ТТ Коэффицент</label>
-                  <Input 
+                  <Input
                     name="ttCoefficient"
                     type="text"
                     value={secondaryMutationData.ttCoefficient}
-                    onChange={(e) => setSecondaryMutation({...secondaryMutationData, [e.target.name]: e.target.value})}
+                    onChange={(e) => setSecondaryMutation({ ...secondaryMutationData, [e.target.name]: e.target.value })}
                   />
                 </div>
               }
-              {selectedObjectType.value =="sip_objects" && 
+              {selectedObjectType.value == "sip_objects" &&
                 <div className="flex flex-col space-y-1">
                   <label htmlFor="amountFeeders">Количество питающих</label>
-                  <Input 
+                  <Input
                     name="amountFeeders"
                     type="number"
                     value={secondaryMutationData.amountFeeders}
-                    onChange={(e) => setSecondaryMutation({...secondaryMutationData, [e.target.name]: +e.target.value})}
+                    onChange={(e) => setSecondaryMutation({ ...secondaryMutationData, [e.target.name]: +e.target.value })}
                   />
                 </div>
               }
-              {selectedObjectType.value =="kl04kv_objects" && 
+              {selectedObjectType.value == "kl04kv_objects" &&
                 <div className="flex flex-col space-y-1">
                   <label htmlFor="length">Длина</label>
-                  <Input 
+                  <Input
                     name="length"
                     type="text"
                     value={secondaryMutationData.length}
-                    onChange={(e) => setSecondaryMutation({...secondaryMutationData, [e.target.name]: +e.target.value})}
+                    onChange={(e) => setSecondaryMutation({ ...secondaryMutationData, [e.target.name]: +e.target.value })}
                   />
                 </div>
               }
               <div>
-                <Button 
-                  text={mutationModalType=="create" ? "Добавить" : "Подтвердить изменения"}
+                <Button
+                  text={mutationModalType == "create" ? "Добавить" : "Подтвердить изменения"}
                   onClick={onMutationSubmit}
                 />
               </div>

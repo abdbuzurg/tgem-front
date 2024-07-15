@@ -4,8 +4,15 @@ import IReactSelectOptions from "../interfaces/react-select";
 import IAPIResposeFormat from "./IAPIResposeFormat";
 import axiosClient from "./axiosClient";
 import { ObjectDataForSelect } from "../interfaces/objects";
+import { ENTRY_LIMIT } from "./constants";
 
 const URL = "/invoice-correction"
+
+export interface InvoiceCorrectionPaginated {
+  data: InvoiceCorrectionPaginatedView[]
+  count: number
+  page: number
+}
 
 export interface InvoiceCorrectionPaginatedView {
   id: number
@@ -16,6 +23,17 @@ export interface InvoiceCorrectionPaginatedView {
   teamNumber: string
   dateOfInvoice: Date
 }
+
+export async function getPaginatedInvoiceCorrection({pageParam = 1}): Promise<InvoiceCorrectionPaginated> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceCorrectionPaginated>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
+  const responseData = responseRaw.data
+  if (responseData.success) {
+    return {...responseData.data, page: pageParam}
+  } else {
+    throw new Error(responseData.error)
+  }
+}
+
 
 export async function getAllInvoiceObjectsForCorrect(): Promise<InvoiceCorrectionPaginatedView[]> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceCorrectionPaginatedView[]>>(`${URL}/`)

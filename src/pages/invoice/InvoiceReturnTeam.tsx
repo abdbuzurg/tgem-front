@@ -10,6 +10,7 @@ import ShowInvoiceReturnDetails from "../../components/invoice/return/ShowInvoic
 import DeleteModal from "../../components/deleteModal"
 import ReportInvoiceReturn from "../../components/invoice/return/ReportInvoiceReturn"
 import MutationInvoiceReturnTeam from "../../components/invoice/return/MutationInvoiceReturnTeam"
+import LoadingDots from "../../components/UI/loadingDots"
 
 export default function InvoiceReturnTeam() {
 
@@ -189,6 +190,21 @@ export default function InvoiceReturnTeam() {
               </td>
             </tr>
           )}
+          {tableDataQuery.hasNextPage &&
+            <tr>
+              <td colSpan={5}>
+                <div className="w-full py-4 flex justify-center">
+                  <div
+                    onClick={() => tableDataQuery.fetchNextPage()}
+                    className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+                  >
+                    {tableDataQuery.isLoading && <LoadingDots height={30} />}
+                    {!tableDataQuery.isLoading && "Загрузить еще"}
+                  </div>
+                </div>
+              </td>
+            </tr>
+          }
         </tbody>
       </table>
       {showDetailsModal && <ShowInvoiceReturnDetails setShowModal={setShowDetailsModal} data={detailModalData} />}

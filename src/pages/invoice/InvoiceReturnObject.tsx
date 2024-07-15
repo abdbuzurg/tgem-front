@@ -10,6 +10,7 @@ import ReportInvoiceReturn from "../../components/invoice/return/ReportInvoiceRe
 import IconButton from "../../components/IconButtons";
 import { FaDownload, FaRegListAlt, FaRegTrashAlt, FaUpload } from "react-icons/fa";
 import ShowInvoiceReturnDetails from "../../components/invoice/return/ShowInvoiceReturnDetails";
+import LoadingDots from "../../components/UI/loadingDots";
 
 export default function InvoiceReturnObject() {
 
@@ -45,7 +46,7 @@ export default function InvoiceReturnObject() {
     onSuccess: () => queryClient.invalidateQueries(["invoice-return-object"])
   })
 
-   const acceptConfirmationFile = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+  const acceptConfirmationFile = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
     e.preventDefault()
 
     if (!e.target.files) return
@@ -155,40 +156,55 @@ export default function InvoiceReturnObject() {
                   />
                 }
                 {!value.confirmation && <>
-                    <label
-                      htmlFor="file"
-                      className="px-4 py-2 flex items-center text-white bg-red-700 hover:bg-red-800 rounded-lg text-center cursor-pointer"
-                    >
-                      <FaUpload
-                        size="20px"
-                        title={`Подтвердить файлом накладную ${value.deliveryCode}`}
-                      />
-                    </label>
-                    <input
-                      name={`file-${value.id}`}
-                      type="file"
-                      id="file"
-                      onChange={(e) => acceptConfirmationFile(e, index)}
-                      className="hidden"
-                      value=''
+                  <label
+                    htmlFor="file"
+                    className="px-4 py-2 flex items-center text-white bg-red-700 hover:bg-red-800 rounded-lg text-center cursor-pointer"
+                  >
+                    <FaUpload
+                      size="20px"
+                      title={`Подтвердить файлом накладную ${value.deliveryCode}`}
                     />
-                    <IconButton
-                      icon={<FaDownload size="20px" title={`Скачать сгенерированный файл накладной ${value.deliveryCode}`} />}
-                      onClick={() => getInvoiceReturnDocument(value.deliveryCode)}
-                    />               {/* <IconButton */}
-                    {/*   icon={<FaRegEdit size="20px" title={`Изменить данные накладной ${row.deliveryCode}`} />} */}
-                    {/*   onClick={() => showDetails(index)} */}
-                    {/* /> */}
-                    <IconButton
-                      type="delete"
-                      icon={<FaRegTrashAlt size="20px" title={`Удалить все данные накладной ${value.deliveryCode}`} />}
-                      onClick={() => onDeleteButtonClick(value)}
-                    />
-                  </>
+                  </label>
+                  <input
+                    name={`file-${value.id}`}
+                    type="file"
+                    id="file"
+                    onChange={(e) => acceptConfirmationFile(e, index)}
+                    className="hidden"
+                    value=''
+                  />
+                  <IconButton
+                    icon={<FaDownload size="20px" title={`Скачать сгенерированный файл накладной ${value.deliveryCode}`} />}
+                    onClick={() => getInvoiceReturnDocument(value.deliveryCode)}
+                  />               {/* <IconButton */}
+                  {/*   icon={<FaRegEdit size="20px" title={`Изменить данные накладной ${row.deliveryCode}`} />} */}
+                  {/*   onClick={() => showDetails(index)} */}
+                  {/* /> */}
+                  <IconButton
+                    type="delete"
+                    icon={<FaRegTrashAlt size="20px" title={`Удалить все данные накладной ${value.deliveryCode}`} />}
+                    onClick={() => onDeleteButtonClick(value)}
+                  />
+                </>
                 }
               </td>
             </tr>
           )}
+          {tableDataQuery.hasNextPage &&
+            <tr>
+              <td colSpan={5}>
+                <div className="w-full py-4 flex justify-center">
+                  <div
+                    onClick={() => tableDataQuery.fetchNextPage()}
+                    className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+                  >
+                    {tableDataQuery.isLoading && <LoadingDots height={30} />}
+                    {!tableDataQuery.isLoading && "Загрузить еще"}
+                  </div>
+                </div>
+              </td>
+            </tr>
+          }
         </tbody>
       </table>
       {showDetailsModal && <ShowInvoiceReturnDetails setShowModal={setShowDetailsModal} data={detailModalData} />}

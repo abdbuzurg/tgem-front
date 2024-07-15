@@ -34,15 +34,17 @@ export default function MaterialsCosts() {
       setTableData(data)
     }
   }, [tableDataQuery.data])
+
   const loadDataOnScrollEnd = () => {
     if (window.innerHeight + document.documentElement.scrollTop !== document.documentElement.offsetHeight) return;
     tableDataQuery.fetchNextPage()
   }
+
   useEffect(() => {
     window.addEventListener("scroll", loadDataOnScrollEnd)
     return () => window.removeEventListener("scroll", loadDataOnScrollEnd)
   }, [])
-
+  
   //mutation DELETE logic
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false)
   const queryClient = useQueryClient()
@@ -188,7 +190,7 @@ export default function MaterialsCosts() {
                   costM19: 0,
                   costWithCustomer: 0,
                 })
-                setSelectedMaterial({value: 0, label: ""})
+                setSelectedMaterial({ value: 0, label: "" })
                 setMutationModalType("create")
                 setShowMutationModal(true)
               }} />
@@ -223,6 +225,21 @@ export default function MaterialsCosts() {
                 </td>
               </tr>
             ))
+          }
+          {tableDataQuery.hasNextPage &&
+            <tr>
+              <td colSpan={5}>
+                <div className="w-full py-4 flex justify-center">
+                  <div
+                    onClick={() => tableDataQuery.fetchNextPage()}
+                    className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+                  >
+                    {tableDataQuery.isLoading && <LoadingDots height={30} />}
+                    {!tableDataQuery.isLoading && "Загрузить еще"}
+                  </div>
+                </div>
+              </td>
+            </tr>
           }
         </tbody>
       </table>

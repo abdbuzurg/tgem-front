@@ -16,7 +16,7 @@ export default function Operatons() {
   //fetching data logic
   const tableDataQuery = useInfiniteQuery<OperationGetAllResponse, Error>({
     queryKey: ["operations"],
-    queryFn: ({ pageParam }) => getPaginatedOperations({pageParam}),
+    queryFn: ({ pageParam }) => getPaginatedOperations({ pageParam }),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
@@ -50,7 +50,7 @@ export default function Operatons() {
   const [modalProps, setModalProps] = useState({
     setShowModal: setShowDeleteModal,
     no_delivery: "",
-    deleteFunc: () => {}
+    deleteFunc: () => { }
   })
   const onDeleteButtonClick = (row: IOperation) => {
     setShowDeleteModal(true)
@@ -90,31 +90,31 @@ export default function Operatons() {
       setShowMutationModal(false)
     }
   })
-   const onMutationSubmit = () => {
-    if (materialMutationData.costPrime <= 0) setMutationModalErrors((prev) => ({...prev, costPrime: true}))
-    else setMutationModalErrors((prev) => ({...prev, costPrime: false}))
-    
-    if (materialMutationData.name == "") setMutationModalErrors((prev) => ({...prev, name: true}))
-    else setMutationModalErrors((prev) => ({...prev, name: false}))
+  const onMutationSubmit = () => {
+    if (materialMutationData.costPrime <= 0) setMutationModalErrors((prev) => ({ ...prev, costPrime: true }))
+    else setMutationModalErrors((prev) => ({ ...prev, costPrime: false }))
 
-    if (materialMutationData.costWithCustomer <= 0) setMutationModalErrors((prev) => ({...prev, costWithCustomer: true}))
-    else setMutationModalErrors((prev) => ({...prev, costWithCustomer: false}))
-    
+    if (materialMutationData.name == "") setMutationModalErrors((prev) => ({ ...prev, name: true }))
+    else setMutationModalErrors((prev) => ({ ...prev, name: false }))
+
+    if (materialMutationData.costWithCustomer <= 0) setMutationModalErrors((prev) => ({ ...prev, costWithCustomer: true }))
+    else setMutationModalErrors((prev) => ({ ...prev, costWithCustomer: false }))
+
     const isThereError = Object.keys(materialMutationData).some((value) => {
       if (materialMutationData[value as keyof typeof materialMutationData] == "" && value != "id" && value != "code") {
         return true
       }
     })
     if (isThereError) return
-    
-    switch(mutationModalType) {
+
+    switch (mutationModalType) {
       case "create":
         createMaterialMutation.mutate(materialMutationData)
         return
       case "update":
         updateMaterialMutation.mutate(materialMutationData)
         return
-      
+
       default:
         throw new Error("Неправильная операция была выбрана")
     }
@@ -144,19 +144,19 @@ export default function Operatons() {
               <Button text="Добавить" onClick={() => {
                 setMutationModalType("create")
                 setShowMutationModal(true)
-              }}/>
+              }} />
             </th>
           </tr>
         </thead>
         <tbody>
-          {tableDataQuery.isLoading && 
+          {tableDataQuery.isLoading &&
             <tr>
               <td colSpan={6}>
                 <LoadingDots />
               </td>
             </tr>
           }
-          {tableDataQuery.isError && 
+          {tableDataQuery.isError &&
             <tr>
               <td colSpan={6} className="text-red font-bold text-center">
                 {tableDataQuery.error.message}
@@ -172,20 +172,35 @@ export default function Operatons() {
                 <td className="px-4 py-3">{row.costWithCustomer}</td>
                 <td className="px-4 py-3 border-box flex space-x-3">
                   <Button text="Изменить" buttonType="default" onClick={() => {
-                      setShowMutationModal(true)
-                      setMutationModalType("update")
-                      setMaterialMutationData(row)
-                    }}
+                    setShowMutationModal(true)
+                    setMutationModalType("update")
+                    setMaterialMutationData(row)
+                  }}
                   />
-                  <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)}/>
+                  <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)} />
                 </td>
               </tr>
             ))
           }
+          {tableDataQuery.hasNextPage &&
+            <tr>
+              <td colSpan={5}>
+                <div className="w-full py-4 flex justify-center">
+                  <div
+                    onClick={() => tableDataQuery.fetchNextPage()}
+                    className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+                  >
+                    {tableDataQuery.isLoading && <LoadingDots height={30} />}
+                    {!tableDataQuery.isLoading && "Загрузить еще"}
+                  </div>
+                </div>
+              </td>
+            </tr>
+          }
         </tbody>
       </table>
-      {showDeleteModal && 
-        <DeleteModal {...modalProps}> 
+      {showDeleteModal &&
+        <DeleteModal {...modalProps}>
           <span>При подтверждении материал под именем {modalProps.no_delivery} и все его данные в ней будут удалены</span>
         </DeleteModal>
       }
@@ -199,37 +214,37 @@ export default function Operatons() {
             <div className="flex flex-col space-y-3 mt-2">
               <div className="flex flex-col space-y-1">
                 <label htmlFor="name">Наименование</label>
-                <Input 
+                <Input
                   name="name"
                   type="text"
                   value={materialMutationData.name}
-                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: e.target.value})}
+                  onChange={(e) => setMaterialMutationData({ ...materialMutationData, [e.target.name]: e.target.value })}
                 />
                 {mutationModalErrors.name && <span className="text-red-600 text-sm font-bold">Не указано наименоваие сервиса</span>}
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="costPrime">Изначальная Цена</label>
-                <Input 
+                <Input
                   name="costPrime"
                   type="number"
                   value={materialMutationData.costPrime}
-                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: e.target.value})}
+                  onChange={(e) => setMaterialMutationData({ ...materialMutationData, [e.target.name]: e.target.value })}
                 />
                 {mutationModalErrors.costPrime && <span className="text-red-600 text-sm font-bold">Не указана изначальная цена за сервис</span>}
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="costWithCustomer">Цена с заказчиком</label>
-                <Input 
+                <Input
                   name="costWithCustomer"
                   type="text"
                   value={materialMutationData.costWithCustomer}
-                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: e.target.value})}
+                  onChange={(e) => setMaterialMutationData({ ...materialMutationData, [e.target.name]: e.target.value })}
                 />
                 {mutationModalErrors.costWithCustomer && <span className="text-red-600 text-sm font-bold">Не указана цена с заказчиком</span>}
               </div>
               <div>
-                <Button 
-                  text={mutationModalType=="create" ? "Добавить" : "Подтвердить изменения"}
+                <Button
+                  text={mutationModalType == "create" ? "Добавить" : "Подтвердить изменения"}
                   onClick={onMutationSubmit}
                 />
               </div>

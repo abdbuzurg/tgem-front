@@ -11,7 +11,7 @@ import IReactSelectOptions from "../../services/interfaces/react-select";
 import Select from 'react-select'
 import toast from "react-hot-toast";
 import IWorker from "../../services/interfaces/worker";
-import { getAllWorkers} from "../../services/api/worker";
+import { getAllWorkers } from "../../services/api/worker";
 import { TeamMutation, TeamGetAllResponse, TeamPaginated, createTeam, deleteTeam, getPaginatedTeams, updateTeam, importTeam, getTeamTemplateDocument } from "../../services/api/team";
 
 export default function Team() {
@@ -224,7 +224,7 @@ export default function Team() {
             <th className="px-4 py-3 w-[150px]">
               <span>Компания</span>
             </th>
-           <th className="px-4 py-3">
+            <th className="px-4 py-3">
               <Button text="Добавить" onClick={() => {
                 setMutationModalType("create")
                 setShowMutationModal(true)
@@ -263,11 +263,26 @@ export default function Team() {
                 <td className="px-4 py-3">{row.mobileNumber}</td>
                 <td className="px-4 py-3">{row.company}</td>
                 <td className="px-4 py-3 border-box flex space-x-3">
-                  <Button text="Изменить" buttonType="default" onClick={() => onEditClick(index)}/>
+                  <Button text="Изменить" buttonType="default" onClick={() => onEditClick(index)} />
                   <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)} />
                 </td>
               </tr>
             ))
+          }
+          {tableDataQuery.hasNextPage &&
+            <tr>
+              <td colSpan={5}>
+                <div className="w-full py-4 flex justify-center">
+                  <div
+                    onClick={() => tableDataQuery.fetchNextPage()}
+                    className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+                  >
+                    {tableDataQuery.isLoading && <LoadingDots height={30} />}
+                    {!tableDataQuery.isLoading && "Загрузить еще"}
+                  </div>
+                </div>
+              </td>
+            </tr>
           }
         </tbody>
       </table>
@@ -328,10 +343,10 @@ export default function Team() {
               </div>
               <div className="flex">
                 <div className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer" onClick={() => onMutationSubmit()}>
-                  {mutationModalType == "create" && !createTeamMutation.isLoading && "Добавить"} 
-                  {mutationModalType == "create" && createTeamMutation.isLoading && <LoadingDots height={30} />} 
-                  {mutationModalType == "update" && !updateTeamMutation.isLoading && "Подтвердить изменения"} 
-                  {mutationModalType == "update" && updateTeamMutation.isLoading && <LoadingDots height={30} />} 
+                  {mutationModalType == "create" && !createTeamMutation.isLoading && "Добавить"}
+                  {mutationModalType == "create" && createTeamMutation.isLoading && <LoadingDots height={30} />}
+                  {mutationModalType == "update" && !updateTeamMutation.isLoading && "Подтвердить изменения"}
+                  {mutationModalType == "update" && updateTeamMutation.isLoading && <LoadingDots height={30} />}
                 </div>
               </div>
             </div>

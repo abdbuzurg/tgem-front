@@ -301,6 +301,21 @@ export default function STVTObject() {
               </tr>
             ))
           }
+          {tableDataQuery.hasNextPage &&
+            <tr>
+              <td colSpan={8}>
+                <div className="w-full py-4 flex justify-center">
+                  <div
+                    onClick={() => tableDataQuery.fetchNextPage()}
+                    className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+                  >
+                    {tableDataQuery.isLoading && <LoadingDots height={30} />}
+                    {!tableDataQuery.isLoading && "Загрузить еще"}
+                  </div>
+                </div>
+              </td>
+            </tr>
+          }
         </tbody>
       </table>
       {showModal &&

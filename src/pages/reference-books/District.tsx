@@ -10,10 +10,10 @@ import { useEffect, useState } from "react"
 import Input from "../../components/UI/Input"
 
 export default function District() {
-   //FETCHING LOGIC
-   const tableDataQuery = useInfiniteQuery<DistrictsPaginatedData, Error>({
+  //FETCHING LOGIC
+  const tableDataQuery = useInfiniteQuery<DistrictsPaginatedData, Error>({
     queryKey: ["districts"],
-    queryFn: ({pageParam}) => getDistrictsPaginated({pageParam}),
+    queryFn: ({ pageParam }) => getDistrictsPaginated({ pageParam }),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
@@ -27,15 +27,6 @@ export default function District() {
     }
   }, [tableDataQuery.data])
 
-  const loadDataOnScrollEnd = () => {
-    if (window.innerHeight + document.documentElement.scrollTop !== document.documentElement.offsetHeight) return;
-    tableDataQuery.fetchNextPage()
-  }
-  useEffect(() => {
-    window.addEventListener("scroll", loadDataOnScrollEnd)
-    return () => window.removeEventListener("scroll", loadDataOnScrollEnd)
-  }, [])
-
   //DELETION LOGIC
   const [showModal, setShowModal] = useState(false)
   const queryClient = useQueryClient()
@@ -48,7 +39,7 @@ export default function District() {
   const [modalProps, setModalProps] = useState({
     setShowModal: setShowModal,
     no_delivery: "",
-    deleteFunc: () => {}
+    deleteFunc: () => { }
   })
   const onDeleteButtonClick = (row: IDistrict) => {
     setShowModal(true)
@@ -87,25 +78,25 @@ export default function District() {
     }
   })
 
-  const onMutationSubmit = () => { 
-    if (materialMutationData.name == "") setMutationModalErrors((prev) => ({...prev, name: true}))
-    else setMutationModalErrors((prev) => ({...prev, name: false}))
-    
+  const onMutationSubmit = () => {
+    if (materialMutationData.name == "") setMutationModalErrors((prev) => ({ ...prev, name: true }))
+    else setMutationModalErrors((prev) => ({ ...prev, name: false }))
+
     const isThereError = Object.keys(materialMutationData).some((value) => {
-      if (materialMutationData[value as keyof typeof materialMutationData] == ""  && value != "id") {
+      if (materialMutationData[value as keyof typeof materialMutationData] == "" && value != "id") {
         return true
       }
     })
     if (isThereError) return
-    
-    switch(mutationModalType) {
+
+    switch (mutationModalType) {
       case "create":
         createMaterialMutation.mutate(materialMutationData)
         return
       case "update":
         updateMaterialMutation.mutate(materialMutationData)
         return
-      
+
       default:
         throw new Error("Неправильная операция была выбрана")
     }
@@ -127,19 +118,19 @@ export default function District() {
               <Button text="Добавить" onClick={() => {
                 setMutationModalType("create")
                 setShowMutationModal(true)
-              }}/>
+              }} />
             </th>
           </tr>
         </thead>
         <tbody>
-          {tableDataQuery.isLoading && 
+          {tableDataQuery.isLoading &&
             <tr>
               <td colSpan={6}>
                 <LoadingDots />
               </td>
             </tr>
           }
-          {tableDataQuery.isError && 
+          {tableDataQuery.isError &&
             <tr>
               <td colSpan={6} className="text-red font-bold text-center">
                 {tableDataQuery.error.message}
@@ -152,20 +143,35 @@ export default function District() {
                 <td className="px-4 py-3">{row.name}</td>
                 <td className="px-4 py-3 border-box flex space-x-3">
                   <Button text="Изменить" buttonType="default" onClick={() => {
-                      setShowMutationModal(true)
-                      setMutationModalType("update")
-                      setMaterialMutationData(row)
-                    }}
+                    setShowMutationModal(true)
+                    setMutationModalType("update")
+                    setMaterialMutationData(row)
+                  }}
                   />
-                  <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)}/>
+                  <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)} />
                 </td>
               </tr>
             ))
           }
+          {tableDataQuery.hasNextPage &&
+            <tr>
+              <td colSpan={2}>
+                <div className="w-full py-4 flex justify-center">
+                  <div
+                    onClick={() => tableDataQuery.fetchNextPage()}
+                    className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+                  >
+                    {tableDataQuery.isLoading && <LoadingDots height={30} />}
+                    {!tableDataQuery.isLoading && "Загрузить еще"}
+                  </div>
+                </div>
+              </td>
+            </tr>
+          }
         </tbody>
       </table>
-      {showModal && 
-        <DeleteModal {...modalProps}> 
+      {showModal &&
+        <DeleteModal {...modalProps}>
           <span>При подтверждении материал под именем {modalProps.no_delivery} и все его данные в ней будут удалены</span>
         </DeleteModal>
       }
@@ -179,17 +185,17 @@ export default function District() {
             <div className="flex flex-col space-y-3 mt-2">
               <div className="flex flex-col space-y-1">
                 <label htmlFor="name">Наименование</label>
-                <Input 
+                <Input
                   name="name"
                   type="text"
                   value={materialMutationData.name}
-                  onChange={(e) => setMaterialMutationData({...materialMutationData, [e.target.name]: e.target.value})}
+                  onChange={(e) => setMaterialMutationData({ ...materialMutationData, [e.target.name]: e.target.value })}
                 />
                 {mutationModalErrors.name && <span className="text-red-600 text-sm font-bold">Не указано наименование материала</span>}
               </div>
               <div>
-                <Button 
-                  text={mutationModalType=="create" ? "Добавить" : "Подтвердить изменения"}
+                <Button
+                  text={mutationModalType == "create" ? "Добавить" : "Подтвердить изменения"}
                   onClick={onMutationSubmit}
                 />
               </div>

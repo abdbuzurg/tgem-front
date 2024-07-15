@@ -196,7 +196,7 @@ export default function InvoiceInput() {
                       {/* /> */}
                       <IconButton
                         type="delete"
-                        icon={<FaEdit size="20px" title={`Изменение данных накладной ${row.deliveryCode}`}/>}
+                        icon={<FaEdit size="20px" title={`Изменение данных накладной ${row.deliveryCode}`} />}
                         onClick={() => {
                           setRowToEdit(row)
                           setShowEditModal(true)
@@ -213,6 +213,21 @@ export default function InvoiceInput() {
               </tr>
             ))
           }
+          {tableDataQuery.hasNextPage &&
+            <tr>
+              <td colSpan={5}>
+                <div className="w-full py-4 flex justify-center">
+                  <div
+                    onClick={() => tableDataQuery.fetchNextPage()}
+                    className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+                  >
+                    {tableDataQuery.isLoading && <LoadingDots height={30} />}
+                    {!tableDataQuery.isLoading && "Загрузить еще"}
+                  </div>
+                </div>
+              </td>
+            </tr>
+          }
         </tbody>
       </table>
       {showDetailsModal && <ShowInvoiceInputDetails setShowModal={setShowDetailsModal} data={detailModalData} />}
@@ -222,7 +237,7 @@ export default function InvoiceInput() {
         </DeleteModal>
       }
       {showAddModal && <AddInvoiceInput setShowAddModal={setShowAddModal} />}
-      {showEditModal && <EditInvoiceInput setShowEditModal={setShowEditModal} invoiceInput={rowToEdit!}/>}
+      {showEditModal && <EditInvoiceInput setShowEditModal={setShowEditModal} invoiceInput={rowToEdit!} />}
       {showReportModal && <ReportInvoiceInput setShowReportModal={setShowReportModal} />}
     </main>
   )

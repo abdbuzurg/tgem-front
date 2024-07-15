@@ -11,6 +11,7 @@ import { InvoiceOutputInProjectConfirmation, InvoiceOutputInProjectPagianted, de
 import { IInvoiceOutputInProjectView } from "../../services/interfaces/invoiceOutputInProject";
 import AddInvoiceOutputInProject from "../../components/invoice/output/AddInvoiceOutputInProject";
 import EditInvoiceOutputInProject from "../../components/invoice/output/EditInvoiceOutputInProject";
+import LoadingDots from "../../components/UI/loadingDots";
 
 export default function InvoiceOutputInProject() {
   //FETCHING LOGIC
@@ -205,6 +206,21 @@ export default function InvoiceOutputInProject() {
               </td>
             </tr>
           )}
+          {tableDataQuery.hasNextPage &&
+            <tr>
+              <td colSpan={8}>
+                <div className="w-full py-4 flex justify-center">
+                  <div
+                    onClick={() => tableDataQuery.fetchNextPage()}
+                    className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+                  >
+                    {tableDataQuery.isLoading && <LoadingDots height={30} />}
+                    {!tableDataQuery.isLoading && "Загрузить еще"}
+                  </div>
+                </div>
+              </td>
+            </tr>
+          }
         </tbody>
       </table>
       {showDetailsModal && <ShowInvoiceOutputInProjectDetails setShowModal={setShowDetailsModal} data={detailModalData} />}

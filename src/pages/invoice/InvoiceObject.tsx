@@ -4,7 +4,8 @@ import { INVOICE_OBJECT_MUTATION_ADD } from "../../URLs";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { InvoiceObjectPaginated, InvoiceObjectPaginatedView, getInvoiceObjectPaginated } from "../../services/api/invoiceObject";
 import { ENTRY_LIMIT } from "../../services/api/constants";
-import {  useEffect, useState } from "react";
+import { useEffect, useState } from "react";
+import LoadingDots from "../../components/UI/loadingDots";
 
 export default function InvoiceObject() {
   const tableDataQuery = useInfiniteQuery<InvoiceObjectPaginated, Error>({
@@ -68,6 +69,17 @@ export default function InvoiceObject() {
             </div>
           </div>
         )}
+        {tableDataQuery.hasNextPage &&
+          <div className="w-full py-4 flex justify-center">
+            <div
+              onClick={() => tableDataQuery.fetchNextPage()}
+              className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+            >
+              {tableDataQuery.isLoading && <LoadingDots height={30} />}
+              {!tableDataQuery.isLoading && "Загрузить еще"}
+            </div>
+          </div>
+        }
 
       </div>
     </main>
