@@ -3,8 +3,16 @@ import { IObject } from "../interfaces/objects"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
+import IReactSelectOptions from "../interfaces/react-select"
 
 const URL = "/object/kl04kv"
+
+export interface KL04KVSearchParameters {
+  objectName: string
+  teamID: number
+  supervisorWorkerID: number
+  tpObjectID: number
+}
 
 export interface IKL04KVObjectPaginated {
   objectID: number
@@ -24,8 +32,8 @@ export interface IKL04KVObjectGetAllResponse {
   page: number
 }
 
-export async function getPaginatedKL04KVObjects({ pageParam = 1 }): Promise<IKL04KVObjectGetAllResponse> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<IKL04KVObjectGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
+export async function getPaginatedKL04KVObjects({ pageParam = 1 }, searchParameters: KL04KVSearchParameters): Promise<IKL04KVObjectGetAllResponse> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IKL04KVObjectGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&teamID=${searchParameters.teamID}&supervisorWorkerID=${searchParameters.supervisorWorkerID}&tpObjectID=${searchParameters.tpObjectID}&objectName=${searchParameters.objectName}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
     return { ...response.data, page: pageParam }
@@ -98,4 +106,25 @@ export async function importKL04KV(data: File): Promise<boolean> {
   } else {
     throw new Error(responseRaw.data)
   }
+}
+
+export async function exportKL04KV(): Promise<boolean> {
+  const response = await axiosClient.get(`${URL}/document/export`, { responseType: "blob" })
+  if (response.status == 200) {
+    fileDownload(response.data, "Экспорт КЛ 04 КВ.xlsx")
+    return true
+  } else {
+    throw new Error(response.statusText)
+  }
+}
+
+export async function getKL04KVObjectNames(): Promise<IReactSelectOptions<string>[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IReactSelectOptions<string>[]>>(`${URL}/search/object-names`)
+  const response = responseRaw.data
+  if (response.success && response.permission) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+
 }

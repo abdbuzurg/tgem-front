@@ -40,3 +40,4 @@ export const REPORT_INVOICE_OBJECT = "report/invoice/object"
 
 export const ADMINISTRATOR_HOME_PAGE = "/admin/home"
 export const ADMINISTRATOR_PROJECT = "/admin/project"
+export const ADMINISTRATOR_USERS = "/admin/users"

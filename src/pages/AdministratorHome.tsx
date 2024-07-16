@@ -1,12 +1,12 @@
 import { Link } from "react-router-dom"
-import { ADMINISTRATOR_PROJECT } from "../URLs"
+import { ADMINISTRATOR_PROJECT, ADMINISTRATOR_USERS } from "../URLs"
 
 const referenceBooksCategorized = [
   {
     category: "Проекты",
     pages: [
       { name: "Проекты", url: ADMINISTRATOR_PROJECT },
-      { name: "Пользователи (не готово)", url: "" },
+      { name: "Пользователи", url: ADMINISTRATOR_USERS },
     ]
   },
 ]
