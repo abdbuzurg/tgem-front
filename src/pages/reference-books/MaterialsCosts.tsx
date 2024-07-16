@@ -16,13 +16,16 @@ import IReactSelectOptions from "../../services/interfaces/react-select"
 import Material from "../../services/interfaces/material"
 import getAllMaterials from "../../services/api/materials/getAll"
 import toast from "react-hot-toast"
-import { exportMaterialCosts, getMaterialCostTemplateDocument, importMaterialCost } from "../../services/api/materialCost"
+import { MaterialCostSearchParameteres, exportMaterialCosts, getMaterialCostTemplateDocument, importMaterialCost } from "../../services/api/materialCost"
 
 export default function MaterialsCosts() {
   //fetching data logic
+  const [searchParameters, setSearchParameters] = useState<MaterialCostSearchParameteres>({
+    materialName: ""
+  })
   const tableDataQuery = useInfiniteQuery<MaterialCostGetAllResponse, Error>({
-    queryKey: ["materials-costs"],
-    queryFn: ({ pageParam }) => getPaginatedMaterialCost({ pageParam }),
+    queryKey: ["materials-costs", searchParameters],
+    queryFn: ({ pageParam }) => getPaginatedMaterialCost({ pageParam }, searchParameters),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
@@ -199,16 +202,55 @@ export default function MaterialsCosts() {
     cacheTime: 0,
   })
 
+  const [showSearchModal, setShowSearchModal] = useState(false)
+  const allMaterialsQuery = useQuery<Material[], Error, Material[]>({
+    queryKey: ["all-materials"],
+    queryFn: getAllMaterials,
+    enabled: false,
+  })
+
+  const [selectedMaterialName, setSelectedMaterialName] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
+  const [allMaterialNames, setAllMaterialNames] = useState<IReactSelectOptions<string>[]>([])
+
+  useEffect(() => {
+    if (allMaterialsQuery.isSuccess && allMaterialsQuery.data) {
+      setAllMaterialNames(allMaterialsQuery.data.map((val) => ({
+        label: val.name,
+        value: val.name,
+      })))
+    }
+  }, [allMaterialsQuery.data])
+
   return (
     <main>
       <div className="mt-2 pl-2 flex space-x-2">
         <span className="text-3xl font-bold">Ценники Материалов</span>
+        <div
+          onClick={() => {
+            allMaterialsQuery.refetch()
+            setShowSearchModal(true)
+          }}
+          className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+        >
+          Поиск
+        </div>
         <Button text="Импорт" onClick={() => setShowImportModal(true)} />
         <div
           onClick={() => materialExport.refetch()}
           className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
         >
           {materialExport.fetchStatus == "fetching" ? <LoadingDots height={20} /> : "Экспорт"}
+        </div>
+        <div
+          onClick={() => {
+            setSearchParameters({
+              materialName: "",
+            })
+            setSelectedMaterialName({ label: "", value: "" })
+          }}
+          className="text-white py-2.5 px-5 rounded-lg bg-red-700 hover:bg-red-800 hover:cursor-pointer"
+        >
+          Сброс поиска
         </div>
       </div>
       <table className="table-auto text-sm text-left mt-2 w-full border-box">
@@ -386,6 +428,36 @@ export default function MaterialsCosts() {
             </div>
           </div>
           <span className="text-sm italic px-2 w-full text-center">При импортировке система будет следовать правилам шаблона</span>
+        </Modal>
+      }
+      {showSearchModal &&
+        <Modal setShowModal={setShowSearchModal}>
+          <span className="font-bold text-xl py-1">Параметры Поиска по сравочнику материалов</span>
+          {allMaterialsQuery.isLoading && <LoadingDots />}
+          {allMaterialsQuery.isSuccess &&
+            <div className="p-2 flex flex-col space-y-2">
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="material-names">Наименование</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"material-names"}
+                  placeholder={""}
+                  value={selectedMaterialName}
+                  options={allMaterialNames}
+                  onChange={value => {
+                    setSelectedMaterialName(value ?? { label: "", value: "" })
+                    setSearchParameters({
+                      ...searchParameters,
+                      materialName: value?.value ?? "",
+                    })
+                  }}
+                />
+              </div>
+            </div>
+          }
         </Modal>
       }
     </main>

@@ -46,3 +46,6 @@ export async function exportMaterialCosts(): Promise<boolean> {
   }
 }
 
+export interface MaterialCostSearchParameteres {
+  materialName: string
+}
