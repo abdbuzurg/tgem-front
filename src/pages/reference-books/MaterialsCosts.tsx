@@ -16,6 +16,7 @@ import IReactSelectOptions from "../../services/interfaces/react-select"
 import Material from "../../services/interfaces/material"
 import getAllMaterials from "../../services/api/materials/getAll"
 import toast from "react-hot-toast"
+import { exportMaterialCosts, getMaterialCostTemplateDocument, importMaterialCost } from "../../services/api/materialCost"
 
 export default function MaterialsCosts() {
   //fetching data logic
@@ -44,7 +45,7 @@ export default function MaterialsCosts() {
     window.addEventListener("scroll", loadDataOnScrollEnd)
     return () => window.removeEventListener("scroll", loadDataOnScrollEnd)
   }, [])
-  
+
   //mutation DELETE logic
   const [showDeleteModal, setShowDeleteModal] = useState<boolean>(false)
   const queryClient = useQueryClient()
@@ -147,7 +148,6 @@ export default function MaterialsCosts() {
   }
 
   const onEditClick = (index: number) => {
-
     const material = allMaterials.find((val) => val.label == tableData[index].materialName)!
     setSelectedMaterial(material)
     setMutationData({
@@ -161,10 +161,55 @@ export default function MaterialsCosts() {
     setMutationModalType("update")
   }
 
+  const [showImportModal, setShowImportModal] = useState(false)
+
+  const importTemplateFile = useQuery<boolean, Error, boolean>({
+    queryKey: ["material-import-template"],
+    queryFn: getMaterialCostTemplateDocument,
+    enabled: false,
+    cacheTime: 0,
+  })
+
+  const importMutation = useMutation<boolean, Error, File>({
+    mutationFn: importMaterialCost,
+    cacheTime: 0,
+  })
+
+  const acceptExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return
+    importMutation.mutate(e.target.files[0], {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["materials-costs"])
+        setShowImportModal(false)
+        toast.success("Импортирование успешно")
+      },
+      onSettled: () => {
+        e.target.value = ""
+      },
+      onError: (error) => {
+        toast.error(`Импортированный файл имеет неправильные данные: ${error.message}`)
+      }
+    })
+  }
+
+  const materialExport = useQuery<boolean, Error, boolean>({
+    queryKey: ["material-costs-export"],
+    queryFn: exportMaterialCosts,
+    enabled: false,
+    cacheTime: 0,
+  })
+
   return (
     <main>
       <div className="mt-2 pl-2 flex space-x-2">
         <span className="text-3xl font-bold">Ценники Материалов</span>
+        <Button text="Импорт" onClick={() => setShowImportModal(true)} />
+        <div
+          onClick={() => materialExport.refetch()}
+          className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+        >
+          {materialExport.fetchStatus == "fetching" ? <LoadingDots height={20} /> : "Экспорт"}
+        </div>
       </div>
       <table className="table-auto text-sm text-left mt-2 w-full border-box">
         <thead className="shadow-md border-t-2">
@@ -305,6 +350,42 @@ export default function MaterialsCosts() {
               </div>
             </div>
           </div>
+        </Modal>
+      }
+      {showImportModal &&
+        <Modal setShowModal={setShowImportModal}>
+          <span className="font-bold text-xl px-2 py-1">Импорт данных в Справочник - Ценники Материалов</span>
+          <div className="grid grid-cols-2 gap-2 items-center px-2 pt-2">
+            <div
+              onClick={() => importTemplateFile.refetch()}
+              className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer text-center"
+            >
+              {importTemplateFile.fetchStatus == "fetching" ? <LoadingDots height={20} /> : "Скачать шаблон"}
+            </div>
+            <div className="w-full">
+              {importMutation.status == "loading"
+                ?
+                <div className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800">
+                  <LoadingDots height={25} />
+                </div>
+                :
+                <label
+                  htmlFor="file"
+                  className="w-full text-white py-3 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer text-center"
+                >
+                  Импортировать данные
+                </label>
+              }
+              <input
+                name="file"
+                type="file"
+                id="file"
+                onChange={(e) => acceptExcel(e)}
+                className="hidden"
+              />
+            </div>
+          </div>
+          <span className="text-sm italic px-2 w-full text-center">При импортировке система будет следовать правилам шаблона</span>
         </Modal>
       }
     </main>

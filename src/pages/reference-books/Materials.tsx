@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
 import { ENTRY_LIMIT } from "../../services/api/constants";
 import getPaginatedMaterials, { MaterialsGetAllResponse } from "../../services/api/materials/getPaginated";
@@ -14,15 +14,23 @@ import updateMaterial from "../../services/api/materials/update";
 import { MEASUREMENT } from "../../services/lib/measurement";
 import IReactSelectOptions from "../../services/interfaces/react-select";
 import Select from "react-select"
-import { getMaterialTemplateDocument, importMaterials } from "../../services/api/material";
+import { MaterialSearchParameters, exportMaterials, getMaterialTemplateDocument, importMaterials } from "../../services/api/material";
 import toast from "react-hot-toast";
 import { MATERIALS_CATEGORIES_FOR_SELECT } from "../../services/lib/objectStatuses";
+import getAllMaterials from "../../services/api/materials/getAll";
 
 export default function Materials() {
   //FETCHING LOGIC
+
+  const [searchParameters, setSearchParameters] = useState<MaterialSearchParameters>({
+    name: "",
+    category: "",
+    code: "",
+    unit: "",
+  })
   const tableDataQuery = useInfiniteQuery<MaterialsGetAllResponse, Error>({
-    queryKey: ["materials"],
-    queryFn: ({ pageParam }) => getPaginatedMaterials({ pageParam }),
+    queryKey: ["materials", searchParameters],
+    queryFn: ({ pageParam }) => getPaginatedMaterials({ pageParam }, searchParameters),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
@@ -148,8 +156,16 @@ export default function Materials() {
 
   const [showImportModal, setShowImportModal] = useState(false)
 
+  const importTemplateFile = useQuery<boolean, Error, boolean>({
+    queryKey: ["material-import-template"],
+    queryFn: getMaterialTemplateDocument,
+    enabled: false,
+    cacheTime: 0,
+  })
+
   const importMutation = useMutation<boolean, Error, File>({
     mutationFn: importMaterials,
+    cacheTime: 0,
   })
 
   const acceptExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -158,6 +174,7 @@ export default function Materials() {
       onSuccess: () => {
         queryClient.invalidateQueries(["materials"])
         setShowImportModal(false)
+        toast.success("Импортирование успешно")
       },
       onSettled: () => {
         e.target.value = ""
@@ -168,12 +185,88 @@ export default function Materials() {
     })
   }
 
+  const materialExport = useQuery<boolean, Error, boolean>({
+    queryKey: ["material-export"],
+    queryFn: exportMaterials,
+    enabled: false,
+    cacheTime: 0,
+  })
+
+  const [showSearchModal, setShowSearchModal] = useState(false)
+  const allMaterialsQuery = useQuery<Material[], Error, Material[]>({
+    queryKey: ["all-materials"],
+    queryFn: getAllMaterials,
+    enabled: false,
+  })
+
+  const [selectedMaterialName, setSelectedMaterialName] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
+  const [allMaterialNames, setAllMaterialNames] = useState<IReactSelectOptions<string>[]>([])
+
+  const [selectedMaterialCategory, setSelectedMaterialCategory] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
+  const [allMaterialCategories, setAllMaterialCategories] = useState<IReactSelectOptions<string>[]>([])
+
+  const [selectedMaterialCode, setSelectedMaterialCode] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
+  const [allMaterialCodes, setAllMaterialCodes] = useState<IReactSelectOptions<string>[]>([])
+
+  const [selectedMaterialUnit, setSelectedMaterialUnit] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
+
+  useEffect(() => {
+    if (allMaterialsQuery.isSuccess && allMaterialsQuery.data) {
+      setAllMaterialNames(allMaterialsQuery.data.map((val) => ({
+        label: val.name,
+        value: val.name,
+      })))
+
+      const categories: string[] = []
+      const codes: string[] = []
+      allMaterialsQuery.data.forEach((material) => {
+        if (!categories.includes(material.category)) categories.push(material.category)
+        if (!codes.includes(material.code)) codes.push(material.code)
+      })
+
+      setAllMaterialCategories(categories.map(val => ({ label: val, value: val })))
+      setAllMaterialCodes(codes.map(val => ({ label: val, value: val })))
+
+    }
+  }, [allMaterialsQuery.data])
+
   return (
     <main>
       <div className="mt-2 pl-2 flex space-x-2">
         <span className="text-3xl font-bold">Материалы</span>
-        {/* <Button text="Экспорт" onClick={() => exportQuery.refetch()}/> */}
+        <div
+          onClick={() => {
+            allMaterialsQuery.refetch()
+            setShowSearchModal(true)
+          }}
+          className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+        >
+          Поиск
+        </div>
         <Button text="Импорт" onClick={() => setShowImportModal(true)} />
+        <div
+          onClick={() => materialExport.refetch()}
+          className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+        >
+          {materialExport.fetchStatus == "fetching" ? <LoadingDots height={20} /> : "Экспорт"}
+        </div>
+        <div
+          onClick={() => {
+            setSearchParameters({
+              unit: "",
+              name: "",
+              category: "",
+              code: "",
+            })
+            setSelectedMaterialUnit({label: "", value: ""})
+            setSelectedMaterialCategory({label:"", value: ""})
+            setSelectedMaterialName({label: "", value: ""})
+            setSelectedMaterialCode({label: "", value: ""})
+          }}
+          className="text-white py-2.5 px-5 rounded-lg bg-red-700 hover:bg-red-800 hover:cursor-pointer"
+        >
+          Сброс поиска
+        </div>
       </div>
       <table className="table-auto text-sm text-left mt-2 w-full border-box">
         <thead className="shadow-md border-t-2">
@@ -376,14 +469,26 @@ export default function Materials() {
         <Modal setShowModal={setShowImportModal}>
           <span className="font-bold text-xl px-2 py-1">Импорт данных в Справочник - Материалы</span>
           <div className="grid grid-cols-2 gap-2 items-center px-2 pt-2">
-            <Button text="Скачать шаблон" onClick={() => getMaterialTemplateDocument()} />
+            <div
+              onClick={() => importTemplateFile.refetch()}
+              className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer text-center"
+            >
+              {importTemplateFile.fetchStatus == "fetching" ? <LoadingDots height={20} /> : "Скачать шаблон"}
+            </div>
             <div className="w-full">
-              <label
-                htmlFor="file"
-                className="w-full text-white py-3 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
-              >
-                Импортировать данные
-              </label>
+              {importMutation.status == "loading"
+                ?
+                <div className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800">
+                  <LoadingDots height={25} />
+                </div>
+                :
+                <label
+                  htmlFor="file"
+                  className="w-full text-white py-3 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer text-center"
+                >
+                  Импортировать данные
+                </label>
+              }
               <input
                 name="file"
                 type="file"
@@ -394,6 +499,96 @@ export default function Materials() {
             </div>
           </div>
           <span className="text-sm italic px-2 w-full text-center">При импортировке система будет следовать правилам шаблона</span>
+        </Modal>
+      }
+      {showSearchModal &&
+        <Modal setShowModal={setShowSearchModal}>
+          <span className="font-bold text-xl py-1">Параметры Поиска по сравочнику материалов</span>
+          {allMaterialsQuery.isLoading && <LoadingDots />}
+          {allMaterialsQuery.isSuccess &&
+            <div className="p-2 flex flex-col space-y-2">
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="material-names">Наименование</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"material-names"}
+                  placeholder={""}
+                  value={selectedMaterialName}
+                  options={allMaterialNames}
+                  onChange={value => {
+                    setSelectedMaterialName(value ?? { label: "", value: "" })
+                    setSearchParameters({
+                      ...searchParameters,
+                      name: value?.value ?? "",
+                    })
+                  }}
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="material-category">Категория</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"material-category"}
+                  placeholder={""}
+                  value={selectedMaterialCategory}
+                  options={allMaterialCategories}
+                  onChange={value => {
+                    setSelectedMaterialCategory(value ?? { label: "", value: "" })
+                    setSearchParameters({
+                      ...searchParameters,
+                      category: value?.value ?? "",
+                    })
+                  }}
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="material-code">Код</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"material-code"}
+                  placeholder={""}
+                  value={selectedMaterialCode}
+                  options={allMaterialCodes}
+                  onChange={value => {
+                    setSelectedMaterialCode(value ?? { label: "", value: "" })
+                    setSearchParameters({
+                      ...searchParameters,
+                      code: value?.value ?? "",
+                    })
+                  }}
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="material-unit">Еденица измерения</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"material-unit"}
+                  placeholder={""}
+                  value={selectedMaterialUnit}
+                  options={measurements}
+                  onChange={value => {
+                    setSelectedMaterialUnit(value ?? { label: "", value: "" })
+                    setSearchParameters({
+                      ...searchParameters,
+                      unit: value?.value ?? "",
+                    })
+                  }}
+                />
+              </div>
+            </div>
+          }
         </Modal>
       }
     </main>

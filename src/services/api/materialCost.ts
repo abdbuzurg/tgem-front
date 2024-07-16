@@ -3,19 +3,19 @@ import axiosClient from "./axiosClient"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import isCorrectResponseFormat from "../lib/typeGuardForResponse"
 
-const URL = "/material"
+const URL = "/material-cost"
 
-export async function getMaterialTemplateDocument(): Promise<boolean> {
+export async function getMaterialCostTemplateDocument(): Promise<boolean> {
   const response = await axiosClient.get(`${URL}/document/template`, { responseType: "blob" })
   if (response.status == 200) {
-    fileDownload(response.data, "Шаблон для импорта материалов.xlsx")
+    fileDownload(response.data, "Шаблон для импорта ценников для материалов.xlsx")
     return true
   } else {
     throw new Error(response.statusText)
   }
 }
 
-export async function importMaterials(data: File): Promise<boolean> {
+export async function importMaterialCost(data: File): Promise<boolean> {
   const formData = new FormData()
   formData.append("file", data)
   const responseRaw = await axiosClient.post<IAPIResposeFormat<null>>(`${URL}/document/import`, formData, {
@@ -31,7 +31,7 @@ export async function importMaterials(data: File): Promise<boolean> {
   }
 }
 
-export async function exportMaterials(): Promise<boolean> {
+export async function exportMaterialCosts(): Promise<boolean> {
   const responseRaw = await axiosClient.get(`${URL}/document/export`, { responseType: "blob" })
   if (isCorrectResponseFormat<null>(responseRaw.data)) {
     const response = responseRaw.data as IAPIResposeFormat<null>
@@ -46,9 +46,3 @@ export async function exportMaterials(): Promise<boolean> {
   }
 }
 
-export interface MaterialSearchParameters {
-  name: string
-  category: string
-  code: string
-  unit: string
-}
