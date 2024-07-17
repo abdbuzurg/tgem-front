@@ -5,7 +5,7 @@ import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
 import IReactSelectOptions from "../interfaces/react-select"
 
-const URL = "/object/kl04kv"
+const URL = "/kl04kv"
 
 export interface KL04KVSearchParameters {
   objectName: string

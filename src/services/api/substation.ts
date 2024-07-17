@@ -4,7 +4,7 @@ import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
 
-const URL = "/object/substation"
+const URL = "/substation"
 
 export interface ISubstationObjectPaginated {
   objectID: number

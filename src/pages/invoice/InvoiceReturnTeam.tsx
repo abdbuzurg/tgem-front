@@ -5,12 +5,13 @@ import { useEffect, useState } from "react"
 import { IInvoiceReturnView } from "../../services/interfaces/invoiceReturn"
 import Button from "../../components/UI/button"
 import IconButton from "../../components/IconButtons"
-import { FaDownload, FaRegListAlt, FaRegTrashAlt, FaUpload } from "react-icons/fa"
+import { FaDownload, FaEdit, FaRegListAlt, FaRegTrashAlt, FaUpload } from "react-icons/fa"
 import ShowInvoiceReturnDetails from "../../components/invoice/return/ShowInvoiceReturnDetails"
 import DeleteModal from "../../components/deleteModal"
 import ReportInvoiceReturn from "../../components/invoice/return/ReportInvoiceReturn"
-import MutationInvoiceReturnTeam from "../../components/invoice/return/MutationInvoiceReturnTeam"
 import LoadingDots from "../../components/UI/loadingDots"
+import AddInvoiceReturnTeam from "../../components/invoice/return/AddInvoiceReturnTeam"
+import EditInvoiceReturnTeam from "../../components/invoice/return/EditInvoiceReturnTeam"
 
 export default function InvoiceReturnTeam() {
 
@@ -80,9 +81,12 @@ export default function InvoiceReturnTeam() {
     })
   }
 
-  //MUTATION LOGIC
-  const [mutationModalType, setMutationModalType] = useState<"update" | "create">("create")
-  const [showMutationModal, setShowMutationModal] = useState(false)
+  //Add LOGIC
+  const [showAddModal, setShowAddModal] = useState(false)
+
+  //Edit Logic
+  const [showEditModal, setShowEditModal] = useState(false)
+  const [rowToEdit, setRowToEdit] = useState<IInvoiceReturnView>()
 
   //Report Modal
   const [showReportModal, setShowReportModal] = useState(false)
@@ -92,13 +96,16 @@ export default function InvoiceReturnTeam() {
   const [detailModalData, setDetailModalData] = useState<IInvoiceReturnView>({
     dateOfInvoice: new Date(),
     deliveryCode: "",
+    districtName: "",
     id: 0,
+    acceptorName: "",
     confirmation: false,
     projectID: 1,
     teamNumber: "",
-    teamLeaderNames: [],
+    teamLeaderName: "",
     objectName: "",
     objectSupervisorNames: [],
+    objectType: "",
   })
 
   const showDetails = (index: number) => {
@@ -124,15 +131,17 @@ export default function InvoiceReturnTeam() {
               <span>Бригада</span>
             </th>
             <th className="px-4 py-3">
-              <span>Бригадиры</span>
+              <span>Бригадир</span>
+            </th>
+            <th className="px-4 py-3">
+              <span>Принял</span>
             </th>
             <th className="px-4 py-3 w-[150px]">
               <span>Дата</span>
             </th>
             <th className="px-4 py-3">
               <Button text="Добавить" onClick={() => {
-                setMutationModalType("create")
-                setShowMutationModal(true)
+                setShowAddModal(true)
               }} />
             </th>
           </tr>
@@ -142,7 +151,8 @@ export default function InvoiceReturnTeam() {
             <tr key={index}>
               <td className="px-4 py-3">{value.deliveryCode}</td>
               <td className="px-4 py-3">{value.teamNumber}</td>
-              <td className="px-4 py-3">{value.teamLeaderNames.reduce((acc, val) => acc + ", " + val)}</td>
+              <td className="px-4 py-3">{value.teamLeaderName}</td>
+              <td className="px-4 py-3">{value.acceptorName}</td>
               <td className="px-4 py-3">{value.dateOfInvoice.toString().substring(0, 10)}</td>
               <td className="px-4 py-3 border-box flex space-x-3">
                 <IconButton
@@ -182,6 +192,14 @@ export default function InvoiceReturnTeam() {
                   {/* /> */}
                   <IconButton
                     type="delete"
+                    icon={<FaEdit size="20px" title={`Изменение данных накладной ${value.deliveryCode}`} />}
+                    onClick={() => {
+                      setRowToEdit(value)
+                      setShowEditModal(true)
+                    }}
+                  />
+                  <IconButton
+                    type="delete"
                     icon={<FaRegTrashAlt size="20px" title={`Удалить все данные накладной ${value.deliveryCode}`} />}
                     onClick={() => onDeleteButtonClick(value)}
                   />
@@ -213,7 +231,8 @@ export default function InvoiceReturnTeam() {
           <span>При подтверждении накладая приход с кодом {modalProps.no_delivery} и все связанные материалы будут удалены</span>
         </DeleteModal>
       }
-      {showMutationModal && <MutationInvoiceReturnTeam setShowMutationModal={setShowMutationModal} mutationType={mutationModalType} />}
+      {showAddModal && <AddInvoiceReturnTeam setShowMutationModal={setShowAddModal} />}
+      {showEditModal && <EditInvoiceReturnTeam setShowMutationModal={setShowEditModal} invoiceReturnTeam={rowToEdit!} />}
       {showReportModal && <ReportInvoiceReturn setShowReportModal={setShowReportModal} />}
     </main>
   )

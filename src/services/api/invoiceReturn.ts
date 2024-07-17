@@ -1,5 +1,5 @@
 import fileDownload from "js-file-download"
-import { IInvoiceReturn, IInvoiceReturnView } from "../interfaces/invoiceReturn"
+import { IInvoiceReturn, IInvoiceReturnMaterials, IInvoiceReturnView } from "../interfaces/invoiceReturn"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
@@ -16,7 +16,7 @@ export interface InvoiceReturnPagianted {
 }
 
 export async function getPaginatedInvoiceReturn({ pageParam = 1 }, type: string): Promise<InvoiceReturnPagianted> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceReturnPagianted>>(`${URL}/returner-type/${type}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceReturnPagianted>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&type=${type}`)
   const response = responseRaw.data
   if (response.success && response.permission) {
     return { ...response.data, page: pageParam }
@@ -68,9 +68,11 @@ export async function updateInvoiceReturn(data: InvoiceReturnMutation): Promise<
 }
 
 export async function getInvoiceReturnDocument(deliveryCode: string): Promise<boolean> {
-  const responseRaw = await axiosClient.get(`${URL}/document/${deliveryCode}`, { responseType: "blob" })
+  const responseRaw = await axiosClient.get(`${URL}/document/${deliveryCode}`, { responseType: "blob", })
   if (responseRaw.status == 200) {
-    fileDownload(responseRaw.data, `${deliveryCode}.xlsx`)
+    const contentType: string = responseRaw.headers["content-type"]
+    const extension = contentType.split("/")[1]
+    fileDownload(responseRaw.data, `${deliveryCode}.${extension}`)
     return true
   } else {
     throw new Error(responseRaw.data)
@@ -199,6 +201,16 @@ export async function getInvoiceReturnMaterilsWithoutSerialNumbersByID(id: numbe
 
 export async function getInvoiceReturnMaterilsWithSerialNumbersByID(id: number): Promise<InvoiceMaterialViewWithSerialNumbers[]> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceMaterialViewWithSerialNumbers[]>>(`${URL}/${id}/materials/with-serial-number`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export async function getInvoiceReturnMaterialsForEdit(id: number): Promise<IInvoiceReturnMaterials[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IInvoiceReturnMaterials[]>>(`${URL}/invoice-materials/${id}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
     return response.data

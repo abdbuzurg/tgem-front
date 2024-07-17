@@ -30,11 +30,14 @@ export interface IInvoiceReturnMaterials {
 export interface IInvoiceReturnView {
   id: number
   projectID: number
+  districtName: string
   deliveryCode: string
   teamNumber: string
-  teamLeaderNames: string[]
+  teamLeaderName: string
   objectName: string
   objectSupervisorNames: string[]
+  objectType: string
+  acceptorName: string
   dateOfInvoice: Date
   confirmation: boolean
 }

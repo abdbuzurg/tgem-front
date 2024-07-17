@@ -4,7 +4,7 @@ import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
 
-const URL = "/object/tp"
+const URL = "/tp"
 
 export interface ITPObjectPaginated {
   objectID: number

@@ -4,7 +4,7 @@ import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
 
-const URL = "/object/stvt"
+const URL = "/stvt"
 
 export interface ISTVTObjectPaginated {
   objectID: number

@@ -68,7 +68,9 @@ export async function updateInvoiceOutputInProject(data: InvoiceOutputInProjectM
 export async function getInvoiceOutputInProjectDocument(deliveryCode: string):Promise<boolean>{
   const responseRaw = await axiosClient.get(`${URL}/document/${deliveryCode}`, { responseType: "blob" })
   if (responseRaw.status == 200) {
-    fileDownload(responseRaw.data, `${deliveryCode}.xlsx`)
+    const contentType: string = responseRaw.headers["content-type"]
+    const extension = contentType.split("/")[1]
+    fileDownload(responseRaw.data, `${deliveryCode}.${extension}`)
     return true
   } else {
     throw new Error(responseRaw.data)

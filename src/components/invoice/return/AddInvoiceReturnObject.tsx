@@ -4,7 +4,6 @@ import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
 import { Fragment, useEffect, useState } from "react";
 import { IInvoiceReturn, IInvoiceReturnMaterials } from "../../../services/interfaces/invoiceReturn";
-import TeamSelect from "../../TeamSelect";
 import Button from "../../UI/button";
 import IReactSelectOptions from "../../../services/interfaces/react-select";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
@@ -14,25 +13,31 @@ import { InvoiceReturnItem, InvoiceReturnMutation, createInvoiceReturn, getMater
 import Input from "../../UI/Input";
 import toast from "react-hot-toast";
 import SerialNumberSelectReturnModal from "./SerialNumberSelectReturn";
-import DistrictSelect from "../../DistrictSelect";
 import IconButton from "../../IconButtons";
 import { FaBarcode } from "react-icons/fa";
 import { IoIosAddCircleOutline } from "react-icons/io";
-import WorkerSelect from "../../WorkerSelect";
+import { getAllTeamsForSelect } from "../../../services/api/team";
+import { getAllWorkers } from "../../../services/api/worker";
+import IWorker from "../../../services/interfaces/worker";
+import { TeamDataForSelect } from "../../../services/interfaces/teams";
+import { getAllDistricts } from "../../../services/api/district";
+import { IDistrict } from "../../../services/interfaces/district";
+import LoadingDots from "../../UI/loadingDots";
+import { IObject } from "../../../services/interfaces/objects";
+import { getAllObjects } from "../../../services/api/object";
+import { objectTypeIntoRus } from "../../../services/lib/objectStatuses";
 
 interface Props {
   setShowMutationModal: React.Dispatch<React.SetStateAction<boolean>>
-  mutationType: "create" | "update"
 }
 
 
-export default function MutationInvoiceReturnTeam({
-  mutationType,
+export default function AddInvoiceReturnObject({
   setShowMutationModal,
 }: Props) {
 
   // Main invoice information
-  const [mutationData, setMutationData] = useState<IInvoiceReturn>({
+  const [addInvoiceReturnObject, setAddInvoiceReturnObject] = useState<IInvoiceReturn>({
     dateOfInvoice: new Date(),
     deliveryCode: "",
     districtID: 0,
@@ -40,41 +45,73 @@ export default function MutationInvoiceReturnTeam({
     notes: "",
     projectID: 0,
     returnerID: 0,
-    returnerType: "team",
+    returnerType: "object",
     acceptorID: 0,
-    acceptorType: "warehouse",
+    acceptorType: "team",
     acceptedByWorkerID: 0,
     confirmation: false,
   })
 
   // District, Object, Team and District select logic
-  const [selectedDistrictID, setSelectedDistrictID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
-  const [selectedTeamID, setSelectedTeamID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
-  const [selectedAcceptedByWorkerID, setSelectedAcceptedByWorkerID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [selectedDistrict, setSelectedDistrict] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [allDistricts, setAllDistricts] = useState<IReactSelectOptions<number>[]>([])
+  const allDistrictsQuery = useQuery<IDistrict[], Error, IDistrict[]>({
+    queryKey: [`all-districts`],
+    queryFn: getAllDistricts,
+  })
   useEffect(() => {
-    setMutationData({
-      ...mutationData,
-      returnerID: selectedTeamID.value,
-      acceptorID: 0,
-      districtID: selectedDistrictID.value,
-      acceptedByWorkerID: selectedAcceptedByWorkerID.value
-    })
-    setSelectedMaterial({ label: "", value: 0 })
-    setSelectedMaterialCost({ label: "", value: 0 })
-    setInvoiceMaterial({
-      materialID: 0,
-      holderAmount: 0,
-      unit: "",
-      materialCostID: 0,
-      amount: 0,
-      materialName: "",
-      materialCost: "",
-      hasSerialNumber: false,
-      serialNumbers: [],
-      isDefective: false,
-      notes: "",
-    })
-  }, [selectedTeamID, selectedDistrictID, selectedAcceptedByWorkerID])
+    if (allDistrictsQuery.isSuccess && allDistrictsQuery.data) {
+      setAllDistricts(allDistrictsQuery.data.map<IReactSelectOptions<number>>(val => ({
+        label: val.name,
+        value: val.id,
+      })))
+    }
+  }, [allDistrictsQuery.data])
+
+  const [selectedObject, setSelectedObject] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [allObjects, setAllObjects] = useState<IReactSelectOptions<number>[]>([])
+  const allObjectsQuery = useQuery<IObject[], Error, IObject[]>({
+    queryKey: ["all-objects"],
+    queryFn: getAllObjects,
+  })
+  useEffect(() => {
+    if (allObjectsQuery.isSuccess && allObjectsQuery.data) {
+      setAllObjects(allObjectsQuery.data.map<IReactSelectOptions<number>>(val => ({
+        label: val.name + " (" + objectTypeIntoRus(val.type) + ")",
+        value: val.id,
+      })))
+    }
+  }, [allObjectsQuery.data])
+
+  const [selectedTeam, setSelectedTeam] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [allTeams, setAllTeams] = useState<IReactSelectOptions<number>[]>([])
+  const allTeamsQuery = useQuery<TeamDataForSelect[], Error, TeamDataForSelect[]>({
+    queryKey: ["all-teams-for-select"],
+    queryFn: getAllTeamsForSelect,
+  })
+  useEffect(() => {
+    if (allTeamsQuery.isSuccess && allTeamsQuery.data) {
+      setAllTeams(allTeamsQuery.data.map<IReactSelectOptions<number>>(val => ({
+        label: val.teamNumber + " (" + val.teamLeaderName + ")",
+        value: val.id,
+      })))
+    }
+  }, [allTeamsQuery.data])
+
+  const [selectedAcceptor, setSelectedAcceptor] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [allWorkers, setAllWorkers] = useState<IReactSelectOptions<number>[]>([])
+  const allWorkersQuery = useQuery<IWorker[], Error, IWorker[]>({
+    queryKey: ["all-workers"],
+    queryFn: getAllWorkers,
+  })
+  useEffect(() => {
+    if (allWorkersQuery.isSuccess && allWorkersQuery.data) {
+      setAllWorkers(allWorkersQuery.data.map<IReactSelectOptions<number>>(val => ({
+        label: val.name,
+        value: val.id,
+      })))
+    }
+  }, [allWorkersQuery.data])
 
   //Invoice material information
   const [invoiceMaterials, setInvoiceMaterials] = useState<IInvoiceReturnMaterials[]>([])
@@ -97,8 +134,8 @@ export default function MutationInvoiceReturnTeam({
   const [selectedMaterial, setSelectedMaterial] = useState<IReactSelectOptions<number>>({ value: 0, label: "" })
   const [allAvaialableMaterials, setAllAvailableMaterails] = useState<IReactSelectOptions<number>[]>([])
   const allMaterialInALocation = useQuery<Material[], Error, Material[]>({
-    queryKey: ["available-materials", mutationData.returnerType, mutationData.returnerID],
-    queryFn: () => getUniqueMaterialsInLocation(mutationData.returnerType, mutationData.returnerID),
+    queryKey: ["available-materials", addInvoiceReturnObject.returnerType, addInvoiceReturnObject.returnerID],
+    queryFn: () => getUniqueMaterialsInLocation(addInvoiceReturnObject.returnerType, addInvoiceReturnObject.returnerID),
   })
 
   useEffect(() => {
@@ -153,7 +190,7 @@ export default function MutationInvoiceReturnTeam({
   const [availableMaterialCosts, setAvailableMaterialCosts] = useState<IReactSelectOptions<number>[]>([])
   const materialCostQuery = useQuery<IMaterialCost[], Error, IMaterialCost[]>({
     queryKey: ["material-cost-in-a-location", selectedMaterial],
-    queryFn: () => getMaterialCostsInLocation(selectedMaterial.value, mutationData.returnerType, mutationData.returnerID),
+    queryFn: () => getMaterialCostsInLocation(selectedMaterial.value, addInvoiceReturnObject.returnerType, addInvoiceReturnObject.returnerID),
     enabled: selectedMaterial.value != 0,
   })
   useEffect(() => {
@@ -187,7 +224,7 @@ export default function MutationInvoiceReturnTeam({
   // Logic of displaying the amount of material available based on cost and name
   const materialAmountQuery = useQuery<number, Error, number>({
     queryKey: ["materail-amount", selectedMaterial, selectedMaterialCost],
-    queryFn: () => getMaterialAmountInLocation(selectedMaterialCost.value, mutationData.returnerType, mutationData.returnerID,),
+    queryFn: () => getMaterialAmountInLocation(selectedMaterialCost.value, addInvoiceReturnObject.returnerType, addInvoiceReturnObject.returnerID,),
     enabled: selectedMaterialCost.value != 0 && selectedMaterial.value != 0,
   })
 
@@ -286,16 +323,21 @@ export default function MutationInvoiceReturnTeam({
     }
   })
   const onMutationSubmit = () => {
-    if (selectedDistrictID.value == 0) {
+    if (addInvoiceReturnObject.districtID == 0) {
       toast.error("Не выбран район")
     }
 
-    if (selectedTeamID.value == 0) {
+    if (addInvoiceReturnObject.acceptorID == 0) {
       toast.error("Не выбрана бригада")
       return
     }
 
-    if (selectedAcceptedByWorkerID.value == 0) {
+    if (addInvoiceReturnObject.returnerID == 0) {
+      toast.error("Не выбран Объект")
+      return
+    }
+
+    if (addInvoiceReturnObject.acceptedByWorkerID == 0) {
       toast.error("Не выбран принимающий")
       return
     }
@@ -305,56 +347,148 @@ export default function MutationInvoiceReturnTeam({
       return
     }
 
-    switch (mutationType) {
-      case "create":
-        createInvoiceReturnMutation.mutate({
-          details: mutationData,
-          items: invoiceMaterials.map<InvoiceReturnItem>((value) => ({
-            amount: value.amount,
-            materialCostID: value.materialCostID,
-            isDefected: value.isDefective,
-            serialNumbers: value.serialNumbers,
-            notes: value.notes,
-          })),
-        })
-        return
-      case "update":
-        // updateMaterialMutation.mutate(mutationData)
-        return
+    createInvoiceReturnMutation.mutate({
+      details: addInvoiceReturnObject,
+      items: invoiceMaterials.map<InvoiceReturnItem>((value) => ({
+        amount: value.amount,
+        materialCostID: value.materialCostID,
+        isDefected: value.isDefective,
+        serialNumbers: value.serialNumbers,
+        notes: value.notes,
+      })),
+    })
 
-      default:
-        throw new Error("Неправильная операция была выбрана")
-    }
   }
 
   return (
     <Modal setShowModal={setShowMutationModal} bigModal>
       <div className="mb-2">
         <h3 className="text-2xl font-medium text-gray-800">
-          {mutationType == "create" && "Добавление накладной возврат из объекта"}
-          {mutationType == "update" && "Изменение накладной"}
+          Добавление накладной возврат из объекта
         </h3>
       </div>
       <div className="flex flex-col w-full max-h-[80vh] space-y-2">
         <p className="text-xl font-semibold text-gray-800">Детали накладной</p>
         <div className="flex flex-col space-y-2 w-full">
           <div className="flex space-x-2">
-            <DistrictSelect
-              selectedDistrictID={selectedDistrictID}
-              setSelectedDistrictID={setSelectedDistrictID}
-            />
-            <TeamSelect
-              selectedTeamID={selectedTeamID}
-              setSelectedTeamID={setSelectedTeamID}
-            />
+            {allDistrictsQuery.isLoading &&
+              <div className="flex h-full w-[200px] items-center">
+                <LoadingDots height={40} />
+              </div>
+            }
+            {allDistrictsQuery.isSuccess &&
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="district">Район</label>
+                <div className="w-[200px]">
+                  <Select
+                    className="basic-single"
+                    classNamePrefix="select"
+                    isSearchable={true}
+                    isClearable={true}
+                    name="district"
+                    placeholder={""}
+                    value={selectedDistrict}
+                    options={allDistricts}
+                    onChange={(value) => {
+                      setSelectedDistrict(value ?? { label: "", value: 0 })
+                      setAddInvoiceReturnObject({
+                        ...addInvoiceReturnObject,
+                        districtID: value?.value ?? 0,
+                      })
+                    }}
+                  />
+                </div>
+              </div>
+            }
+            {allObjectsQuery.isLoading &&
+              <div className="flex h-full w-[200px] items-center">
+                <LoadingDots height={40} />
+              </div>
+            }
+            {allObjectsQuery.isSuccess &&
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="object">Объект</label>
+                <div className="w-[200px]">
+                  <Select
+                    className="basic-single"
+                    classNamePrefix="select"
+                    isSearchable={true}
+                    isClearable={true}
+                    name="object"
+                    placeholder={""}
+                    value={selectedObject}
+                    options={allObjects}
+                    onChange={(value) => {
+                      setSelectedObject(value ?? { label: "", value: 0 })
+                      setAddInvoiceReturnObject({
+                        ...addInvoiceReturnObject,
+                        returnerID: value?.value ?? 0,
+                      })
+                    }}
+                  />
+                </div>
+              </div>
+            }
           </div>
           <div className="flex space-x-2 items-center">
-            <WorkerSelect
-              title="Принял"
-              jobTitle="Заведующий складом"
-              selectedWorkerID={selectedAcceptedByWorkerID}
-              setSelectedWorkerID={setSelectedAcceptedByWorkerID}
-            />
+            {allTeamsQuery.isLoading &&
+              <div className="flex h-full w-[200px] items-center">
+                <LoadingDots height={40} />
+              </div>
+            }
+            {allTeamsQuery.isSuccess &&
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="team">Бригада</label>
+                <div className="w-[200px]">
+                  <Select
+                    className="basic-single"
+                    classNamePrefix="select"
+                    isSearchable={true}
+                    isClearable={true}
+                    name="team"
+                    placeholder={""}
+                    value={selectedTeam}
+                    options={allTeams}
+                    onChange={(value) => {
+                      setSelectedTeam(value ?? { label: "", value: 0 })
+                      setAddInvoiceReturnObject({
+                        ...addInvoiceReturnObject,
+                        acceptorID: value?.value ?? 0,
+                      })
+                    }}
+                  />
+                </div>
+              </div>
+            }
+            {allWorkersQuery.isLoading &&
+              <div className="flex h-full w-[200px] items-center">
+                <LoadingDots height={40} />
+              </div>
+            }
+            {allWorkersQuery.isSuccess &&
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="acceptor">Принял</label>
+                <div className="w-[200px]">
+                  <Select
+                    className="basic-single"
+                    classNamePrefix="select"
+                    isSearchable={true}
+                    isClearable={true}
+                    name="acceptor"
+                    placeholder={""}
+                    value={selectedAcceptor}
+                    options={allWorkers}
+                    onChange={(value) => {
+                      setSelectedAcceptor(value ?? { label: "", value: 0 })
+                      setAddInvoiceReturnObject({
+                        ...addInvoiceReturnObject,
+                        acceptedByWorkerID: value?.value ?? 0,
+                      })
+                    }}
+                  />
+                </div>
+              </div>
+            }
             <div className="flex flex-col space-y-1">
               <label htmlFor="dateOfInvoice">Дата накладной</label>
               <div className="py-[4px] px-[8px] border-[#cccccc] border rounded-[4px]">
@@ -362,8 +496,8 @@ export default function MutationInvoiceReturnTeam({
                   name="dateOfInvoice"
                   className="outline-none w-full"
                   dateFormat={"dd-MM-yyyy"}
-                  selected={mutationData.dateOfInvoice}
-                  onChange={(date) => setMutationData({ ...mutationData, dateOfInvoice: date ?? new Date(+0) })}
+                  selected={addInvoiceReturnObject.dateOfInvoice}
+                  onChange={(date) => setAddInvoiceReturnObject({ ...addInvoiceReturnObject, dateOfInvoice: date ?? new Date(+0) })}
                 />
               </div>
             </div>
@@ -501,8 +635,8 @@ export default function MutationInvoiceReturnTeam({
         <SerialNumberSelectReturnModal
           setShowModal={setShowSerialNumberSelectModal}
           alreadySelectedSerialNumers={invoiceMaterial.serialNumbers}
-          locationType={mutationData.returnerType}
-          locationID={mutationData.returnerID}
+          locationType={addInvoiceReturnObject.returnerType}
+          locationID={addInvoiceReturnObject.returnerID}
           addSerialNumbersToInvoice={addSerialNumbersToInvoice}
           materialID={invoiceMaterial.materialID}
         />

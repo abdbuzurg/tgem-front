@@ -4,7 +4,7 @@ import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
 
-const URL = "/object/mjd"
+const URL = "/mjd"
 
 export interface IMJDObjectPaginated {
   objectID: number
