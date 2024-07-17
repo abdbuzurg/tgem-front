@@ -46,7 +46,7 @@ export default function ShowInvoiceReturnDetails({ setShowModal, data }: Props) 
       <div className="flex w-full space-x-8 max-h-[70vh] px-2">
         <div className="flex flex-col w-[25%]">
           <div className="flex flex-col space-y-3">
-            {data.teamNumber && data.teamLeaderNames &&
+            {data.teamNumber && data.teamLeaderName &&
               <>
                 <div className="flex flex-col">
                   <p className="text-sm font-bold">Номер Бригады</p>
