@@ -29,7 +29,7 @@ export default function InvoiceCorrection() {
     if (window.innerHeight + document.documentElement.scrollTop !== document.documentElement.offsetHeight) return;
     tableDataQuery.fetchNextPage()
   }
-
+  
   useEffect(() => {
     window.addEventListener("scroll", loadDataOnScrollEnd)
     return () => window.removeEventListener("scroll", loadDataOnScrollEnd)

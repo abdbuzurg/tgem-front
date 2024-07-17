@@ -67,7 +67,7 @@ export default function CorrectionModal({
     }, {
       onSuccess: () => {
         setShowModal(false)
-        queryClient.invalidateQueries(["invoice-correction-all"])
+        queryClient.invalidateQueries(["invoice-correction"])
       }
     })
   }
