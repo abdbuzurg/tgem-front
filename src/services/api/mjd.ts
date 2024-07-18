@@ -3,6 +3,7 @@ import { IObject } from "../interfaces/objects"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
+import IReactSelectOptions from "../interfaces/react-select"
 
 const URL = "/mjd"
 
@@ -26,8 +27,15 @@ export interface IMJDObjectGetAllResponse {
   page: number
 }
 
-export async function getPaginatedMJDObjects({ pageParam = 1 }): Promise<IMJDObjectGetAllResponse> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<IMJDObjectGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
+export interface MJDObjectSearchParameters {
+  objectName: string
+  teamID: number
+  supervisorWorkerID: number
+  tpObjectID: number
+}
+
+export async function getPaginatedMJDObjects({ pageParam = 1 }, searchParameters: MJDObjectSearchParameters): Promise<IMJDObjectGetAllResponse> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IMJDObjectGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&teamID=${searchParameters.teamID}&supervisorWorkerID=${searchParameters.supervisorWorkerID}&tpObjectID=${searchParameters.tpObjectID}&objectName=${searchParameters.objectName}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
     return {...response.data, page: pageParam}
@@ -102,4 +110,25 @@ export async function importMJD(data: File): Promise<boolean> {
   } else {
     throw new Error(responseRaw.data)
   }
+}
+
+export async function exportMJD(): Promise<boolean> {
+  const response = await axiosClient.get(`${URL}/document/export`, { responseType: "blob" })
+  if (response.status == 200) {
+    fileDownload(response.data, "Экспорт МЖД.xlsx")
+    return true
+  } else {
+    throw new Error(response.statusText)
+  }
+}
+
+export async function getMJDObjectNames(): Promise<IReactSelectOptions<string>[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IReactSelectOptions<string>[]>>(`${URL}/search/object-names`)
+  const response = responseRaw.data
+  if (response.success && response.permission) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+
 }

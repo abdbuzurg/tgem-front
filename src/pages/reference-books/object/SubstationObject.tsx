@@ -454,8 +454,15 @@ export default function SubstationObject() {
               />
             </div>
           </div>
-          <div>
-            <Button text="Опубликовать" onClick={() => onMutationSubmitClick()} />
+          <div className="mt-4 flex">
+            <div
+                onClick={() => onMutationSubmitClick()}
+                className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+              >
+                {(createMutation.isLoading || updateMutation.isLoading) && <LoadingDots height={30} />}
+                {!createMutation.isLoading && mutationType == "create" && "Опубликовать"}
+                {!updateMutation.isLoading && mutationType == "update" && "Изменить"}
+              </div>
           </div>
         </Modal>
       }

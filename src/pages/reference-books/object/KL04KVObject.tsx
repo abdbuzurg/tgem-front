@@ -13,8 +13,8 @@ import IReactSelectOptions from "../../../services/interfaces/react-select";
 import IWorker from "../../../services/interfaces/worker";
 import { getWorkerByJobTitle } from "../../../services/api/worker";
 import toast from "react-hot-toast";
-import {  TeamDataForSelect } from "../../../services/interfaces/teams";
-import {  getAllTeamsForSelect } from "../../../services/api/team";
+import { TeamDataForSelect } from "../../../services/interfaces/teams";
+import { getAllTeamsForSelect } from "../../../services/api/team";
 import arrayListToString from "../../../services/lib/arrayListToStringWithCommas";
 import { getAllTPs } from "../../../services/api/tp_object";
 import { IObject } from "../../../services/interfaces/objects";
@@ -123,9 +123,9 @@ export default function KL04KVObject() {
   useEffect(() => {
     if (teamsQuery.isSuccess && teamsQuery.data) {
       setAvailableTeams([
-        ...teamsQuery.data.map<IReactSelectOptions<number>>((val) => ({ 
-          label: val.teamNumber + " (" + val.teamLeaderName + ")", 
-          value: val.id 
+        ...teamsQuery.data.map<IReactSelectOptions<number>>((val) => ({
+          label: val.teamNumber + " (" + val.teamLeaderName + ")",
+          value: val.id
         }))
       ])
     }
@@ -589,8 +589,15 @@ export default function KL04KVObject() {
               />
             </div>
           </div>
-          <div>
-            <Button text="Опубликовать" onClick={() => onMutationSubmitClick()} />
+          <div className="mt-4 flex">
+            <div
+              onClick={() => onMutationSubmitClick()}
+              className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+            >
+              {(createMutation.isLoading || updateMutation.isLoading) && <LoadingDots height={30} />}
+              {!createMutation.isLoading && mutationType == "create" && "Опубликовать"}
+              {!updateMutation.isLoading && mutationType == "update" && "Изменить"}
+            </div>
           </div>
         </Modal>
       }
@@ -632,7 +639,7 @@ export default function KL04KVObject() {
       }
       {showSearchModal &&
         <Modal setShowModal={setShowSearchModal}>
-          <span className="font-bold text-xl py-1">Параметры Поиска по сравочнику материалов</span>
+          <span className="font-bold text-xl py-1">Параметры Поиска по сравочнику КЛ 04 КВ</span>
 
           <div className="p-2 flex flex-col space-y-2">
             <div className="flex flex-col space-y-1">

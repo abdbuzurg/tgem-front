@@ -1,6 +1,6 @@
 import Select from "react-select"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { IMJDObjectCreate, IMJDObjectGetAllResponse, IMJDObjectPaginated, createMJDObject, deleteMJDObject, getMJDTemplateDocument, getPaginatedMJDObjects, importMJD, updateMJDObject } from "../../../services/api/mjd"
+import { IMJDObjectCreate, IMJDObjectGetAllResponse, IMJDObjectPaginated, MJDObjectSearchParameters, createMJDObject, deleteMJDObject, exportMJD, getMJDObjectNames, getMJDTemplateDocument, getPaginatedMJDObjects, importMJD, updateMJDObject } from "../../../services/api/mjd"
 import { ENTRY_LIMIT } from "../../../services/api/constants"
 import { useEffect, useState } from "react"
 import LoadingDots from "../../../components/UI/loadingDots"
@@ -22,9 +22,17 @@ import { getAllTPs } from "../../../services/api/tp_object"
 export default function MJDObject() {
 
   //PAGINATED DATA
+
+  const [searchParameters, setSearchParameters] = useState<MJDObjectSearchParameters>({
+    objectName: "",
+    teamID: 0,
+    supervisorWorkerID: 0,
+    tpObjectID: 0,
+  })
+
   const tableDataQuery = useInfiniteQuery<IMJDObjectGetAllResponse, Error>({
-    queryKey: ["mjd-objects"],
-    queryFn: ({ pageParam }) => getPaginatedMJDObjects({ pageParam }),
+    queryKey: ["mjd-objects", searchParameters],
+    queryFn: ({ pageParam }) => getPaginatedMJDObjects({ pageParam }, searchParameters),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
@@ -117,9 +125,9 @@ export default function MJDObject() {
   useEffect(() => {
     if (teamsQuery.isSuccess && teamsQuery.data) {
       setAvailableTeams([
-        ...teamsQuery.data.map<IReactSelectOptions<number>>((val) => ({ 
-          label: val.teamNumber + " (" + val.teamLeaderName, 
-          value: val.id 
+        ...teamsQuery.data.map<IReactSelectOptions<number>>((val) => ({
+          label: val.teamNumber + " (" + val.teamLeaderName + ")",
+          value: val.id
         }))
       ])
     }
@@ -233,7 +241,7 @@ export default function MJDObject() {
   const [showImportModal, setShowImportModal] = useState(false)
 
   const importTemplateQuery = useQuery<boolean, Error, boolean>({
-    queryKey:["mjd-template"],
+    queryKey: ["mjd-template"],
     queryFn: getMJDTemplateDocument,
     enabled: false,
   })
@@ -258,11 +266,92 @@ export default function MJDObject() {
     })
   }
 
+  const mjdExport = useQuery<boolean, Error, boolean>({
+    queryKey: ["mjd-export"],
+    queryFn: exportMJD,
+    enabled: false,
+  })
+
+  const [showSearchModal, setShowSearchModal] = useState(false)
+
+  const [selectedObjectName, setSelectedObjectName] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
+  const [allObjectNames, setAllObjectNames] = useState<IReactSelectOptions<string>[]>([])
+  const allObjectNamesQuery = useQuery<IReactSelectOptions<string>[], Error, IReactSelectOptions<string>[]>({
+    queryKey: ["mjd-object-names"],
+    queryFn: getMJDObjectNames,
+    enabled: showSearchModal,
+  })
+  useEffect(() => {
+    if (allObjectNamesQuery.isSuccess && allObjectNamesQuery.data) {
+      setAllObjectNames(allObjectNamesQuery.data)
+    }
+  }, [allObjectNamesQuery.data])
+
+  const [selectedSupervisor, setSelectedSupervisor] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [allSupervisors, setAllSupervisors] = useState<IReactSelectOptions<number>[]>([])
+  const allSupervisorsQuery = useQuery<IWorker[], Error, IWorker[]>({
+    queryKey: ["all-workers", "Супервайзер"],
+    queryFn: () => getWorkerByJobTitle("Супервайзер"),
+    enabled: showSearchModal,
+  })
+  useEffect(() => {
+    if (allSupervisorsQuery.isSuccess && allSupervisorsQuery.data) {
+      setAllSupervisors(allSupervisorsQuery.data.map<IReactSelectOptions<number>>(val => ({
+        label: val.name,
+        value: val.id,
+      })))
+    }
+  }, [allSupervisorsQuery.data])
+
+  const [selectedTeam, setSelectedTeam] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [allTeams, setAllTeams] = useState<IReactSelectOptions<number>[]>([])
+  const allTeamsQuery = useQuery<TeamDataForSelect[], Error, TeamDataForSelect[]>({
+    queryKey: ["all-teams-for-select"],
+    queryFn: getAllTeamsForSelect,
+    enabled: showSearchModal,
+  })
+  useEffect(() => {
+    if (allTeamsQuery.isSuccess && allTeamsQuery.data) {
+      setAllTeams(allTeamsQuery.data.map<IReactSelectOptions<number>>(val => ({
+        label: val.teamNumber + " (" + val.teamLeaderName + ")",
+        value: val.id,
+      })))
+    }
+  }, [allTeamsQuery.data])
+
+  const [selectedTPObject, setSelectedTPObject] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+
   return (
     <main>
       <div className="mt-2 pl-2 flex space-x-2">
         <span className="text-3xl font-bold">Объекты - МЖД</span>
+        <div onClick={() => setShowSearchModal(true)} className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer">
+          Поиск
+        </div>
         <Button text="Импорт" onClick={() => setShowImportModal(true)} />
+        <div
+          onClick={() => mjdExport.refetch()}
+          className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+        >
+          {mjdExport.fetchStatus == "fetching" ? <LoadingDots height={20} /> : "Экспорт"}
+        </div>
+        <div
+          onClick={() => {
+            setSearchParameters({
+              objectName: "",
+              tpObjectID: 0,
+              teamID: 0,
+              supervisorWorkerID: 0,
+            })
+            setSelectedObjectName({ label: "", value: "" })
+            setSelectedSupervisor({ label: "", value: 0 })
+            setSelectedTeam({ label: "", value: 0 })
+            setSelectedTPObject({ label: "", value: 0 })
+          }}
+          className="text-white py-2.5 px-5 rounded-lg bg-red-700 hover:bg-red-800 hover:cursor-pointer"
+        >
+          Сброс поиска
+        </div>
       </div>
       <table className="table-auto text-sm text-left mt-2 w-full border-box">
         <thead className="shadow-md border-t-2">
@@ -587,7 +676,16 @@ export default function MJDObject() {
 
           </div>
           <div>
-            <Button text="Опубликовать" onClick={() => onMutationSubmitClick()} />
+            <div className="mt-4 flex">
+              <div
+                onClick={() => onMutationSubmitClick()}
+                className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+              >
+                {(createMutation.isLoading || updateMutation.isLoading) && <LoadingDots height={30} />}
+                {!createMutation.isLoading && mutationType == "create" && "Опубликовать"}
+                {!updateMutation.isLoading && mutationType == "update" && "Изменить"}
+              </div>
+            </div>
           </div>
         </Modal>
       }
@@ -625,6 +723,94 @@ export default function MJDObject() {
             </div>
           </div>
           <span className="text-sm italic px-2 w-full text-center">При импортировке система будет следовать правилам шаблона</span>
+        </Modal>
+      }
+      {showSearchModal &&
+        <Modal setShowModal={setShowSearchModal}>
+          <span className="font-bold text-xl py-1">Параметры Поиска по сравочнику МЖД</span>
+
+          <div className="p-2 flex flex-col space-y-2">
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="object-names">Наименование Объекта</label>
+              <Select
+                className="basic-single"
+                classNamePrefix="select"
+                isSearchable={true}
+                isClearable={true}
+                name={"object-names"}
+                placeholder={""}
+                value={selectedObjectName}
+                options={allObjectNames}
+                onChange={value => {
+                  setSelectedObjectName(value ?? { label: "", value: "" })
+                  setSearchParameters({
+                    ...searchParameters,
+                    objectName: value?.value ?? "",
+                  })
+                }}
+              />
+            </div>
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="supervisors">Супервайзеры</label>
+              <Select
+                className="basic-single"
+                classNamePrefix="select"
+                isSearchable={true}
+                isClearable={true}
+                name={"supervisors"}
+                placeholder={""}
+                value={selectedSupervisor}
+                options={allSupervisors}
+                onChange={value => {
+                  setSelectedSupervisor(value ?? { label: "", value: 0 })
+                  setSearchParameters({
+                    ...searchParameters,
+                    supervisorWorkerID: value?.value ?? 0,
+                  })
+                }}
+              />
+            </div>
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="team">Бригада</label>
+              <Select
+                className="basic-single"
+                classNamePrefix="select"
+                isSearchable={true}
+                isClearable={true}
+                name={"team"}
+                placeholder={""}
+                value={selectedTeam}
+                options={allTeams}
+                onChange={value => {
+                  setSelectedTeam(value ?? { label: "", value: 0 })
+                  setSearchParameters({
+                    ...searchParameters,
+                    teamID: value?.value ?? 0,
+                  })
+                }}
+              />
+            </div>
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="tp-objects">ТП</label>
+              <Select
+                className="basic-single"
+                classNamePrefix="select"
+                isSearchable={true}
+                isClearable={true}
+                name={"tp-objects"}
+                placeholder={""}
+                value={selectedTPObject}
+                options={availableTPs}
+                onChange={value => {
+                  setSelectedTPObject(value ?? { label: "", value: 0 })
+                  setSearchParameters({
+                    ...searchParameters,
+                    tpObjectID: value?.value ?? 0,
+                  })
+                }}
+              />
+            </div>
+          </div>
         </Modal>
       }
     </main>
