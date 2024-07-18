@@ -13,8 +13,8 @@ import IReactSelectOptions from "../../../services/interfaces/react-select";
 import IWorker from "../../../services/interfaces/worker";
 import { getWorkerByJobTitle } from "../../../services/api/worker";
 import toast from "react-hot-toast";
-import { ITeam, TeamDataForSelect } from "../../../services/interfaces/teams";
-import { getAllTeams, getAllTeamsForSelect } from "../../../services/api/team";
+import {  TeamDataForSelect } from "../../../services/interfaces/teams";
+import {  getAllTeamsForSelect } from "../../../services/api/team";
 import arrayListToString from "../../../services/lib/arrayListToStringWithCommas";
 import { getAllTPs } from "../../../services/api/tp_object";
 import { IObject } from "../../../services/interfaces/objects";
@@ -116,14 +116,17 @@ export default function KL04KVObject() {
 
   const [selectedTeamID, setSelectedTeamID] = useState<IReactSelectOptions<number>[]>([])
   const [availableTeams, setAvailableTeams] = useState<IReactSelectOptions<number>[]>([])
-  const teamsQuery = useQuery<ITeam[], Error, ITeam[]>({
+  const teamsQuery = useQuery<TeamDataForSelect[], Error, TeamDataForSelect[]>({
     queryKey: ["all-teams"],
-    queryFn: () => getAllTeams()
+    queryFn: () => getAllTeamsForSelect()
   })
   useEffect(() => {
     if (teamsQuery.isSuccess && teamsQuery.data) {
       setAvailableTeams([
-        ...teamsQuery.data.map<IReactSelectOptions<number>>((val) => ({ label: val.number, value: val.id }))
+        ...teamsQuery.data.map<IReactSelectOptions<number>>((val) => ({ 
+          label: val.teamNumber + " (" + val.teamLeaderName + ")", 
+          value: val.id 
+        }))
       ])
     }
   }, [teamsQuery.data])

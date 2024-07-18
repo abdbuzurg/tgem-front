@@ -13,8 +13,8 @@ import Modal from "../../../components/Modal"
 import toast from "react-hot-toast"
 import { MJD_OBJECT_TYPES_FOR_SELECT, OBJECT_STATUSES_FOR_SELECT } from "../../../services/lib/objectStatuses"
 import Input from "../../../components/UI/Input"
-import { ITeam } from "../../../services/interfaces/teams"
-import { getAllTeams } from "../../../services/api/team"
+import { TeamDataForSelect } from "../../../services/interfaces/teams"
+import { getAllTeamsForSelect } from "../../../services/api/team"
 import arrayListToString from "../../../services/lib/arrayListToStringWithCommas"
 import { IObject } from "../../../services/interfaces/objects"
 import { getAllTPs } from "../../../services/api/tp_object"
@@ -110,14 +110,17 @@ export default function MJDObject() {
 
   const [selectedTeamID, setSelectedTeamID] = useState<IReactSelectOptions<number>[]>([])
   const [availableTeams, setAvailableTeams] = useState<IReactSelectOptions<number>[]>([])
-  const teamsQuery = useQuery<ITeam[], Error, ITeam[]>({
-    queryKey: ["all-teams"],
-    queryFn: () => getAllTeams()
+  const teamsQuery = useQuery<TeamDataForSelect[], Error, TeamDataForSelect[]>({
+    queryKey: ["all-teams-for-select"],
+    queryFn: () => getAllTeamsForSelect()
   })
   useEffect(() => {
     if (teamsQuery.isSuccess && teamsQuery.data) {
       setAvailableTeams([
-        ...teamsQuery.data.map<IReactSelectOptions<number>>((val) => ({ label: val.number, value: val.id }))
+        ...teamsQuery.data.map<IReactSelectOptions<number>>((val) => ({ 
+          label: val.teamNumber + " (" + val.teamLeaderName, 
+          value: val.id 
+        }))
       ])
     }
   }, [teamsQuery.data])
