@@ -101,7 +101,7 @@ export async function importTP(data: File): Promise<boolean> {
 }
 
 export async function getAllTPs(): Promise<IObject[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<IObject[]>>(`${URL}/`)
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IObject[]>>(`${URL}/all`)
   const response = responseRaw.data
   if (response.success && response.permission) {
     return response.data

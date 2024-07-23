@@ -245,7 +245,7 @@ export default function SIPObject() {
                     id: 0,
                     projectID: 0,
                     objectDetailedID: 0,
-                    type: "kl04kv_objects",
+                    type: "sip_objects",
                     name: "",
                     status: "",
                   },

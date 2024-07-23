@@ -209,3 +209,20 @@ export async function getInvoiceInputMaterialsForEdit(id: number): Promise<IInvo
     throw new Error(response.error)
   }
 }
+
+export async function importInvoiceInput(file: File): Promise<boolean> {
+  const formData = new FormData()
+  formData.append("file", file)
+  const responseRaw = await axiosClient.post(`${URL}/import`, formData, {
+    headers: {
+      "Content-Type": `multipart/form-data; boundary=WebAppBoundary`,
+    }
+  })
+  if (responseRaw.status == 200) {
+    return true
+  } else {
+    throw new Error(responseRaw.data)
+  }
+}
+
+

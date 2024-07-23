@@ -142,8 +142,9 @@ export default function EditInvoiceOutputInProject({
       })))
 
       const alreadyTeam = allTeamsQuery.data.find((val) => val.teamNumber = invoiceOutputInProject.teamName)!
+      console.log(alreadyTeam, invoiceOutputInProject)
       setSelectedTeam({
-        label: alreadyTeam.teamNumber + " (" + alreadyTeam + ")",
+        label: alreadyTeam.teamNumber + " (" + alreadyTeam.teamLeaderName + ")",
         value: alreadyTeam.id,
       })
       setEditInvoiceOutputInProject(prev => ({

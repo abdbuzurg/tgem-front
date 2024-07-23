@@ -330,7 +330,7 @@ export default function MJDObject() {
         </div>
         <Button text="Импорт" onClick={() => setShowImportModal(true)} />
         <div
-          onClick={() => mjdExport.refetch()}
+          onClick={() => exportMJD()}
           className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
         >
           {mjdExport.fetchStatus == "fetching" ? <LoadingDots height={20} /> : "Экспорт"}
@@ -393,7 +393,7 @@ export default function MJDObject() {
                     id: 0,
                     projectID: 0,
                     objectDetailedID: 0,
-                    type: "kl04kv_objects",
+                    type: "sip_objects",
                     name: "",
                     status: "",
                   },
