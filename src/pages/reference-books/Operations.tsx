@@ -1,4 +1,5 @@
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import Select from 'react-select'
 import { ENTRY_LIMIT } from "../../services/api/constants";
 import { useEffect, useState } from "react";
 import Button from "../../components/UI/button";
@@ -6,26 +7,34 @@ import LoadingDots from "../../components/UI/loadingDots";
 import DeleteModal from "../../components/deleteModal";
 import Modal from "../../components/Modal";
 import Input from "../../components/UI/Input";
-import getPaginatedOperations, { OperationGetAllResponse } from "../../services/api/operations/getAllPaginated";
 import { IOperation } from "../../services/interfaces/operation";
-import deleteOperation from "../../services/api/operations/delete";
-import createOperation from "../../services/api/operations/create";
-import updateOperation from "../../services/api/operations/update";
+import toast from "react-hot-toast";
+import IReactSelectOptions from "../../services/interfaces/react-select";
+import Material from "../../services/interfaces/material";
+import getAllMaterials from "../../services/api/materials/getAll";
+import updateOperation, { OperationGetAllResponse, OperationMutation, OperationPaginated, OperationSearchParameters, createOperation, deleteOperation, getAllOperations, getPaginatedOperations } from "../../services/api/operation";
 
 export default function Operatons() {
   //fetching data logic
+
+  const [searchParameters, setSearchParameters] = useState<OperationSearchParameters>({
+    name: "",
+    code: "",
+    materialID: 0,
+  })
+
   const tableDataQuery = useInfiniteQuery<OperationGetAllResponse, Error>({
-    queryKey: ["operations"],
-    queryFn: ({ pageParam }) => getPaginatedOperations({ pageParam }),
+    queryKey: ["operations", searchParameters],
+    queryFn: ({ pageParam }) => getPaginatedOperations({ pageParam }, searchParameters),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
     }
   })
-  const [tableData, setTableData] = useState<IOperation[]>([])
+  const [tableData, setTableData] = useState<OperationPaginated[]>([])
   useEffect(() => {
     if (tableDataQuery.isSuccess && tableDataQuery.data) {
-      const data: IOperation[] = tableDataQuery.data.pages.reduce<IOperation[]>((acc, page) => [...acc, ...page.data], [])
+      const data: OperationPaginated[] = tableDataQuery.data.pages.reduce<OperationPaginated[]>((acc, page) => [...acc, ...page.data], [])
       setTableData(data)
     }
   }, [tableDataQuery.data])
@@ -64,71 +73,152 @@ export default function Operatons() {
   //mutation CREATE AND EDIT logic
   const [showMutationModal, setShowMutationModal] = useState<boolean>(false)
   const [mutationModalType, setMutationModalType] = useState<null | "update" | "create">()
-  const [materialMutationData, setMaterialMutationData] = useState<IOperation>({
+  const [operationMutationData, setOperationMutationData] = useState<OperationMutation>({
     id: 0,
+    projectID: 0,
+    name: "",
     code: "",
     costPrime: 0,
     costWithCustomer: 0,
-    name: "",
+    materialID: 0,
   })
-  const [mutationModalErrors, setMutationModalErrors] = useState({
-    costPrime: false,
-    costWithCustomer: false,
-    name: false,
+
+  const [selectedMaterial, setSelectedMaterial] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [allMaterials, setAllMaterials] = useState<IReactSelectOptions<number>[]>([])
+  const allMaterialsQuery = useQuery<Material[], Error, Material[]>({
+    queryKey: ["all-materials"],
+    queryFn: getAllMaterials,
   })
-  const createMaterialMutation = useMutation<IOperation, Error, IOperation>({
+  useEffect(() => {
+    if (allMaterialsQuery.isSuccess && allMaterialsQuery.data) {
+      setAllMaterials(allMaterialsQuery.data.map<IReactSelectOptions<number>>(val => ({
+        label: val.name,
+        value: val.id,
+      })))
+    }
+  }, [allMaterialsQuery.data])
+
+  const createOperationMutation = useMutation<IOperation, Error, OperationMutation>({
     mutationFn: createOperation,
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries(["operations"])
       setShowMutationModal(false)
+      setOperationMutationData({
+        id: 0,
+        projectID: 0,
+        code: "",
+        costPrime: 0,
+        costWithCustomer: 0,
+        name: "",
+        materialID: 0,
+      })
+      setSelectedMaterial({ label: "", value: 0 })
     }
   })
-  const updateMaterialMutation = useMutation<IOperation, Error, IOperation>({
+
+  const updateOperationMutation = useMutation<IOperation, Error, OperationMutation>({
     mutationFn: updateOperation,
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries(["operations"])
       setShowMutationModal(false)
+      setOperationMutationData({
+        id: 0,
+        projectID: 0,
+        code: "",
+        costPrime: 0,
+        costWithCustomer: 0,
+        name: "",
+        materialID: 0,
+      })
+      setSelectedMaterial({ label: "", value: 0 })
     }
   })
   const onMutationSubmit = () => {
-    if (materialMutationData.costPrime <= 0) setMutationModalErrors((prev) => ({ ...prev, costPrime: true }))
-    else setMutationModalErrors((prev) => ({ ...prev, costPrime: false }))
 
-    if (materialMutationData.name == "") setMutationModalErrors((prev) => ({ ...prev, name: true }))
-    else setMutationModalErrors((prev) => ({ ...prev, name: false }))
+    if (operationMutationData.name == "") {
+      toast.error("Не указано наименование услуги")
+      return
+    }
 
-    if (materialMutationData.costWithCustomer <= 0) setMutationModalErrors((prev) => ({ ...prev, costWithCustomer: true }))
-    else setMutationModalErrors((prev) => ({ ...prev, costWithCustomer: false }))
-
-    const isThereError = Object.keys(materialMutationData).some((value) => {
-      if (materialMutationData[value as keyof typeof materialMutationData] == "" && value != "id" && value != "code") {
-        return true
-      }
-    })
-    if (isThereError) return
+    if (operationMutationData.code == "") {
+      toast.error("Не указан код услуги")
+      return
+    }
 
     switch (mutationModalType) {
       case "create":
-        createMaterialMutation.mutate(materialMutationData)
-        return
+        createOperationMutation.mutate(operationMutationData)
+        break
+
       case "update":
-        updateMaterialMutation.mutate(materialMutationData)
-        return
+        updateOperationMutation.mutate(operationMutationData)
+        break
 
       default:
         throw new Error("Неправильная операция была выбрана")
     }
   }
 
+  const [showSearchModal, setShowSearchModal] = useState(false)
+
+  const [selectedOperationName, setSelectedOperationName] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
+  const [allOperationsNames, setAllOperationsNames] = useState<IReactSelectOptions<string>[]>([])
+  const [selectedOperationCode, setSelectedOperationCode] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
+  const [allOperationCodes, setAllOperationsCodes] = useState<IReactSelectOptions<string>[]>([])
+  const allOperationQuery = useQuery<IOperation[], Error, IOperation[]>({
+    queryKey: ["all-operations"],
+    queryFn: getAllOperations,
+    enabled: false,
+  })
+  useEffect(() => {
+    if (allOperationQuery.isSuccess && allOperationQuery.data) {
+      setAllOperationsNames(allOperationQuery.data.map<IReactSelectOptions<string>>(val => ({
+        label: val.name,
+        value: val.name,
+      })))
+
+      setAllOperationsCodes(allOperationQuery.data.map<IReactSelectOptions<string>>(val => ({
+        label: val.code,
+        value: val.code,
+      })))
+    }
+  }, [allOperationQuery.data])
+
+  const [selectedMaterialForSearch, setSelectedMaterialForSearch] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+
   return (
     <main>
       <div className="mt-2 pl-2 flex space-x-2">
-        <span className="text-3xl font-bold">Сервисы</span>
+        <span className="text-3xl font-bold">Услуги</span>
+        <div
+          onClick={() => {
+            allOperationQuery.refetch()
+            setShowSearchModal(true)
+          }}
+          className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+        >
+          Поиск
+        </div>
+        <div
+          onClick={() => {
+            setSearchParameters({
+              name: "",
+              code: "",
+              materialID: 0,
+            })
+            setSelectedOperationCode({ label: "", value: "" })
+            setSelectedOperationName({ label: "", value: "" })
+            setSelectedMaterialForSearch({ label: "", value: 0 })
+          }}
+          className="text-white py-2.5 px-5 rounded-lg bg-red-700 hover:bg-red-800 hover:cursor-pointer"
+        >
+          Сброс поиска
+        </div>
       </div>
       <table className="table-auto text-sm text-left mt-2 w-full border-box">
         <thead className="shadow-md border-t-2">
           <tr>
-            <th className="px-4 py-3 w-[350px]">
+            <th className="px-4 py-3 w-[100px]">
               <span>Код</span>
             </th>
             <th className="px-4 py-3">
@@ -141,9 +231,22 @@ export default function Operatons() {
               <span>Цена с заказчиком</span>
             </th>
             <th className="px-4 py-3">
+              <span>Привязанный материал</span>
+            </th>
+            <th className="px-4 py-3">
               <Button text="Добавить" onClick={() => {
                 setMutationModalType("create")
                 setShowMutationModal(true)
+                setOperationMutationData({
+                  id: 0,
+                  projectID: 0,
+                  code: "",
+                  costPrime: 0,
+                  costWithCustomer: 0,
+                  name: "",
+                  materialID: 0,
+                })
+                setSelectedMaterial({ label: "", value: 0 })
               }} />
             </th>
           </tr>
@@ -170,11 +273,13 @@ export default function Operatons() {
                 <td className="px-4 py-3">{row.name}</td>
                 <td className="px-4 py-3">{row.costPrime}</td>
                 <td className="px-4 py-3">{row.costWithCustomer}</td>
+                <td className="px-4 py-3">{row.materialName}</td>
                 <td className="px-4 py-3 border-box flex space-x-3">
                   <Button text="Изменить" buttonType="default" onClick={() => {
                     setShowMutationModal(true)
                     setMutationModalType("update")
-                    setMaterialMutationData(row)
+                    setOperationMutationData(row)
+                    setSelectedMaterial({ label: row.materialName, value: row.materialID })
                   }}
                   />
                   <Button text="Удалить" buttonType="delete" onClick={() => onDeleteButtonClick(row)} />
@@ -208,48 +313,151 @@ export default function Operatons() {
         <Modal setShowModal={setShowMutationModal}>
           <div className="">
             <h3 className="text-xl font-medium text-gray-800">
-              {mutationModalType == "create" && "Добавление сервиса"}
-              {mutationModalType == "update" && "Изменение сервиса"}
+              {mutationModalType == "create" && "Добавление услуги"}
+              {mutationModalType == "update" && "Изменение услуги"}
             </h3>
             <div className="flex flex-col space-y-3 mt-2">
               <div className="flex flex-col space-y-1">
-                <label htmlFor="name">Наименование</label>
+                <label htmlFor="name">Наименование<span className="text-red-600">*</span></label>
                 <Input
                   name="name"
                   type="text"
-                  value={materialMutationData.name}
-                  onChange={(e) => setMaterialMutationData({ ...materialMutationData, [e.target.name]: e.target.value })}
+                  value={operationMutationData.name}
+                  onChange={(e) => setOperationMutationData({ ...operationMutationData, name: e.target.value })}
                 />
-                {mutationModalErrors.name && <span className="text-red-600 text-sm font-bold">Не указано наименоваие сервиса</span>}
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="code">Код<span className="text-red-600">*</span></label>
+                <Input
+                  name="code"
+                  type="text"
+                  value={operationMutationData.code}
+                  onChange={(e) => setOperationMutationData({ ...operationMutationData, code: e.target.value })}
+                />
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="costPrime">Изначальная Цена</label>
                 <Input
                   name="costPrime"
                   type="number"
-                  value={materialMutationData.costPrime}
-                  onChange={(e) => setMaterialMutationData({ ...materialMutationData, [e.target.name]: e.target.value })}
+                  value={operationMutationData.costPrime}
+                  onChange={(e) => setOperationMutationData({ ...operationMutationData, costPrime: e.target.valueAsNumber })}
                 />
-                {mutationModalErrors.costPrime && <span className="text-red-600 text-sm font-bold">Не указана изначальная цена за сервис</span>}
               </div>
               <div className="flex flex-col space-y-1">
                 <label htmlFor="costWithCustomer">Цена с заказчиком</label>
                 <Input
                   name="costWithCustomer"
-                  type="text"
-                  value={materialMutationData.costWithCustomer}
-                  onChange={(e) => setMaterialMutationData({ ...materialMutationData, [e.target.name]: e.target.value })}
+                  type="number"
+                  value={operationMutationData.costWithCustomer}
+                  onChange={(e) => setOperationMutationData({ ...operationMutationData, costWithCustomer: e.target.valueAsNumber })}
                 />
-                {mutationModalErrors.costWithCustomer && <span className="text-red-600 text-sm font-bold">Не указана цена с заказчиком</span>}
               </div>
-              <div>
-                <Button
-                  text={mutationModalType == "create" ? "Добавить" : "Подтвердить изменения"}
-                  onClick={onMutationSubmit}
-                />
+              <div className="flex flex-col space-y-1">
+                {allMaterialsQuery.isLoading && <LoadingDots height={30} />}
+                {allMaterialsQuery.isSuccess &&
+                  <>
+                    <label htmlFor="material">Материал</label>
+                    <Select
+                      className="basic-single"
+                      classNamePrefix="select"
+                      isSearchable={true}
+                      isClearable={true}
+                      name={"material"}
+                      placeholder={""}
+                      value={selectedMaterial}
+                      options={allMaterials}
+                      onChange={(value) => {
+                        setSelectedMaterial(value ?? { label: "", value: 0 })
+                        setOperationMutationData({
+                          ...operationMutationData,
+                          materialID: value?.value ?? 0,
+                        })
+                      }}
+                    />
+                  </>
+                }
+              </div>
+              <div className="flex">
+                <div className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer" onClick={() => onMutationSubmit()}>
+                  {mutationModalType == "create" && !createOperationMutation.isLoading && "Добавить"}
+                  {mutationModalType == "create" && createOperationMutation.isLoading && <LoadingDots height={30} />}
+                  {mutationModalType == "update" && !updateOperationMutation.isLoading && "Подтвердить изменения"}
+                  {mutationModalType == "update" && updateOperationMutation.isLoading && <LoadingDots height={30} />}
+                </div>
               </div>
             </div>
           </div>
+        </Modal>
+      }
+      {showSearchModal &&
+        <Modal setShowModal={setShowSearchModal}>
+          <span className="font-bold text-xl py-1">Параметры Поиска по сравочнику услуг</span>
+          {allMaterialsQuery.isLoading && <LoadingDots />}
+          {allMaterialsQuery.isSuccess &&
+            <div className="p-2 flex flex-col space-y-2">
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="material-names">Наименование</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"operation-names"}
+                  placeholder={""}
+                  value={selectedOperationName}
+                  options={allOperationsNames}
+                  onChange={value => {
+                    setSelectedOperationName(value ?? { label: "", value: "" })
+                    setSearchParameters({
+                      ...searchParameters,
+                      name: value?.value ?? "",
+                    })
+                  }}
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="material-category">Код</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"operation-code"}
+                  placeholder={""}
+                  value={selectedOperationCode}
+                  options={allOperationCodes}
+                  onChange={value => {
+                    setSelectedOperationCode(value ?? { label: "", value: "" })
+                    setSearchParameters({
+                      ...searchParameters,
+                      code: value?.value ?? "",
+                    })
+                  }}
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="material-code">Название материала</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"material-code"}
+                  placeholder={""}
+                  value={selectedMaterialForSearch}
+                  options={allMaterials}
+                  onChange={value => {
+                    setSelectedMaterialForSearch(value ?? { label: "", value: 0 })
+                    setSearchParameters({
+                      ...searchParameters,
+                      materialID: value?.value ?? 0,
+                    })
+                  }}
+                />
+              </div>
+            </div>
+          }
         </Modal>
       }
     </main>
