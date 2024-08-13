@@ -90,6 +90,7 @@ export interface InvoiceCorrectionMaterialMutation {
     dateOfCorrection: Date
   },
   items: InvoiceCorrectionMaterial[]
+  operations: InvoiceCorrectionOperation[]
 }
 
 export async function createInvoiceCorrection(data: InvoiceCorrectionMaterialMutation): Promise<IInvoiceObject> {
@@ -140,3 +141,21 @@ export async function buildInvoiceCorrectionReport(filter: InvoiceCorrectionRepo
     throw new Error(responseRaw.data)
   }
 }
+
+export interface InvoiceCorrectionOperation {
+  operationID: number
+  operationName: string
+  materialName: string
+  amount: number
+}
+
+export async function getOperationsForCorrect(invoiceID: number): Promise<InvoiceCorrectionOperation[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceCorrectionOperation[]>>(`${URL}/operations/${invoiceID}`)
+  const response = responseRaw.data
+  if (response.success && response.permission) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+

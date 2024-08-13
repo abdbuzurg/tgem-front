@@ -4,7 +4,6 @@ import Layout from "./components/layout";
 import { AdminLayout } from "./components/adminLayout";
 
 export default function App() {
-
   return (
     <Routes>
       {/* public routes */}

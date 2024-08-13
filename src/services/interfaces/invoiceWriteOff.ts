@@ -1,26 +1,28 @@
 export interface IInvoiceWriteOff {
   id: number
+  projectID: number
+  releasedWorkerID: number
   writeOffType: string
+  writeOffLocationID: number
   dateOfInvoice: Date
-  dateOfAdd: Date
-  dateOfEdit: Date
-  operatorAddWorkerID: number
-  operatorEditWorkerID: number
+  confirmation: boolean
+  dateOfConfirmation: Date
   deliveryCode: string
 }
 
 export interface IInvoiceWriteOffMaterials {
-  materialCostID: number
+  materialID: number
   materialName: string
   unit: string
   amount: number
-  materialCost: string
+  materialCostID: number
+  materialCost: number
+  notes: string
+  hasSerialNumber: boolean
+  serialNumbers: string[]
 }
 
-export interface IInvoiceWriteOffView extends Omit<IInvoiceWriteOff, 
-  "operatorAddWorkerID" |
-  "operatorEditWorkerID"
-> {
-  operatorAddName: string
-  operatorEditName: string
+export interface IInvoiceWriteOffView extends IInvoiceWriteOff  {
+  writeOffLocationName: string
+  releasedWorkerName: string
 }

@@ -43,8 +43,8 @@ export default function MaterialCorrectionModal({
         }))
       ])
 
-      if (materialData.invoiceMaterialID != 0) {
-        const material = materialQuery.data.find((val) => val.name == materialData.materialName)!
+      if (materialData.materialID != 0) {
+        const material = materialQuery.data.find((val) => val.id == materialData.materialID)!
         setSelectedMaterial({
           value: material.id,
           label: material.name,
@@ -134,7 +134,6 @@ export default function MaterialCorrectionModal({
     }
 
     correctionFunction(correctionIndex, correction)
-    setShowModal(false)
   }
 
   return (

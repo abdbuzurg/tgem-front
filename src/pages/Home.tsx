@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { INVOICE_CORRECTION, INVOICE_INPUT, INVOICE_OBJECT, INVOICE_OUTPUT_IN_PROJECT, INVOICE_OUTPUT_OUT_OF_PROJECT, INVOICE_RETURN_OBJECT, INVOICE_RETURN_TEAM, } from "../URLs";
+import { INVOICE_CORRECTION, INVOICE_INPUT, INVOICE_OBJECT, INVOICE_OUTPUT_IN_PROJECT, INVOICE_OUTPUT_OUT_OF_PROJECT, INVOICE_RETURN_OBJECT, INVOICE_RETURN_TEAM, LOSS_OBJECT, LOSS_TEAM, LOSS_WAREHOUSE, WRITEOFF_WAREHOUSE, } from "../URLs";
 
 const homePageCategorized = [
   {
@@ -27,6 +27,15 @@ const homePageCategorized = [
     pages: [
       { name: "Расход материала на объект", url: INVOICE_OBJECT },
       { name: "Корректировка", url: INVOICE_CORRECTION },
+    ]
+  },
+  {
+    category: "Списание",
+    pages: [
+      { name: "Акт списания со склада", url: WRITEOFF_WAREHOUSE },
+      { name: "Акт утери со склада", url: LOSS_WAREHOUSE },
+      { name: "Акт утери бригады", url: LOSS_TEAM },
+      { name: "Акт утери с объекта", url: LOSS_OBJECT },
     ]
   },
 ]

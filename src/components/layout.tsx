@@ -6,6 +6,7 @@ import { useQuery } from "@tanstack/react-query";
 import { getPermissionByResourceURL } from "../services/api/permission";
 import {  HOME, LOGIN, PERMISSION_DENIED, REFERENCE_BOOK, REPORT } from "../URLs";
 import LoadingDots from "./UI/loadingDots";
+import { getProjectName } from "../services/api/project";
 
 export default function Layout() {
 
@@ -48,6 +49,11 @@ export default function Layout() {
       navigate(LOGIN);
   };
 
+  const projectNameQuery = useQuery<string, Error, string>({
+    queryKey: ["project-name"],
+    queryFn: getProjectName,
+  })
+
   if (hasAccessQuery.isLoading && resourceURL !== "")
     return (
       <div className="w-screen h-screen text-center">
@@ -58,7 +64,7 @@ export default function Layout() {
   return (
     <>
       <nav className="relative flex md:flex-row w-full justify-normal md:justify-between md:items-center bg-gray-800 px-3 py-2 shadow-lg text-gray-400">
-        <div className="hidden md:block md:items-center md:justify-between md:w-full">
+        <div className="hidden md:block md:items-center md:justify-between">
           <ul className="flex p-0 font-medium space-x-8 items-center">
             <li>
               <Link to={`${HOME}`} className="block text-white bg-transparent p-0 hover:text-gray-400">
@@ -77,6 +83,11 @@ export default function Layout() {
             </li>
           </ul>
         </div>
+        {projectNameQuery.isSuccess && projectNameQuery.data &&
+          <div className="flex flex-col text-white">
+            <span className="font-bold italic">{projectNameQuery.data}</span>
+          </div>
+        }
         <div className="w-full flex items-center md:w-auto justify-between md:justify-normal space-x-4 font-medium ">
           <p className="text-4xl font-bold">ТГЭМ</p>
           <Button onClick={logout} text="Выход" />

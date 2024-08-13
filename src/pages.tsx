@@ -1,4 +1,4 @@
-import { LOGIN, PAGE_NOT_FOUND, PERMISSION_DENIED, HOME, INVOICE_INPUT, INVOICE_WRITEOFF, REFERENCE_BOOK_WORKER, REFERENCE_BOOK_OBJECTS, REFERENCE_BOOK_OPERATIONS, REFERENCE_BOOK_MATERIAL_COST, REFERENCE_BOOK_DISTRICT, INVOICE_OBJECT, REPORT, ADMIN_USERS_PAGE, REFERENCE_BOOK_TEAM, REFERENCE_BOOK_MATERIAL, INVOICE_OBJECT_MUTATION_ADD, INVOICE_OBJECT_DETIALS, INVOICE_CORRECTION, REFERENCE_BOOK_KL04KV_OBJECT, REFERENCE_BOOK_MJD_OBJECT, REFERENCE_BOOK_SIP_OBJECT, REFERENCE_BOOK_STVT_OBJECT, REFERENCE_BOOK_TP_OBJECT, INVOICE_RETURN_TEAM, INVOICE_RETURN_OBJECT, REFERENCE_BOOK, REFERENCE_BOOK_SUBSTATION_OBJECT, INVOICE_OUTPUT_IN_PROJECT, INVOICE_OUTPUT_OUT_OF_PROJECT, ADMINISTRATOR_HOME_PAGE, ADMINISTRATOR_PROJECT, ADMINISTRATOR_USERS, IMPORT, } from "./URLs"
+import { LOGIN, PAGE_NOT_FOUND, PERMISSION_DENIED, HOME, INVOICE_INPUT,  REFERENCE_BOOK_WORKER, REFERENCE_BOOK_OBJECTS, REFERENCE_BOOK_OPERATIONS, REFERENCE_BOOK_MATERIAL_COST, REFERENCE_BOOK_DISTRICT, INVOICE_OBJECT, REPORT, ADMIN_USERS_PAGE, REFERENCE_BOOK_TEAM, REFERENCE_BOOK_MATERIAL, INVOICE_OBJECT_MUTATION_ADD, INVOICE_OBJECT_DETIALS, INVOICE_CORRECTION, REFERENCE_BOOK_KL04KV_OBJECT, REFERENCE_BOOK_MJD_OBJECT, REFERENCE_BOOK_SIP_OBJECT, REFERENCE_BOOK_STVT_OBJECT, REFERENCE_BOOK_TP_OBJECT, INVOICE_RETURN_TEAM, INVOICE_RETURN_OBJECT, REFERENCE_BOOK, REFERENCE_BOOK_SUBSTATION_OBJECT, INVOICE_OUTPUT_IN_PROJECT, INVOICE_OUTPUT_OUT_OF_PROJECT, ADMINISTRATOR_HOME_PAGE, ADMINISTRATOR_PROJECT, ADMINISTRATOR_USERS, IMPORT, MATERIAL_LOCATION_LIVE, WRITEOFF_WAREHOUSE, LOSS_WAREHOUSE, LOSS_TEAM, LOSS_OBJECT, } from "./URLs"
 import Home from "./pages/Home"
 import Login from "./pages/Login"
 import PermissionDenied from "./pages/PermissionDenied"
@@ -6,7 +6,6 @@ import ReferenceBooks from "./pages/ReferenceBooks"
 import ErrorPage from "./pages/error-page"
 import InvoiceInput from "./pages/invoice/InvoiceInput"
 import InvoiceObject from "./pages/invoice/InvoiceObject"
-import InvoiceWriteOff from "./pages/invoice/InvoiceWriteOff"
 import District from "./pages/reference-books/District"
 import Materials from "./pages/reference-books/Materials"
 import MaterialsCosts from "./pages/reference-books/MaterialsCosts"
@@ -32,6 +31,11 @@ import InvoiceOutputOutOfProject from "./pages/invoice/InvoiceOutputOutOfProject
 import AdministatorHome from "./pages/AdministratorHome"
 import { AdministratorProject } from "./pages/admin/AdministratorProject"
 import Import from './pages/Import'
+import MaterialLocationLive from "./pages/MaterialLocationLive"
+import WriteOffWarehouse from "./pages/writeoff/WriteOffWarehouse"
+import LossWarehouse from "./pages/writeoff/LossWarehouse"
+import LossTeam from "./pages/writeoff/LossTeam"
+import LossObject from "./pages/writeoff/LossObject"
 
 export const PAGES_WITHOUT_LAYOUT = [
   {
@@ -92,10 +96,6 @@ export const PAGES_WITH_LAYOUT = [
   {
     path: INVOICE_CORRECTION,
     element: <InvoiceCorrection />
-  },
-  {
-    path: INVOICE_WRITEOFF,
-    element: <InvoiceWriteOff />
   },
   {
     path: REFERENCE_BOOK_WORKER,
@@ -160,7 +160,27 @@ export const PAGES_WITH_LAYOUT = [
   {
     path: IMPORT,
     element: <Import />
-  }
+  },
+  {
+    path: MATERIAL_LOCATION_LIVE,
+    element: <MaterialLocationLive />
+  },
+  {
+    path: WRITEOFF_WAREHOUSE,
+    element: <WriteOffWarehouse />
+  },
+  {
+    path: LOSS_WAREHOUSE,
+    element: <LossWarehouse />
+  },
+  {
+    path: LOSS_TEAM,
+    element: <LossTeam />
+  },
+  {
+    path: LOSS_OBJECT,
+    element: <LossObject />
+  },
 ]
 
 export const ADMIN_PAGES = [

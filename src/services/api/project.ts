@@ -61,4 +61,14 @@ export async function updateProject(data: Project): Promise<Project>{
   }
 }
 
+export async function getProjectName(): Promise<string>{
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<string>>(`${URL}/name`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
 

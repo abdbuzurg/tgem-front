@@ -165,7 +165,7 @@ export default function Operatons() {
   const [allOperationsNames, setAllOperationsNames] = useState<IReactSelectOptions<string>[]>([])
   const [selectedOperationCode, setSelectedOperationCode] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
   const [allOperationCodes, setAllOperationsCodes] = useState<IReactSelectOptions<string>[]>([])
-  const allOperationQuery = useQuery<IOperation[], Error, IOperation[]>({
+  const allOperationQuery = useQuery<OperationPaginated[], Error, OperationPaginated[]>({
     queryKey: ["all-operations"],
     queryFn: getAllOperations,
     enabled: false,

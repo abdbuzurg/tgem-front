@@ -1,8 +1,8 @@
-import { Outlet, useNavigate } from "react-router-dom";
+import { Link, Outlet, useNavigate } from "react-router-dom";
 import Button from "./UI/button";
 import { Toaster } from "react-hot-toast";
 import toast from "react-hot-toast/headless";
-import { LOGIN } from "../URLs";
+import { ADMINISTRATOR_HOME_PAGE, LOGIN } from "../URLs";
 
 export function AdminLayout() {
 
@@ -20,6 +20,15 @@ export function AdminLayout() {
   return (
     <>
       <nav className="relative flex md:flex-row w-full justify-normal md:justify-between md:items-center bg-gray-800 px-3 py-2 shadow-lg text-gray-400">
+        <div className="hidden md:block md:items-center md:justify-between md:w-full">
+          <ul className="flex p-0 font-medium space-x-8 items-center">
+            <li>
+              <Link to={`${ADMINISTRATOR_HOME_PAGE}`} className="block text-white bg-transparent p-0 hover:text-gray-400">
+                Главная
+              </Link>
+            </li>
+          </ul>
+        </div>
         <div className="w-full flex items-center md:w-auto justify-between md:justify-normal space-x-4 font-medium ">
           <p className="text-4xl font-bold">ТГЭМ</p>
           <Button onClick={logout} text="Выход" />

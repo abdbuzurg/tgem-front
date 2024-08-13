@@ -1,11 +1,13 @@
 import { useEffect, useState } from "react";
 import Modal from "../../Modal";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { InvoiceCorrectionMaterial, InvoiceCorrectionMaterialMutation, InvoiceCorrectionPaginatedView, createInvoiceCorrection, getInvoiceMaterialsForCorrect } from "../../../services/api/invoiceCorrection";
+import { InvoiceCorrectionMaterial, InvoiceCorrectionMaterialMutation, InvoiceCorrectionOperation, InvoiceCorrectionPaginatedView, createInvoiceCorrection, getInvoiceMaterialsForCorrect, getOperationsForCorrect } from "../../../services/api/invoiceCorrection";
 import Button from "../../UI/button";
 import MaterialCorrectionModal from "./MaterialCorrectionModal";
 import { IInvoiceObject } from "../../../services/interfaces/invoiceObject";
 import LoadingDots from "../../UI/loadingDots";
+import OperationCorrectionModal from "./OperationCorrectionModal";
+import toast from "react-hot-toast";
 
 interface Props {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>
@@ -18,7 +20,7 @@ export default function CorrectionModal({
 }: Props) {
   const [invoiceMaterialsForCorrection, setInvoiceMaterialsForCorrections] = useState<InvoiceCorrectionMaterial[]>([])
   const materialsForCorrectionQuery = useQuery<InvoiceCorrectionMaterial[], Error, InvoiceCorrectionMaterial[]>({
-    queryKey: [`invoice-correction-materials-${invoiceObject.id}`],
+    queryKey: [`invoice-correction-materials`, invoiceObject.id],
     queryFn: () => getInvoiceMaterialsForCorrect(invoiceObject.id),
   })
   useEffect(() => {
@@ -30,26 +32,74 @@ export default function CorrectionModal({
 
   const [showCorrectionMaterialModal, setShowCorrectionMaterialModal] = useState(false)
   const [selectedMaterial, setSelectedMaterial] = useState<InvoiceCorrectionMaterial>()
-  const [selectedIndex, setSelectedIndex] = useState<number>(0)
-  const onModalToggle = (materialData: InvoiceCorrectionMaterial, index: number) => {
-    setSelectedIndex(index)
+  const [selectedInvoiceCorrectionMaterialIndex, setSelectedInvoiceCorrectionMaterialIndex] = useState<number>(0)
+  const onMaterialModalToggle = (materialData: InvoiceCorrectionMaterial, index: number) => {
+    setSelectedInvoiceCorrectionMaterialIndex(index)
     setSelectedMaterial(materialData)
     setShowCorrectionMaterialModal(true)
   }
 
-  const onDelete = (index: number) => {
+  const onMaterialDelete = (index: number) => {
     const data = invoiceMaterialsForCorrection.filter((_, idx) => index != idx)
     setInvoiceMaterialsForCorrections(data)
   }
 
-  const correction = (index: number, correction: InvoiceCorrectionMaterial) => {
+  const materialCorrection = (index: number, correction: InvoiceCorrectionMaterial) => {
     if (index == -1) {
+      if (invoiceMaterialsForCorrection.findIndex(val => val.materialID == correction.materialID) != -1) {
+        toast.error("Такой материал уже в списке")
+        return
+      }
+
       invoiceMaterialsForCorrection.push(correction)
     } else {
       invoiceMaterialsForCorrection[index] = correction
     }
 
     setInvoiceMaterialsForCorrections(invoiceMaterialsForCorrection)
+    setShowCorrectionMaterialModal(false)
+  }
+
+  const [operationsForCorrection, setOperationsForCorrection] = useState<InvoiceCorrectionOperation[]>([])
+  const operationsForCorrectionQuery = useQuery<InvoiceCorrectionOperation[], Error, InvoiceCorrectionOperation[]>({
+    queryKey: ["invoice-correction-operations", invoiceObject.id],
+    queryFn: () => getOperationsForCorrect(invoiceObject.id)
+  })
+  useEffect(() => {
+    if (operationsForCorrectionQuery.isSuccess && operationsForCorrectionQuery.data) {
+      setOperationsForCorrection(operationsForCorrectionQuery.data)
+    }
+  }, [operationsForCorrectionQuery.data])
+
+  const [showCorrectionOperationModal, setShowCorrectionOperationModal] = useState(false)
+  const [selectedOperation, setSelectedOperation] = useState<InvoiceCorrectionOperation>()
+  const [selectedInvoiceCorrectionOperationIndex, setSelectedInvoiceCorrectionOperationIndex] = useState<number>(0)
+  const onOperationModalToggle = (operationData: InvoiceCorrectionOperation, index: number) => {
+    setSelectedOperation(operationData)
+    setSelectedInvoiceCorrectionOperationIndex(index)
+    setShowCorrectionOperationModal(true)
+  }
+
+  const onOperationDelete = (index: number) => {
+    const data = operationsForCorrection.filter((_, idx) => index != idx)
+    setOperationsForCorrection(data)
+  }
+
+  const operationCorrection = (index: number, correction: InvoiceCorrectionOperation) => {
+
+    if (index == -1) {
+      if (operationsForCorrection.findIndex(val => val.operationID == correction.operationID) != -1) {
+        toast.error("Такая услуга уже в списке")
+        return
+      }
+
+      operationsForCorrection.push(correction)
+    } else {
+      operationsForCorrection[index] = correction
+    }
+
+    setOperationsForCorrection(operationsForCorrection)
+    setShowCorrectionOperationModal(false)
   }
 
   const queryClient = useQueryClient()
@@ -58,12 +108,38 @@ export default function CorrectionModal({
   })
 
   const onCorrectionSubmit = () => {
+
+    let materialCount = 0
+    let operationCount = 0
+    for (let index = 0; index < operationsForCorrection.length; index++) {
+      if (!operationsForCorrection[index]) continue
+      operationCount++
+
+      for (let subIndex = 0; subIndex < invoiceMaterialsForCorrection.length; subIndex++) {
+        if (operationsForCorrection[index].materialName == invoiceMaterialsForCorrection[subIndex].materialName) {
+          if (operationsForCorrection[index].amount != invoiceMaterialsForCorrection[subIndex].materialAmount) {
+            toast.error(`Услуга ${operationsForCorrection[index].operationName} и материал ${invoiceMaterialsForCorrection[subIndex].materialName} имеют разное количество`)
+            return
+          }
+
+          materialCount++
+          break
+        }
+      }
+    }
+
+    if (materialCount != operationCount) {
+      toast.error("Количество услуг и количество материалов привязанные к этим услугам не совпадают")
+      return
+    }
+
     createInvoiceCorrectionMutation.mutate({
       details: {
         id: invoiceObject.id,
         dateOfCorrection: new Date()
       },
       items: invoiceMaterialsForCorrection,
+      operations: operationsForCorrection,
     }, {
       onSuccess: () => {
         setShowModal(false)
@@ -98,54 +174,90 @@ export default function CorrectionModal({
               onClick={() => onCorrectionSubmit()}
               className="text-center text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
             >
-              {createInvoiceCorrectionMutation.isLoading ? <LoadingDots height={30}/> : "Опубликовать"}
+              {createInvoiceCorrectionMutation.isLoading ? <LoadingDots height={30} /> : "Опубликовать"}
             </div>
           </div>
         </div>
-        <div className="grid grid-cols-4 gap-2 border-b-2 border-b-black font-bold text-l">
-          <div className="px-2 py-1">Наименование</div>
-          <div className="px-2 py-1">Кол-во</div>
-          <div className="px-2 py-1">Примичание</div>
-          <div className="px-2 py-1 invisible">Корректировка</div>
-        </div>
+        <div className="flex flex-col mt-3">
+          <span className="text-xl font-bold mb-1">Материалы для корректировки</span>
+          <div className="grid grid-cols-4 gap-1 border-b-2 border-b-black font-bold text-l">
+            <div className="px-2 py-1 flex items-center">Наименование</div>
+            <div className="px-2 py-1 flex items-center">Кол-во</div>
+            <div className="px-2 py-1 flex items-center">Примичание</div>
+            <div className="px-2 py-1 font-normal">
+              <Button
+                onClick={() => onMaterialModalToggle({
+                  invoiceMaterialID: 0,
+                  materialName: "",
+                  materialID: 0,
+                  materialAmount: 0,
+                  materialUnit: "",
+                  notes: "",
+                }, -1)}
+                text="Добавить"
+              />
+            </div>
+          </div>
 
-        {invoiceMaterialsForCorrection.map((row, index) =>
-          <div className="grid grid-cols-4 gap-2 border-b-2 border-b-black" key={index}>
-            <div className="px-2 py-1">{row.materialName}</div>
-            <div className="px-2 py-1">{row.materialAmount}</div>
-            <div className="px-2 py-1">{row.notes}</div>
-            <div className="px-2 py-1 flex space-x-2">
-              <Button onClick={() => onModalToggle(row, index)} text="Изменить" />
-              <Button onClick={() => onDelete(index)} text="Удалить" buttonType="delete" />
+          {invoiceMaterialsForCorrection.map((row, index) =>
+            <div className="grid grid-cols-4 gap-1 border-b border-b-black" key={index}>
+              <div className="px-2 py-1 flex items-center">{row.materialName}</div>
+              <div className="px-2 py-1 flex items-center">{row.materialAmount}</div>
+              <div className="px-2 py-1 flex items-center">{row.notes}</div>
+              <div className="px-2 py-1 flex space-x-2">
+                <Button onClick={() => onMaterialModalToggle(row, index)} text="Изменить" />
+                <Button onClick={() => onMaterialDelete(index)} text="Удалить" buttonType="delete" />
+              </div>
+            </div>
+          )}
+        </div>
+        <div className="flex flex-col mt-3">
+          <span className="text-xl font-bold mb-1">Услуги для корректировки</span>
+          <div className="grid grid-cols-4 gap-1 border-b-2 border-b-black font-bold text-l">
+            <div className="px-2 py-1 flex items-center">Наименование услуги</div>
+            <div className="px-2 py-1 flex items-center">Кол-во</div>
+            <div className="px-2 py-1 flex items-center">Привязанный материал</div>
+            <div className="px-2 py-1 font-normal">
+              <Button
+                onClick={() => onOperationModalToggle({
+                  materialName: "",
+                  operationID: 0,
+                  operationName: "",
+                  amount: 0,
+                }, -1)}
+                text="Добавить"
+              />
             </div>
           </div>
-        )}
-        <div className="grid grid-cols-4 gap-2 border-b-2 border-b-black">
-          <div className="px-2 py-1"></div>
-          <div className="px-2 py-1"></div>
-          <div className="px-2 py-1"></div>
-          <div className="px-2 py-1">
-            <Button
-              onClick={() => onModalToggle({
-                invoiceMaterialID: 0,
-                materialName: "",
-                materialID: 0,
-                materialAmount: 0,
-                materialUnit: "",
-                notes: "",
-              }, -1)}
-              text="Добавить"
-            />
-          </div>
+
+          {operationsForCorrection.map((row, index) =>
+            <div className="grid grid-cols-4 gap-1 border-b border-b-black" key={index}>
+              <div className="px-2 py-1 flex items-center">{row.operationName}</div>
+              <div className="px-2 py-1 flex items-center">{row.amount}</div>
+              <div className="px-2 py-1 flex items-center">{row.materialName}</div>
+              <div className="px-2 py-1 flex space-x-2">
+                <Button onClick={() => onOperationModalToggle(row, index)} text="Изменить" />
+                <Button onClick={() => onOperationDelete(index)} text="Удалить" buttonType="delete" />
+              </div>
+            </div>
+          )}
         </div>
       </div>
       {showCorrectionMaterialModal &&
         <MaterialCorrectionModal
           teamID={invoiceObject.teamID}
-          correctionIndex={selectedIndex}
+          correctionIndex={selectedInvoiceCorrectionMaterialIndex}
           setShowModal={setShowCorrectionMaterialModal}
           materialData={selectedMaterial!}
-          correctionFunction={correction}
+          correctionFunction={materialCorrection}
+        />
+      }
+      {showCorrectionOperationModal &&
+        <OperationCorrectionModal
+          setShowModal={setShowCorrectionOperationModal}
+          operationData={selectedOperation!}
+          correctionFunction={operationCorrection}
+          correctionIndex={selectedInvoiceCorrectionOperationIndex}
         />
       }
     </Modal>

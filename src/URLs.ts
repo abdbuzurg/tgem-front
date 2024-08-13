@@ -43,3 +43,9 @@ export const ADMINISTRATOR_PROJECT = "/admin/project"
 export const ADMINISTRATOR_USERS = "/admin/users"
 
 export const IMPORT = "/import"
+export const MATERIAL_LOCATION_LIVE = "/material-location-live"
+
+export const WRITEOFF_WAREHOUSE = "/invoice/writeoff/warehouse"
+export const LOSS_WAREHOUSE = "/invoice/loss/warehouse"
+export const LOSS_TEAM = "/invoice/loss/team"
+export const LOSS_OBJECT = "/invoice/loss/object"

@@ -36,8 +36,8 @@ export async function deleteOperation(key: number) {
   }
 }
 
-export async function getAllOperations(): Promise<IOperation[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<IOperation[]>>(`${URL}/all`)
+export async function getAllOperations(): Promise<OperationPaginated[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<OperationPaginated[]>>(`${URL}/all`)
   const response = responseRaw.data
   if (response.success) {
     return response.data
