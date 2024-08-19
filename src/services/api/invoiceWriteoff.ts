@@ -4,6 +4,7 @@ import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
 import { InvoiceMaterialViewWithoutSerialNumbers } from "../interfaces/invoiceMaterial"
+import writeOffTypeToRus from "../lib/writeOffTypeToRus"
 
 const URL = "/invoice-writeoff"
 
@@ -13,11 +14,11 @@ export interface InvoiceWriteOffPagianted {
   page: number
 }
 
-export async function getPaginatedInvoiceWriteOff({ pageParam = 1}, writeOffType: string): Promise<InvoiceWriteOffPagianted> {
+export async function getPaginatedInvoiceWriteOff({ pageParam = 1 }, writeOffType: string): Promise<InvoiceWriteOffPagianted> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceWriteOffPagianted>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&writeOffType=${writeOffType}`)
   const response = responseRaw.data
   if (response.success && response.permission) {
-    return {...response.data, page: pageParam}
+    return { ...response.data, page: pageParam }
   } else {
     throw new Error(response.error)
   }
@@ -54,7 +55,7 @@ export async function createInvoiceWriteOff(data: InvoiceWriteOffMutation): Prom
   }
 }
 
-export async function updateInvoiceWriteOff(data: InvoiceWriteOffMutation):Promise<InvoiceWriteOffMutation> {
+export async function updateInvoiceWriteOff(data: InvoiceWriteOffMutation): Promise<InvoiceWriteOffMutation> {
   const responseRaw = await axiosClient.patch<IAPIResposeFormat<InvoiceWriteOffMutation>>(`${URL}/`, data)
   const response = responseRaw.data
   if (response.permission && response.success) {
@@ -110,6 +111,24 @@ export async function getInvoiceWriteOffDocument(deliveryCode: string): Promise<
     const contentType: string = responseRaw.headers["content-type"]
     const extension = contentType.split("/")[1]
     fileDownload(responseRaw.data, `${deliveryCode}.${extension}`)
+    return true
+  } else {
+    throw new Error(responseRaw.data)
+  }
+}
+
+export interface InvoiceWriteOffReportParameters {
+  writeOffType: string
+  writeOffLocationID: number
+  dateFrom: Date | null
+  dateTo: Date | null
+}
+
+export async function buildWriteOffReport(filter: InvoiceWriteOffReportParameters): Promise<boolean> {
+  const responseRaw = await axiosClient.post(`${URL}/report`, filter, { responseType: "blob", })
+  if (responseRaw.status == 200) {
+    const fileName = `Отчет ${writeOffTypeToRus(filter.writeOffType)}`
+    fileDownload(responseRaw.data, `${fileName}.xlsx`)
     return true
   } else {
     throw new Error(responseRaw.data)

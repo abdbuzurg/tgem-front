@@ -25,7 +25,7 @@ import Button from "../../UI/button"
 
 interface Props {
   setShowEditModal: React.Dispatch<React.SetStateAction<boolean>>
-  writeOffType: "loss-object" | "loss-team" | "loss-warehouse" | "writeoff-warehouse",
+  writeOffType: "loss-object" | "loss-team" | "loss-warehouse" | "writeoff-warehouse" | "writeoff-object",
   invoiceWriteOff: IInvoiceWriteOffView
 }
 
@@ -67,7 +67,7 @@ export default function EditInvoiceWriteOff({
   const allObjectQuery = useQuery<IObject[], Error, IObject[]>({
     queryKey: ["all-objects"],
     queryFn: () => getAllObjects(),
-    enabled: writeOffType == "loss-object",
+    enabled: writeOffType == "loss-object" || writeOffType == "writeoff-object",
   })
   useEffect(() => {
     if (allObjectQuery.isSuccess && allObjectQuery.data) {
@@ -281,7 +281,7 @@ export default function EditInvoiceWriteOff({
               <div className="flex flex-col space-y-1">
                 <label htmlFor="warehouse-manager">
                   {writeOffType == "loss-team" && "Бригада"}
-                  {writeOffType == "loss-object" && "Объект"}
+                  {(writeOffType == "loss-object" || writeOffType == "writeoff-object") && "Объект"}
                 </label>
                 <div className="w-[200px]">
                   <Select

@@ -25,7 +25,7 @@ import { InvoiceWriteOffItem, InvoiceWriteOffMutation, createInvoiceWriteOff } f
 
 interface Props {
   setShowAddModal: React.Dispatch<React.SetStateAction<boolean>>
-  writeOffType: "loss-object" | "loss-team" | "loss-warehouse" | "writeoff-warehouse",
+  writeOffType: "loss-object" | "loss-team" | "loss-warehouse" | "writeoff-warehouse" | "writeoff-object",
 }
 
 export default function AddInvoiceWriteOff({
@@ -65,7 +65,7 @@ export default function AddInvoiceWriteOff({
   const allObjectQuery = useQuery<IObject[], Error, IObject[]>({
     queryKey: ["all-objects"],
     queryFn: () => getAllObjects(),
-    enabled: writeOffType == "loss-object",
+    enabled: writeOffType == "loss-object" || writeOffType == "writeoff-object",
   })
   useEffect(() => {
     if (allObjectQuery.isSuccess && allObjectQuery.data) {
@@ -270,7 +270,7 @@ export default function AddInvoiceWriteOff({
               <div className="flex flex-col space-y-1">
                 <label htmlFor="warehouse-manager">
                   {writeOffType == "loss-team" && "Бригада"}
-                  {writeOffType == "loss-object" && "Объект"}
+                  {(writeOffType == "loss-object" || writeOffType == "writeoff-object") && "Объект"}
                 </label>
                 <div className="w-[200px]">
                   <Select

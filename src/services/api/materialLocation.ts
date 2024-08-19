@@ -1,7 +1,9 @@
+import fileDownload from "js-file-download";
 import Material from "../interfaces/material";
 import { IMaterialCost } from "../interfaces/materialCost";
 import IAPIResposeFormat from "./IAPIResposeFormat";
 import axiosClient from "./axiosClient";
+import writeOffTypeToRus from "../lib/writeOffTypeToRus";
 
 const URL = "/material-location"
 
@@ -69,5 +71,21 @@ export async function getMaterialLocation(searchParameters: MaterialLocationLive
     return response.data
   } else {
     throw new Error(response.error)
+  }
+}
+
+export interface ReportWriteOffBalanceFilter {
+  writeOffType: string
+  locationID: number
+}
+
+export async function buildWriteOffBalanceReport(filter: ReportWriteOffBalanceFilter): Promise<boolean> {
+  const responseRaw = await axiosClient.post(`${URL}/report/balance/writeoff`, filter, { responseType: "blob", })
+  if (responseRaw.status == 200) {
+    const fileName = writeOffTypeToRus(filter.writeOffType) 
+    fileDownload(responseRaw.data, `${fileName}.xlsx`)
+    return true
+  } else {
+    throw new Error(responseRaw.data)
   }
 }
