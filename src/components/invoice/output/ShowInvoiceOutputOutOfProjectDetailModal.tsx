@@ -46,12 +46,8 @@ export default function ShowInvoiceOutputOutOfProjectDetails({ setShowModal, dat
         <div className="flex flex-col w-[25%]">
           <div className="flex flex-col space-y-3">
             <div className="flex flex-col">
-              <p className="text-sm font-bold">Проект</p>
-              <p className="text-xl italic">{data.toProjectName}</p>
-            </div>
-            <div className="flex flex-col">
-              <p className="text-sm font-bold">Менеджер Проекта</p>
-              <p className="text-xl italic">{data.toProjectManager}</p>
+              <p className="text-sm font-bold">Имя проекта</p>
+              <p className="text-xl italic">{data.nameOfProject}</p>
             </div>
             <div className="flex flex-col">
               <p className="text-sm font-bold">Дата</p>
