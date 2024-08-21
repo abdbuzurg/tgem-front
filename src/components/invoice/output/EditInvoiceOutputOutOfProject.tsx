@@ -2,8 +2,6 @@ import { useEffect, useState } from "react"
 import { InvoiceOutputOutOfProjectMutation, InvoiceOutputOutOfProjectView, getInvoiceOutputOutOfProjectMaterialsForEdit, updateInvoiceOutputOfOutProject } from "../../../services/api/invoiceOutputOutOfProject"
 import { InvoiceOutputOutOfProject } from "../../../services/interfaces/invoiceOutputOutOfProject"
 import IReactSelectOptions from "../../../services/interfaces/react-select"
-import Project from "../../../services/interfaces/project"
-import { GetAllProjects } from "../../../services/api/project"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { IInvoiceOutputMaterials } from "../../../services/interfaces/invoiceOutputInProject"
 import { AvailableMaterial, InvoiceOutputItem, getAvailableMaterialsInWarehouse } from "../../../services/api/invoiceOutputInProject"
@@ -30,37 +28,14 @@ export default function EditInvoiceOutputOutOfProject({
 
   const [editInvoiceOutputOutOfProject, setEditInvoiceOutputOutOfProject] = useState<InvoiceOutputOutOfProject>({
     id: invoiceOutputOutOfProject.id,
-    fromProjectID: invoiceOutputOutOfProject.fromProjectID,
-    toProjectID: invoiceOutputOutOfProject.toProjectID,
+    projectID: 0,
+    nameOfProject: invoiceOutputOutOfProject.nameOfProject,
     dateOfInvoice: new Date(invoiceOutputOutOfProject.dateOfInvoice),
     releasedWorkerID: 0,
     confirmation: false,
     deliveryCode: invoiceOutputOutOfProject.deliveryCode,
     notes: "",
   })
-
-  const [selectedProject, setSelectedProject] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
-  const [allProjects, setAllProjects] = useState<IReactSelectOptions<number>[]>([])
-  const allProjectsQuery = useQuery<Project[], Error, Project[]>({
-    queryKey: ["all-projects"],
-    queryFn: GetAllProjects,
-  })
-  useEffect(() => {
-    if (allProjectsQuery.isSuccess && allProjectsQuery.data) {
-      const allProjectsInSystem: Project[] = allProjectsQuery.data.filter(val => val.name != "Администрирование" && val.name != "Test Project")
-      setAllProjects(allProjectsInSystem.map<IReactSelectOptions<number>>(val => ({
-        label: val.name + " (" + val.projectManager + ")",
-        value: val.id,
-      }))
-      )
-
-      const alreadyProject = allProjectsInSystem.find(val => val.id == invoiceOutputOutOfProject.toProjectID)!
-      setSelectedProject({
-        label: alreadyProject.name + " (" + alreadyProject.projectManager + ")",
-        value: alreadyProject.id,
-      })
-    }
-  }, [allProjectsQuery.data])
 
   const [invoiceMaterials, setInvoiceMaterials] = useState<IInvoiceOutputMaterials[]>([])
   const invoiceMaterialsQuery = useQuery<IInvoiceOutputMaterials[], Error, IInvoiceOutputMaterials[]>({
@@ -204,7 +179,7 @@ export default function EditInvoiceOutputOutOfProject({
 
   const onMutationSubmit = () => {
 
-    if (editInvoiceOutputOutOfProject.toProjectID == 0) {
+    if (editInvoiceOutputOutOfProject.nameOfProject == "") {
       toast.error("Не указан проект")
       return
     }
@@ -233,35 +208,15 @@ export default function EditInvoiceOutputOutOfProject({
         <div className="flex flex-col space-y-2">
           <p className="text-xl font-semibold text-gray-800">Детали накладной</p>
           <div className="flex space-x-2 items-center w-full">
-            {allProjectsQuery.isLoading &&
-              <div className="flex h-full w-[200px] items-center">
-                <LoadingDots height={40} />
-              </div>
-            }
-            {allProjectsQuery.isSuccess &&
-              <div className="flex flex-col space-y-1">
-                <label htmlFor="to-project">Проект</label>
-                <div className="w-[200px]">
-                  <Select
-                    className="basic-single"
-                    classNamePrefix="select"
-                    isSearchable={true}
-                    isClearable={true}
-                    name="to-project"
-                    placeholder={""}
-                    value={selectedProject}
-                    options={allProjects}
-                    onChange={(value) => {
-                      setSelectedProject(value ?? { label: "", value: 0 })
-                      setEditInvoiceOutputOutOfProject({
-                        ...editInvoiceOutputOutOfProject,
-                        toProjectID: value?.value ?? 0,
-                      })
-                    }}
-                  />
-                </div>
-              </div>
-            }
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="nameOfProject">Имя проекта</label>
+              <input
+                type="text"
+                name="nameOfProject"
+                onChange={(e) => setEditInvoiceOutputOutOfProject({ ...editInvoiceOutputOutOfProject, nameOfProject: e.target.value })}
+                value={editInvoiceOutputOutOfProject.nameOfProject}
+              />
+            </div>
             <div className="flex flex-col space-y-1">
               <label htmlFor="dateOfInvoice">Дата накладной</label>
               <div className="py-[4px] px-[8px] border-[#cccccc] border rounded-[4px]">

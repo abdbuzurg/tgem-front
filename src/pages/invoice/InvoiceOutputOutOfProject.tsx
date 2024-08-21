@@ -3,7 +3,7 @@ import Select from 'react-select'
 import AddInvoiceOutputOutOfProject from "../../components/invoice/output/AddInvoiceOutputOutOfProject"
 import Button from "../../components/UI/button"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { InvoiceOutputOutOfProjectConfirmation, InvoiceOutputOutOfProjectPaginated, InvoiceOutputOutOfProjectSearchParameters, InvoiceOutputOutOfProjectView, deleteInvoiceOutputOutOfProject, getInvoiceOutputOutOfProjectDocument, getInvoiceOutputOutOfProjectPaginated, sendInvoiceOutputOutOfProjectConfirmationExcel } from "../../services/api/invoiceOutputOutOfProject"
+import { InvoiceOutputOutOfProjectConfirmation, InvoiceOutputOutOfProjectPaginated, InvoiceOutputOutOfProjectSearchParameters, InvoiceOutputOutOfProjectView, deleteInvoiceOutputOutOfProject, getInvoiceOutputOutOfProjectDocument, getInvoiceOutputOutOfProjectPaginated, getUniqueNamesOfProjects, sendInvoiceOutputOutOfProjectConfirmationExcel } from "../../services/api/invoiceOutputOutOfProject"
 import { ENTRY_LIMIT } from "../../services/api/constants"
 import IconButton from "../../components/IconButtons"
 import { FaDownload, FaEdit, FaRegListAlt, FaRegTrashAlt, FaUpload } from "react-icons/fa"
@@ -13,13 +13,11 @@ import ShowInvoiceOutputOutOfProjectDetails from "../../components/invoice/outpu
 import EditInvoiceOutputOutOfProject from "../../components/invoice/output/EditInvoiceOutputOutOfProject"
 import IReactSelectOptions from "../../services/interfaces/react-select"
 import Modal from "../../components/Modal"
-import Project from "../../services/interfaces/project"
-import { GetAllProjects } from "../../services/api/project"
 
 export default function InvoiceOutputOutOfProject() {
 
   const [searchParameters, setSearchParameters] = useState<InvoiceOutputOutOfProjectSearchParameters>({
-    toProjectID: 0,
+    nameOfProject: "",
     releasedWorkerID: 0,
   })
   //FETCHING LOGIC
@@ -61,10 +59,7 @@ export default function InvoiceOutputOutOfProject() {
     id: 0,
     releasedWorkerName: "",
     confirmation: false,
-    fromProjectID: 0,
-    toProjectManager: "",
-    toProjectName: "",
-    toProjectID: 0,
+    nameOfProject: "",
   })
 
   const showDetails = (index: number) => {
@@ -112,26 +107,23 @@ export default function InvoiceOutputOutOfProject() {
     e.target.value = ''
   }
   const [showSearchModal, setShowSearchModal] = useState(false)
-  const [selectedProjectForSearch, setSelectedProjectForSearch] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
-  const [allProjects, setAllProjects] = useState<IReactSelectOptions<number>[]>([])
-  const allProjectsQuery = useQuery<Project[], Error, Project[]>({
-    queryKey: ["all-projects"],
-    queryFn: GetAllProjects,
+  const [selectedNameOfProject, setSelectedNameOfProject] = useState<IReactSelectOptions<string>>({ label: "", value: "", })
+  const [allNamesOfProjects, setAllNamesOfProjects] = useState<IReactSelectOptions<string>[]>([])
+  const allNamesOfProjectsQuery = useQuery<string[], Error, string[]>({
+    queryKey: ["unique-name-of-projects"],
+    queryFn: () => getUniqueNamesOfProjects(),
     enabled: false,
   })
   useEffect(() => {
-    if (allProjectsQuery.isSuccess && allProjectsQuery.data) {
-      if (allProjectsQuery.isSuccess && allProjectsQuery.data) {
-        setAllProjects(allProjectsQuery.data.
-          filter(val => val.name != "Администрирование" && val.name != "Test Project").
-          map<IReactSelectOptions<number>>(val => ({
-            label: val.name + " (" + val.projectManager + ")",
-            value: val.id,
-          }))
-        )
+    if (allNamesOfProjectsQuery.isSuccess && allNamesOfProjectsQuery.data) {
+      if (allNamesOfProjectsQuery.isSuccess && allNamesOfProjectsQuery.data) {
+        setAllNamesOfProjects(allNamesOfProjectsQuery.data.map<IReactSelectOptions<string>>(val => ({
+          value: val,
+          label: val,
+        })))
       }
     }
-  }, [allProjectsQuery.data])
+  }, [allNamesOfProjectsQuery.data])
 
   return (
     <main>
@@ -141,9 +133,9 @@ export default function InvoiceOutputOutOfProject() {
           onClick={() => {
             setSearchParameters({
               ...searchParameters,
-              toProjectID: 0,
+              nameOfProject: "",
             })
-            setSelectedProjectForSearch({ label: "", value: 0 })
+            setSelectedNameOfProject({ label: "", value: "" })
           }}
           className="text-white py-2.5 px-5 rounded-lg bg-red-700 hover:bg-red-800 hover:cursor-pointer"
         >
@@ -152,7 +144,7 @@ export default function InvoiceOutputOutOfProject() {
         <div>
           <div
             onClick={() => {
-              allProjectsQuery.refetch()
+              allNamesOfProjectsQuery.refetch()
               setShowSearchModal(true)
             }}
             className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
@@ -173,9 +165,6 @@ export default function InvoiceOutputOutOfProject() {
               <span>Название проекта</span>
             </th>
             <th className="px-4 py-3">
-              <span>Менеджер проекта</span>
-            </th>
-            <th className="px-4 py-3">
               <span>Составитель</span>
             </th>
             <th className="px-4 py-3 w-[110px]">
@@ -190,8 +179,7 @@ export default function InvoiceOutputOutOfProject() {
           {tableData.map((row, index) =>
             <tr key={index} className="text-sm hover:bg-gray-200">
               <td className="px-4 py-3">{row.deliveryCode}</td>
-              <td className="px-4 py-3">{row.toProjectName}</td>
-              <td className="px-4 py-3">{row.toProjectManager}</td>
+              <td className="px-4 py-3">{row.nameOfProject}</td>
               <td className="px-4 py-3">{row.releasedWorkerName}</td>
               <td className="px-4 py-3">{row.dateOfInvoice.toString().substring(0, 10)}</td>
               <td className="px-4 py-3 border-box flex space-x-3">
@@ -274,8 +262,8 @@ export default function InvoiceOutputOutOfProject() {
       {showSearchModal &&
         <Modal setShowModal={setShowSearchModal}>
           <span className="font-bold text-xl py-1">Параметры Поиска по сравочнику материалов</span>
-          {allProjectsQuery.isLoading && <LoadingDots />}
-          {allProjectsQuery.isSuccess &&
+          {allNamesOfProjectsQuery.isLoading && <LoadingDots />}
+          {allNamesOfProjectsQuery.isSuccess &&
             <div className="p-2 flex flex-col space-y-2">
               <div className="flex flex-col space-y-1">
                 <label htmlFor="projects">Проект</label>
@@ -286,13 +274,13 @@ export default function InvoiceOutputOutOfProject() {
                   isClearable={true}
                   name={"projects"}
                   placeholder={""}
-                  value={selectedProjectForSearch}
-                  options={allProjects}
+                  value={selectedNameOfProject}
+                  options={allNamesOfProjects}
                   onChange={value => {
-                    setSelectedProjectForSearch(value ?? { label: "", value: 0 })
+                    setSelectedNameOfProject(value ?? { label: "", value: "" })
                     setSearchParameters({
                       ...searchParameters,
-                      toProjectID: value?.value ?? 0,
+                      nameOfProject: value?.value ?? "",
                     })
                   }}
                 />

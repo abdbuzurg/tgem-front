@@ -20,6 +20,7 @@ export interface IInvoiceWriteOffMaterials {
   notes: string
   hasSerialNumber: boolean
   serialNumbers: string[]
+  locationAmount: number
 }
 
 export interface IInvoiceWriteOffView extends IInvoiceWriteOff  {

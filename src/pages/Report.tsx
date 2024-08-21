@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { REPORT_BALANCE_LOSS_OBJECT, REPORT_BALANCE_LOSS_TEAM, REPORT_BALANCE_LOSS_WAREHOUSE, REPORT_BALANCE_OBJECT, REPORT_BALANCE_TEAM, REPORT_BALANCE_WAREHOUSE, REPORT_BALANCE_WRITEOFF_OBJECT, REPORT_BALANCE_WRITEOFF_WAREHOUSE, REPORT_INVOICE_INPUT, REPORT_INVOICE_LOSS_OBJECT, REPORT_INVOICE_LOSS_TEAM, REPORT_INVOICE_LOSS_WAREHOUSE, REPORT_INVOICE_OBJECT, REPORT_INVOICE_OUTPUT, REPORT_INVOICE_RETURN, REPORT_INVOICE_WRITEOFF_OBJECT, REPORT_INVOICE_WRITEOFF_WAREHOUSE } from "../URLs"
+import { REPORT_BALANCE_LOSS_OBJECT, REPORT_BALANCE_LOSS_TEAM, REPORT_BALANCE_LOSS_WAREHOUSE, REPORT_BALANCE_OBJECT, REPORT_BALANCE_OUT_OF_PROJECT, REPORT_BALANCE_TEAM, REPORT_BALANCE_WAREHOUSE, REPORT_BALANCE_WRITEOFF_OBJECT, REPORT_BALANCE_WRITEOFF_WAREHOUSE, REPORT_INVOICE_INPUT, REPORT_INVOICE_LOSS_OBJECT, REPORT_INVOICE_LOSS_TEAM, REPORT_INVOICE_LOSS_WAREHOUSE, REPORT_INVOICE_OBJECT, REPORT_INVOICE_OUTPUT, REPORT_INVOICE_OUTPUT_OUT_OF_PROJECT, REPORT_INVOICE_RETURN, REPORT_INVOICE_WRITEOFF_OBJECT, REPORT_INVOICE_WRITEOFF_WAREHOUSE } from "../URLs"
 import ReportInvoiceInput from "../components/invoice/input/ReportInvoiceInput"
 import ReportInvoiceOutput from "../components/invoice/output/ReportInvoiceOutput"
 import ReportInvoiceReturn from "../components/invoice/return/ReportInvoiceReturn"
@@ -13,28 +13,17 @@ import ReportBalanceLossTeam from "../components/report/ReportBalanceLossTeam"
 import ReportBalanceLossObject from "../components/report/ReportBalanceLossObject"
 import ReportBalanceWriteOffObject from "../components/report/ReportBalanceWriteOffObject"
 import ReportInvoiceWriteOff from "../components/invoice/writeoff/ReportInvoiceWriteOff"
+import ReportBalanceOutOfProject from "../components/report/ReportBalanceOutOfProject"
+import ReportInvoiceOutputOutOfProject from "../components/invoice/output/ReportInvoiceOutputOutOfProject"
 
 const report = [
   {
     category: "Остаток",
     pages: [
-      { name: "Склад", type: REPORT_BALANCE_WAREHOUSE },
-      { name: "Бригада", type: REPORT_BALANCE_TEAM },
-      { name: "Объекты", type: REPORT_BALANCE_OBJECT },
-    ]
-  },
-  {
-    category: "Операции",
-    pages: [
-      { name: "Отчет приход", type: REPORT_INVOICE_INPUT },
-      { name: "Отчет отпуск", type: REPORT_INVOICE_OUTPUT },
-      { name: "Отчет возврат", type: REPORT_INVOICE_RETURN },
-      { name: "Отчет расхода на объект", type: REPORT_INVOICE_OBJECT }
-    ]
-  },
-  {
-    category: "Остаток списанных материалов",
-    pages: [
+      { name: "Материалы на складе", type: REPORT_BALANCE_WAREHOUSE },
+      { name: "Материалы у бригад", type: REPORT_BALANCE_TEAM },
+      { name: "Материалы на oбъектах", type: REPORT_BALANCE_OBJECT },
+      { name: "Материалы вышедшие с проекта", type: REPORT_BALANCE_OUT_OF_PROJECT },
       { name: "Материалы списанные со склада", type: REPORT_BALANCE_WRITEOFF_WAREHOUSE },
       { name: "Утеренные материалы со склада", type: REPORT_BALANCE_LOSS_WAREHOUSE },
       { name: "Утеренные материалы бригад", type: REPORT_BALANCE_LOSS_TEAM },
@@ -43,16 +32,20 @@ const report = [
     ]
   },
   {
-    category: "Списание",
+    category: "Операции",
     pages: [
+      { name: "Отчет приход", type: REPORT_INVOICE_INPUT },
+      { name: "Отчет отпуск внутри проекта", type: REPORT_INVOICE_OUTPUT },
+      { name: "Отчет отпуск вне проекта", type: REPORT_INVOICE_OUTPUT_OUT_OF_PROJECT },
+      { name: "Отчет возврат", type: REPORT_INVOICE_RETURN },
+      { name: "Отчет расхода на объект", type: REPORT_INVOICE_OBJECT },
       { name: "Отчет списания со склада", type: REPORT_INVOICE_WRITEOFF_WAREHOUSE },
       { name: "Отчет утери со склада", type: REPORT_INVOICE_LOSS_WAREHOUSE },
       { name: "Отчет утери бригады", type: REPORT_INVOICE_LOSS_TEAM },
       { name: "Отчет утери с объекта", type: REPORT_INVOICE_LOSS_OBJECT },
       { name: "Отчет списания с объекта", type: REPORT_INVOICE_WRITEOFF_OBJECT },
     ]
-  }
-
+  },
 ]
 
 export default function Report() {
@@ -90,6 +83,7 @@ export default function Report() {
         (selectedReportType == REPORT_BALANCE_WAREHOUSE && <ReportBalanceWarehouse setShowModal={setSelectedReportModal} />)
         || (selectedReportType == REPORT_BALANCE_TEAM && <ReportBalanceTeam setShowModal={setSelectedReportModal} />)
         || (selectedReportType == REPORT_BALANCE_OBJECT && <ReportBalanceObject setShowModal={setSelectedReportModal} />)
+        || (selectedReportType == REPORT_BALANCE_OUT_OF_PROJECT && <ReportBalanceOutOfProject setShowModal={setSelectedReportModal} />)
         || (selectedReportType == REPORT_BALANCE_WRITEOFF_WAREHOUSE && <ReportBalanceWriteOffWarehouse setShowModal={setSelectedReportModal} />)
         || (selectedReportType == REPORT_BALANCE_LOSS_WAREHOUSE && <ReportBalanceLossWarehouse setShowModal={setSelectedReportModal} />)
         || (selectedReportType == REPORT_BALANCE_LOSS_TEAM && <ReportBalanceLossTeam setShowModal={setSelectedReportModal} />)
@@ -104,6 +98,7 @@ export default function Report() {
         || (selectedReportType == REPORT_INVOICE_OUTPUT && <ReportInvoiceOutput setShowReportModal={setSelectedReportModal} />)
         || (selectedReportType == REPORT_INVOICE_RETURN && <ReportInvoiceReturn setShowReportModal={setSelectedReportModal} />)
         || (selectedReportType == REPORT_INVOICE_OBJECT && <ReportInvoiceObject setShowReportModal={setSelectedReportModal} />)
+        || (selectedReportType == REPORT_INVOICE_OUTPUT_OUT_OF_PROJECT && <ReportInvoiceOutputOutOfProject setShowReportModal={setSelectedReportModal} />)
       )
       }
     </div>

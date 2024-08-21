@@ -1,7 +1,7 @@
 export interface InvoiceOutputOutOfProject {
   id: number
-  fromProjectID: number
-  toProjectID: number
+  projectID: number
+  nameOfProject: string
   deliveryCode: string
   releasedWorkerID: number
   dateOfInvoice: Date

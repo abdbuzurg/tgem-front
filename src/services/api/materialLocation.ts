@@ -28,6 +28,7 @@ export async function getAllMaterialInALocation(locationType: string, locationID
 }
 
 export async function getMaterailCostsInALocation(locationType: string, locationID: number, materialID: number): Promise<IMaterialCost[]> {
+  console.log(locationType, locationID, materialID)
   const responseRaw = await axiosClient.get<IAPIResposeFormat<IMaterialCost[]>>(`/material-location/costs/${materialID}/${locationType}/${locationID}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
@@ -89,3 +90,15 @@ export async function buildWriteOffBalanceReport(filter: ReportWriteOffBalanceFi
     throw new Error(responseRaw.data)
   }
 }
+
+export async function buildOutOfProjectBalanceReport(): Promise<boolean> {
+  const responseRaw = await axiosClient.post(`${URL}/report/balance/out-of-project`, null, { responseType: "blob", })
+  if (responseRaw.status == 200) {
+    fileDownload(responseRaw.data, `Отчет остатка материалов вне проекта.xlsx`)
+    return true
+  } else {
+    throw new Error(responseRaw.data)
+  }
+}
+
+

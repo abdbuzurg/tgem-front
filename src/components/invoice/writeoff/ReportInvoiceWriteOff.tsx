@@ -71,7 +71,7 @@ export default function ReportInvoiceWriteOff({
 
   const onCreateReportClick = () => {
 
-    if (filter.dateFrom && filter.dateTo) {
+    if (filter.dateFrom && filter.dateTo && filter.dateFrom > filter.dateTo) {
       toast.error("Неправильно указан диапазон дат")
       return
     }

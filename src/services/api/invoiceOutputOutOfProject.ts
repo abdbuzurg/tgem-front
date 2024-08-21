@@ -26,10 +26,7 @@ export async function createInvoiceOutputOfOutProject(data: InvoiceOutputOutOfPr
 
 export interface InvoiceOutputOutOfProjectView {
   id: number
-  fromProjectID: number
-  toProjectID: number
-  toProjectName: string
-  toProjectManager: string
+  nameOfProject: string
   deliveryCode: string
   releasedWorkerName: string
   dateOfInvoice: Date
@@ -43,12 +40,12 @@ export interface InvoiceOutputOutOfProjectPaginated {
 }
 
 export interface InvoiceOutputOutOfProjectSearchParameters {
-  toProjectID: number
+  nameOfProject: string
   releasedWorkerID: number
 }
 
 export async function getInvoiceOutputOutOfProjectPaginated({ pageParam = 1 }, searchParameters: InvoiceOutputOutOfProjectSearchParameters): Promise<InvoiceOutputOutOfProjectPaginated> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceOutputOutOfProjectPaginated>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&toProjectID=${searchParameters.toProjectID}&releasedWorkerID=${searchParameters.releasedWorkerID}`)
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceOutputOutOfProjectPaginated>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&nameOfProject=${searchParameters.nameOfProject}&releasedWorkerID=${searchParameters.releasedWorkerID}`)
   const response = responseRaw.data
   if (response.success && response.permission) {
     return { ...response.data, page: pageParam }
@@ -137,5 +134,30 @@ export async function getInvoiceOutputOutOfProjectMaterialsForEdit(id: number): 
     return response.data
   } else {
     throw new Error(response.error)
+  }
+}
+
+export async function getUniqueNamesOfProjects(): Promise<string[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/unique/name-of-project`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export interface InvoiceOutputOutOfProjectReportFilter {
+  dateFrom: Date | null
+  dateTo: Date | null
+}
+
+export async function buildReportInvoiceOutputOutOfProject(filter: InvoiceOutputOutOfProjectReportFilter): Promise<boolean> {
+  const responseRaw = await axiosClient.post(`${URL}/report`, filter, { responseType: "blob" })
+  if (responseRaw.status == 200) {
+    fileDownload(responseRaw.data, `Отсчет накладной отпуск вне проекта.xlsx`)
+    return true
+  } else {
+    throw new Error(responseRaw.data)
   }
 }

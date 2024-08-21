@@ -10,8 +10,6 @@ import Button from "../../UI/button";
 import LoadingDots from "../../UI/loadingDots";
 import { InvoiceOutputOutOfProject } from "../../../services/interfaces/invoiceOutputOutOfProject";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import Project from "../../../services/interfaces/project";
-import { GetAllProjects } from "../../../services/api/project";
 import IReactSelectOptions from "../../../services/interfaces/react-select";
 import { IInvoiceOutputMaterials } from "../../../services/interfaces/invoiceOutputInProject";
 import { AvailableMaterial, InvoiceOutputItem, getAvailableMaterialsInWarehouse } from "../../../services/api/invoiceOutputInProject";
@@ -26,32 +24,14 @@ export default function AddInvoiceOutputOutOfProject({ setShowAddModal }: Props)
 
   const [addInvoiceOutputOutOfProject, setAddInvoiceOutputOutOfProject] = useState<InvoiceOutputOutOfProject>({
     id: 0,
-    fromProjectID: 0,
-    toProjectID: 0,
+    projectID: 0,
+    nameOfProject: "",
     dateOfInvoice: new Date(),
     releasedWorkerID: 0,
     confirmation: false,
     deliveryCode: "",
     notes: "",
   })
-
-  const [selectedProject, setSelectedProject] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
-  const [allProjects, setAllProjects] = useState<IReactSelectOptions<number>[]>([])
-  const allProjectsQuery = useQuery<Project[], Error, Project[]>({
-    queryKey: ["all-projects"],
-    queryFn: GetAllProjects,
-  })
-  useEffect(() => {
-    if (allProjectsQuery.isSuccess && allProjectsQuery.data) {
-      setAllProjects(allProjectsQuery.data.
-        filter(val => val.name != "Администрирование" && val.name != "Test Project").
-        map<IReactSelectOptions<number>>(val => ({
-          label: val.name + " (" + val.projectManager + ")",
-          value: val.id,
-        }))
-      )
-    }
-  }, [allProjectsQuery.data])
 
   const [invoiceMaterials, setInvoiceMaterials] = useState<IInvoiceOutputMaterials[]>([])
   const [invoiceMaterial, setInvoiceMaterial] = useState<IInvoiceOutputMaterials>({
@@ -176,7 +156,7 @@ export default function AddInvoiceOutputOutOfProject({ setShowAddModal }: Props)
 
   const onMutationSubmit = () => {
 
-    if (addInvoiceOutputOutOfProject.toProjectID == 0) {
+    if (addInvoiceOutputOutOfProject.nameOfProject == "") {
       toast.error("Не указан проект")
       return
     }
@@ -205,35 +185,15 @@ export default function AddInvoiceOutputOutOfProject({ setShowAddModal }: Props)
         <div className="flex flex-col space-y-2">
           <p className="text-xl font-semibold text-gray-800">Детали накладной</p>
           <div className="flex space-x-2 items-center w-full">
-            {allProjectsQuery.isLoading &&
-              <div className="flex h-full w-[200px] items-center">
-                <LoadingDots height={40} />
-              </div>
-            }
-            {allProjectsQuery.isSuccess &&
-              <div className="flex flex-col space-y-1">
-                <label htmlFor="to-project">Проект</label>
-                <div className="w-[200px]">
-                  <Select
-                    className="basic-single"
-                    classNamePrefix="select"
-                    isSearchable={true}
-                    isClearable={true}
-                    name="to-project"
-                    placeholder={""}
-                    value={selectedProject}
-                    options={allProjects}
-                    onChange={(value) => {
-                      setSelectedProject(value ?? { label: "", value: 0 })
-                      setAddInvoiceOutputOutOfProject({
-                        ...addInvoiceOutputOutOfProject,
-                        toProjectID: value?.value ?? 0,
-                      })
-                    }}
-                  />
-                </div>
-              </div>
-            }
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="nameOfProject">Имя проекта</label>
+              <input
+                type="text"
+                name="nameOfProject"
+                onChange={(e) => setAddInvoiceOutputOutOfProject({ ...addInvoiceOutputOutOfProject, nameOfProject: e.target.value })}
+                value={addInvoiceOutputOutOfProject.nameOfProject}
+              />
+            </div>
             <div className="flex flex-col space-y-1">
               <label htmlFor="dateOfInvoice">Дата накладной</label>
               <div className="py-[4px] px-[8px] border-[#cccccc] border rounded-[4px]">

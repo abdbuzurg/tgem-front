@@ -5,10 +5,8 @@ import Modal from '../../Modal';
 import { Fragment, useEffect, useState } from 'react';
 import { IInvoiceWriteOff, IInvoiceWriteOffMaterials } from '../../../services/interfaces/invoiceWriteOff';
 import Material from '../../../services/interfaces/material';
-import getAllMaterials from '../../../services/api/materials/getAll';
 import IReactSelectOptions from '../../../services/interfaces/react-select';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import getMaterailCostByMaterialID from '../../../services/api/materialscosts/getByMaterailID';
 import { IMaterialCost } from '../../../services/interfaces/materialCost';
 import LoadingDots from '../../UI/loadingDots';
 import Button from '../../UI/button';
@@ -22,6 +20,7 @@ import { getAllObjects } from '../../../services/api/object';
 import { IObject } from '../../../services/interfaces/objects';
 import { objectTypeIntoRus } from '../../../services/lib/objectStatuses';
 import { InvoiceWriteOffItem, InvoiceWriteOffMutation, createInvoiceWriteOff } from '../../../services/api/invoiceWriteoff';
+import { getAllMaterialInALocation, getAmountByCostAndLocation, getMaterailCostsInALocation } from '../../../services/api/materialLocation';
 
 interface Props {
   setShowAddModal: React.Dispatch<React.SetStateAction<boolean>>
@@ -32,6 +31,11 @@ export default function AddInvoiceWriteOff({
   setShowAddModal,
   writeOffType,
 }: Props) {
+  const [locationWriteOff, _] = useState<"warehouse" | "team" | "object">(() => {
+    if (writeOffType == "loss-team") return "team"
+    if (writeOffType == "loss-object" || writeOffType == "writeoff-object") return "object"
+    return "warehouse"
+  })
 
   const [addInvoiceWriteOff, setAddInvoiceWriteOff] = useState<IInvoiceWriteOff>({
     id: 0,
@@ -51,7 +55,7 @@ export default function AddInvoiceWriteOff({
   const allTeamsQuery = useQuery<TeamDataForSelect[], Error, TeamDataForSelect[]>({
     queryKey: ["team-data-for-select"],
     queryFn: () => getAllTeamsForSelect(),
-    enabled: writeOffType == "loss-team",
+    enabled: locationWriteOff == "team",
   })
   useEffect(() => {
     if (allTeamsQuery.isSuccess && allTeamsQuery.data) {
@@ -65,7 +69,7 @@ export default function AddInvoiceWriteOff({
   const allObjectQuery = useQuery<IObject[], Error, IObject[]>({
     queryKey: ["all-objects"],
     queryFn: () => getAllObjects(),
-    enabled: writeOffType == "loss-object" || writeOffType == "writeoff-object",
+    enabled: locationWriteOff == "object",
   })
   useEffect(() => {
     if (allObjectQuery.isSuccess && allObjectQuery.data) {
@@ -88,12 +92,14 @@ export default function AddInvoiceWriteOff({
     notes: "",
     hasSerialNumber: false,
     serialNumbers: [],
+    locationAmount: 0,
   })
 
   // MATERIAL SELECT LOGIC
   const materialQuery = useQuery<Material[], Error, Material[]>({
-    queryKey: ["all-materials"],
-    queryFn: getAllMaterials,
+    queryKey: ["material-location-all",],
+    queryFn: () => getAllMaterialInALocation(locationWriteOff, writeOffLocation.value),
+    enabled: writeOffLocation.value != 0 || locationWriteOff == "warehouse"
   })
   const [allMaterialData, setAllMaterialData] = useState<IReactSelectOptions<number>[]>([])
   const [selectedMaterial, setSelectedMaterial] = useState<IReactSelectOptions<number>>({ value: 0, label: "" })
@@ -117,6 +123,7 @@ export default function AddInvoiceWriteOff({
         materialName: "",
         hasSerialNumber: false,
       })
+
       return
     }
     setSelectedMaterial(value)
@@ -129,17 +136,20 @@ export default function AddInvoiceWriteOff({
         materialName: material.name,
         hasSerialNumber: material.hasSerialNumber,
       })
+      materialCostQuery.refetch()
     }
   }
 
   // MATERIAL COST SELECT LOGIC
-  const materialCostQuery = useQuery<IMaterialCost[], Error>({
-    queryKey: ["material-cost", invoiceMaterial.materialID],
-    queryFn: () => getMaterailCostByMaterialID(invoiceMaterial.materialID),
+  const materialCostQuery = useQuery<IMaterialCost[], Error, IMaterialCost[]>({
+    queryKey: ["material-location-cost", selectedMaterial.value],
+    queryFn: () => getMaterailCostsInALocation(locationWriteOff, writeOffLocation.value, invoiceMaterial.materialID),
+    enabled: selectedMaterial.value != 0,
   })
   const [allMaterialCostData, setAllMaterialCostData] = useState<IReactSelectOptions<number>[]>([])
   const [selectedMaterialCost, setSelectedMaterialCost] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   useEffect(() => {
+    console.log(invoiceMaterial.materialID)
     if (materialCostQuery.isSuccess && materialCostQuery.data) {
       setAllMaterialCostData([...materialCostQuery.data.map<IReactSelectOptions<number>>((value) => ({ label: value.costM19.toString(), value: value.id }))])
       if (materialCostQuery.data.length == 1) {
@@ -163,8 +173,24 @@ export default function AddInvoiceWriteOff({
     if (materialCostQuery.isSuccess && materialCostQuery.data) {
       const materialCost = materialCostQuery.data!.find((cost) => cost.id == value.value)!
       setInvoiceMaterial({ ...invoiceMaterial, materialCostID: materialCost.id, materialCost: materialCost.costM19 })
+      materialAmounQuery.refetch()
     }
   }
+
+  //Material Amount 
+  const materialAmounQuery = useQuery<number, Error, number>({
+    queryKey: ["material-location-amount", selectedMaterial.value],
+    queryFn: () => getAmountByCostAndLocation(locationWriteOff, writeOffLocation.value, invoiceMaterial.materialCostID),
+    enabled: selectedMaterialCost.value != 0,
+  })
+  useEffect(() => {
+    if (materialAmounQuery.isSuccess && materialAmounQuery.data) {
+      setInvoiceMaterial({
+        ...invoiceMaterial,
+        locationAmount: materialAmounQuery.data,
+      })
+    }
+  }, [materialAmounQuery.data])
 
   //ADDING MATERIAL TO LIST LOGIC
   const onAddClick = () => {
@@ -192,6 +218,11 @@ export default function AddInvoiceWriteOff({
       return
     }
 
+    if (invoiceMaterial.amount > invoiceMaterial.locationAmount) {
+      toast.error("Выбранное количество привышает доступное")
+      return
+    }
+
     if (invoiceMaterial.hasSerialNumber && invoiceMaterial.serialNumbers.length !== invoiceMaterial.amount) {
       toast.error("Количство материала не совпадает с количеством серийных намеров")
       return
@@ -208,6 +239,7 @@ export default function AddInvoiceWriteOff({
       unit: "",
       hasSerialNumber: false,
       serialNumbers: [],
+      locationAmount: 0,
     })
     setSelectedMaterial({ label: "", value: 0 })
     setSelectedMaterialCost({ label: "", value: 0 })
@@ -311,11 +343,11 @@ export default function AddInvoiceWriteOff({
               onClick={() => onMutationSubmit()}
               className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
             >
-              {createInvoiceWriteOffMutation.isLoading 
+              {createInvoiceWriteOffMutation.isLoading
                 ?
-                  <LoadingDots height={30}/>
+                <LoadingDots height={30} />
                 :
-                  "Опубликовать"
+                "Опубликовать"
               }
             </div>
           </div>
@@ -325,7 +357,7 @@ export default function AddInvoiceWriteOff({
             <p className="text-xl font-semibold text-gray-800">Материалы наклданой</p>
 
           </div>
-          <div className="grid grid-cols-6 text-sm font-bold shadow-md text-left mt-2 w-full border-box">
+          <div className="grid grid-cols-7 text-sm font-bold shadow-md text-left mt-2 w-full border-box">
             {/* table head START */}
             <div className="px-4 py-3">
               <span>Наименование</span>
@@ -340,18 +372,25 @@ export default function AddInvoiceWriteOff({
               <span>Цена</span>
             </div>
             <div className="px-4 py-3">
+              <span>
+                {locationWriteOff == "warehouse" && "На складе"}
+                {locationWriteOff == "team" && "У бригады"}
+                {locationWriteOff == "object" && "На объекте"}
+              </span>
+            </div>
+            <div className="px-4 py-3">
               <span>Примичание</span>
             </div>
             <div className="px-4 py-3"></div>
             {/* table head END */}
           </div>
-          <div className="grid grid-cols-6 text-sm text-left mt-2 w-full border-box items-center">
-            {materialQuery.isLoading &&
+          <div className="grid grid-cols-7 text-sm text-left mt-2 w-full border-box items-center">
+            {materialQuery.isFetching &&
               <div className="px-4 py-3">
                 <LoadingDots height={36} />
               </div>
             }
-            {materialQuery.isSuccess &&
+            {(materialQuery.isSuccess || !materialQuery.isFetching) &&
               <div className="px-4 py-3">
                 <Select
                   className="basic-single"
@@ -376,12 +415,12 @@ export default function AddInvoiceWriteOff({
                 onChange={(e) => setInvoiceMaterial((prev) => ({ ...prev, amount: e.target.valueAsNumber }))}
               />
             </div>
-            {materialCostQuery.isLoading &&
+            {materialCostQuery.isFetching &&
               <div className="px-4 py-3">
                 <LoadingDots height={36} />
               </div>
             }
-            {materialCostQuery.isSuccess &&
+            {(materialCostQuery.isSuccess || !materialCostQuery.isFetching) &&
               <div className="px-4 py-3">
                 <Select
                   className="basic-single"
@@ -397,6 +436,7 @@ export default function AddInvoiceWriteOff({
                 />
               </div>
             }
+            <div className="px-4 py-3">{invoiceMaterial.locationAmount}</div>
             <div className="px-4 py-3">
               <Input
                 name="notes"
