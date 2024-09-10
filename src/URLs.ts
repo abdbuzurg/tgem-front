@@ -64,3 +64,5 @@ export const LOSS_WAREHOUSE = "/invoice/loss/warehouse"
 export const LOSS_TEAM = "/invoice/loss/team"
 export const LOSS_OBJECT = "/invoice/loss/object"
 export const WRITEOFF_OBJECT = "/invoice/writeoff/object"
+
+export const HR_ATTENDANCE = "/hr/attendance"
