@@ -7,9 +7,7 @@ import { IInvoiceReturn, IInvoiceReturnMaterials } from "../../../services/inter
 import Button from "../../UI/button";
 import IReactSelectOptions from "../../../services/interfaces/react-select";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import Material from "../../../services/interfaces/material";
-import { IMaterialCost } from "../../../services/interfaces/materialCost";
-import { InvoiceReturnItem, InvoiceReturnMutation, createInvoiceReturn, getMaterialAmountInLocation, getMaterialCostsInLocation, getUniqueMaterialsInLocation } from "../../../services/api/invoiceReturn";
+import { InvoiceReturnItem, InvoiceReturnMaterialsForSelect, InvoiceReturnMutation, createInvoiceReturn, getUniqueMaterialsInLocation } from "../../../services/api/invoiceReturn";
 import Input from "../../UI/Input";
 import toast from "react-hot-toast";
 import SerialNumberSelectReturnModal from "./SerialNumberSelectReturn";
@@ -121,8 +119,6 @@ export default function AddInvoiceReturnObject({
     materialName: "",
     unit: "",
     holderAmount: 0,
-    materialCostID: 0,
-    materialCost: "",
     hasSerialNumber: false,
     serialNumbers: [],
     isDefective: false,
@@ -133,7 +129,7 @@ export default function AddInvoiceReturnObject({
   //The data is based on the returner type and the returnerID
   const [selectedMaterial, setSelectedMaterial] = useState<IReactSelectOptions<number>>({ value: 0, label: "" })
   const [allAvaialableMaterials, setAllAvailableMaterails] = useState<IReactSelectOptions<number>[]>([])
-  const allMaterialInALocation = useQuery<Material[], Error, Material[]>({
+  const allMaterialInALocation = useQuery<InvoiceReturnMaterialsForSelect[], Error, InvoiceReturnMaterialsForSelect[]>({
     queryKey: ["available-materials", addInvoiceReturnObject.returnerType, addInvoiceReturnObject.returnerID],
     queryFn: () => getUniqueMaterialsInLocation(addInvoiceReturnObject.returnerType, addInvoiceReturnObject.returnerID),
   })
@@ -142,7 +138,7 @@ export default function AddInvoiceReturnObject({
     if (allMaterialInALocation.isSuccess) {
       if (allMaterialInALocation.data)
         setAllAvailableMaterails([
-          ...allMaterialInALocation.data.map<IReactSelectOptions<number>>((value) => ({ label: value.name, value: value.id }))
+          ...allMaterialInALocation.data.map<IReactSelectOptions<number>>((value) => ({ label: value.materialName, value: value.materialID }))
         ])
       else
         setAllAvailableMaterails([]);
@@ -152,15 +148,11 @@ export default function AddInvoiceReturnObject({
   const onAllAvailableMaterialSelect = (value: IReactSelectOptions<number> | null) => {
     if (!value) {
       setSelectedMaterial({ label: "", value: 0 })
-      setSelectedMaterialCost({ label: "", value: 0 })
-      setAvailableMaterialCosts([])
       setInvoiceMaterial({
         ...invoiceMaterial,
         unit: "",
         holderAmount: 0,
         materialName: "",
-        materialCost: "",
-        materialCostID: 0,
         hasSerialNumber: false,
         serialNumbers: [],
         materialID: 0,
@@ -169,70 +161,18 @@ export default function AddInvoiceReturnObject({
     }
     if (allMaterialInALocation.data) {
       setSelectedMaterial(value)
-      setSelectedMaterialCost({ label: "", value: 0 })
-      const material = allMaterialInALocation.data.find((material) => material.id == value.value)!
+      const materialInfo = allMaterialInALocation.data.find((material) => material.materialID == value.value)!
       setInvoiceMaterial({
         ...invoiceMaterial,
-        materialID: material.id,
-        unit: material.unit,
-        holderAmount: 0,
-        materialName: material.name,
-        materialCostID: 0,
-        materialCost: "",
-        hasSerialNumber: material.hasSerialNumber,
+        materialID: materialInfo.materialID,
+        unit: materialInfo.materialUnit,
+        holderAmount: materialInfo.amount,
+        materialName: materialInfo.materialName,
+        hasSerialNumber: materialInfo.hasSerialNumber,
         serialNumbers: [],
       })
     }
   }
-
-  //Logic for Material cost
-  const [selectedMaterialCost, setSelectedMaterialCost] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
-  const [availableMaterialCosts, setAvailableMaterialCosts] = useState<IReactSelectOptions<number>[]>([])
-  const materialCostQuery = useQuery<IMaterialCost[], Error, IMaterialCost[]>({
-    queryKey: ["material-cost-in-a-location", selectedMaterial],
-    queryFn: () => getMaterialCostsInLocation(selectedMaterial.value, addInvoiceReturnObject.returnerType, addInvoiceReturnObject.returnerID),
-    enabled: selectedMaterial.value != 0,
-  })
-  useEffect(() => {
-    if (materialCostQuery.isSuccess && materialCostQuery.data) {
-      setAvailableMaterialCosts([
-        ...materialCostQuery.data.map<IReactSelectOptions<number>>((value) => ({ label: value.costM19.toString(), value: value.id }))
-      ])
-    }
-  }, [materialCostQuery.data])
-
-  const onMaterialCostSelect = (value: IReactSelectOptions<number> | null) => {
-    if (!value) {
-      setSelectedMaterialCost({ label: "", value: 0 })
-      setInvoiceMaterial({
-        ...invoiceMaterial,
-        holderAmount: 0,
-        materialCost: "",
-        materialCostID: 0
-      })
-      return
-    }
-    setSelectedMaterialCost(value)
-    setInvoiceMaterial({
-      ...invoiceMaterial,
-      holderAmount: 0,
-      materialCost: value.label,
-      materialCostID: value.value
-    })
-  }
-
-  // Logic of displaying the amount of material available based on cost and name
-  const materialAmountQuery = useQuery<number, Error, number>({
-    queryKey: ["materail-amount", selectedMaterial, selectedMaterialCost],
-    queryFn: () => getMaterialAmountInLocation(selectedMaterialCost.value, addInvoiceReturnObject.returnerType, addInvoiceReturnObject.returnerID,),
-    enabled: selectedMaterialCost.value != 0 && selectedMaterial.value != 0,
-  })
-
-  useEffect(() => {
-    if (materialAmountQuery.isSuccess && materialAmountQuery.data) {
-      setInvoiceMaterial({ ...invoiceMaterial, holderAmount: materialAmountQuery.data })
-    }
-  }, [materialAmountQuery.data])
 
   //Logic of serial numbers
   const [showSerialNumberSelectModal, setShowSerialNumberSelectModal] = useState(false)
@@ -266,14 +206,9 @@ export default function AddInvoiceReturnObject({
       return
     }
 
-    if (invoiceMaterial.materialCostID == 0) {
-      toast.error("Не выбрана цена материала")
-      return
-    }
-
-    const index = invoiceMaterials.findIndex((value) => value.materialCostID == invoiceMaterial.materialCostID)
+    const index = invoiceMaterials.findIndex((value) => value.materialID == invoiceMaterial.materialID)
     if (index != -1) {
-      if (invoiceMaterials[index].materialCost == invoiceMaterial.materialCost) {
+      if (invoiceMaterials[index].materialID == invoiceMaterial.materialID) {
         if (invoiceMaterials[index].isDefective == invoiceMaterial.isDefective) {
           toast.error("Материал с такой ценой и с такими статусом браковоности был указан")
           return
@@ -295,8 +230,6 @@ export default function AddInvoiceReturnObject({
       materialID: 0,
       amount: 0,
       holderAmount: 0,
-      materialCost: "",
-      materialCostID: 0,
       materialName: "",
       unit: "",
       notes: "",
@@ -305,7 +238,6 @@ export default function AddInvoiceReturnObject({
       isDefective: false,
     })
     setSelectedMaterial({ label: "", value: 0 })
-    setSelectedMaterialCost({ label: "", value: 0 })
   }
 
   //Logic of deleting material from list of materials
@@ -351,7 +283,7 @@ export default function AddInvoiceReturnObject({
       details: addInvoiceReturnObject,
       items: invoiceMaterials.map<InvoiceReturnItem>((value) => ({
         amount: value.amount,
-        materialCostID: value.materialCostID,
+        materialID: value.materialID,
         isDefected: value.isDefective,
         serialNumbers: value.serialNumbers,
         notes: value.notes,
@@ -519,9 +451,6 @@ export default function AddInvoiceReturnObject({
               <span>Ед.Изм.</span>
             </div>
             <div className="px-4 py-3">
-              <span>Цена</span>
-            </div>
-            <div className="px-4 py-3">
               <span>Доступно</span>
             </div>
             <div className="px-4 py-3">
@@ -552,20 +481,6 @@ export default function AddInvoiceReturnObject({
               />
             </div>
             <div className="px-4 py-3 flex items-center">{invoiceMaterial.unit}</div>
-            <div className="px-4 py-3">
-              <Select
-                className="basic-single"
-                classNamePrefix="select"
-                isSearchable={true}
-                isClearable={true}
-                menuPosition="fixed"
-                name={"materials-costs"}
-                placeholder={""}
-                value={selectedMaterialCost}
-                options={availableMaterialCosts}
-                onChange={(value) => onMaterialCostSelect(value)}
-              />
-            </div>
             <div className="px-4 py-3 flex items-center">{invoiceMaterial.holderAmount}</div>
             <div className="px-4 py-3">
               <Input
@@ -617,7 +532,6 @@ export default function AddInvoiceReturnObject({
                 <Fragment key={index}>
                   <div className="px-4 py-3">{value.materialName}</div>
                   <div className="px-4 py-3">{value.unit}</div>
-                  <div className="px-4 py-3">{value.materialCost}</div>
                   <div className="px-4 py-3">{value.holderAmount}</div>
                   <div className="px-4 py-3">{value.amount}</div>
                   <div className="px-4 py-3">{value.isDefective ? "ДА" : "НЕТ"}</div>

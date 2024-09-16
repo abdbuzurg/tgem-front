@@ -15,12 +15,10 @@ export interface IInvoiceReturn {
 
 export interface IInvoiceReturnMaterials {
   materialID: number
-  materialCostID: number
   materialName: string
   unit: string
   holderAmount: number
   amount: number
-  materialCost: string
   hasSerialNumber: boolean
   serialNumbers: string[]
   isDefective: boolean

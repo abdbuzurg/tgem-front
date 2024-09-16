@@ -13,6 +13,7 @@ import ShowInvoiceOutputOutOfProjectDetails from "../../components/invoice/outpu
 import EditInvoiceOutputOutOfProject from "../../components/invoice/output/EditInvoiceOutputOutOfProject"
 import IReactSelectOptions from "../../services/interfaces/react-select"
 import Modal from "../../components/Modal"
+import toast from "react-hot-toast"
 
 export default function InvoiceOutputOutOfProject() {
 
@@ -101,11 +102,39 @@ export default function InvoiceOutputOutOfProject() {
 
     if (!e.target.files) return
 
-    confirmationFileMutation.mutate({ id: tableData[index].id, file: e.target.files[0]! })
+    const confirmationFileToast = toast.loading("Загрузка подтвердающего файла...")
+    confirmationFileMutation.mutate({
+      id: tableData[index].id,
+      file: e.target.files[0]!
+    }, {
+      onSuccess: () => {
+        toast.dismiss(confirmationFileToast)
+        toast.success("Подтвердающий файл загружен")
+        queryClient.invalidateQueries(["invoice-input"])
+      },
+      onError: (err) => {
+        toast.dismiss(confirmationFileToast)
+        toast.error(`Ошибка при загрузке файла: ${err.message}`)
+      },
+    })
 
     e.target.files = null
     e.target.value = ''
   }
+
+  const [deliveryCodeForDocumentDownload, setDeliveryCodeForDocumentDownload] = useState<string>("")
+  useQuery({
+    queryKey: ["invoice-output-document", deliveryCodeForDocumentDownload],
+    queryFn: async () => {
+      const loadingToast = toast.loading("Идет скачка файла")
+      return getInvoiceOutputOutOfProjectDocument(deliveryCodeForDocumentDownload)
+        .then(() => toast.success("Документ скачан"))
+        .catch(err => toast.error(`Ошибка при скачке документа: ${err}`))
+        .finally(() => toast.dismiss(loadingToast))
+    },
+    enabled: deliveryCodeForDocumentDownload != "",
+  })
+
   const [showSearchModal, setShowSearchModal] = useState(false)
   const [selectedNameOfProject, setSelectedNameOfProject] = useState<IReactSelectOptions<string>>({ label: "", value: "", })
   const [allNamesOfProjects, setAllNamesOfProjects] = useState<IReactSelectOptions<string>[]>([])
@@ -190,7 +219,7 @@ export default function InvoiceOutputOutOfProject() {
                 {row.confirmation &&
                   <IconButton
                     icon={<FaDownload size="20px" title={`Скачать подтвержденный файл накладной ${row.deliveryCode}`} />}
-                    onClick={() => getInvoiceOutputOutOfProjectDocument(row.deliveryCode)}
+                    onClick={() => setDeliveryCodeForDocumentDownload(row.deliveryCode)}
                   />
                 }
                 {!row.confirmation &&

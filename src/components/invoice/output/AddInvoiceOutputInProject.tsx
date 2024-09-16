@@ -231,9 +231,12 @@ export default function AddInvoiceOutputInProject({ setShowAddModal }: Props) {
   // SUBMIT INVOICE LOGIC
   const createInvoiceOutputMutation = useMutation<InvoiceOutputInProjectMutation, Error, InvoiceOutputInProjectMutation>({
     mutationFn: createInvoiceOutputInProject,
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries(["invoice-output-in-project"])
       setShowAddModal(false)
+    },
+    onError: (err) => {
+      toast.error(`Ошибка при создании накладной: ${err.message}`)
     }
   })
 

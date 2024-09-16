@@ -302,12 +302,13 @@ export default function EditInvoiceOutputInProject({
     onSuccess: () => {
       queryClient.invalidateQueries(["invoice-output-in-project"])
       setShowEditModal(false)
+    },
+    onError: (err) => {
+      toast.error(`Ошибка при изменение накладной: ${err.message}`)
     }
   })
 
   const onEditMutationSubmit = () => {
-    console.log(editInvoiceOutputInProject)
-
     if (editInvoiceOutputInProject.warehouseManagerWorkerID == 0) {
       toast.error("Не указан заведующий складом")
       return

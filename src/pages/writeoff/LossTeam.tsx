@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react"
 import Button from "../../components/UI/button"
 import AddInvoiceWriteOff from "../../components/invoice/writeoff/AddInvoiceWriteOff"
-import { useInfiniteQuery, useMutation, useQueryClient } from "@tanstack/react-query"
+import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { ENTRY_LIMIT } from "../../services/api/constants"
 import { InvoiceWriteOffConfirmationData, InvoiceWriteOffPagianted, deleteInvoiceWriteOff, getInvoiceWriteOffDocument, getPaginatedInvoiceWriteOff, sendInvoiceWriteOffConfirmationExcel } from "../../services/api/invoiceWriteoff"
 import { IInvoiceWriteOffView } from "../../services/interfaces/invoiceWriteOff"
@@ -11,6 +11,7 @@ import { FaDownload, FaEdit, FaRegListAlt, FaRegTrashAlt, FaUpload } from "react
 import DeleteModal from "../../components/deleteModal"
 import DetailsInvoiceWriteOff from "../../components/invoice/writeoff/DetailsInvoiceWriteOff"
 import EditInvoiceWriteOff from "../../components/invoice/writeoff/EditInvoiceWriteOff"
+import toast from "react-hot-toast"
 
 export default function LossTeam() {
   const tableDataQuery = useInfiniteQuery<InvoiceWriteOffPagianted, Error>({
@@ -98,12 +99,39 @@ export default function LossTeam() {
 
     if (!e.target.files) return
 
-    confirmationFileMutation.mutate({ id: tableData[index].id, file: e.target.files[0]! })
+    const confirmationFileToast = toast.loading("Загрузка подтвердающего файла...")
+    confirmationFileMutation.mutate({
+      id: tableData[index].id,
+      file: e.target.files[0]!
+    }, {
+      onSuccess: () => {
+        toast.dismiss(confirmationFileToast)
+        toast.success("Подтвердающий файл загружен")
+        queryClient.invalidateQueries(["invoice-input"])
+      },
+      onError: (err) => {
+        toast.dismiss(confirmationFileToast)
+        toast.error(`Ошибка при загрузке файла: ${err.message}`)
+      },
+    })
 
     e.target.files = null
     e.target.value = ''
 
   }
+
+  const [deliveryCodeForDocumentDownload, setDeliveryCodeForDocumentDownload] = useState<string>("")
+  useQuery({
+    queryKey: ["invoice-writeoff-document", deliveryCodeForDocumentDownload],
+    queryFn: async () => {
+      const loadingToast = toast.loading("Идет скачка файла")
+      return getInvoiceWriteOffDocument(deliveryCodeForDocumentDownload)
+        .then(() => toast.success("Документ скачан"))
+        .catch(err => toast.error(`Ошибка при скачке документа: ${err}`))
+        .finally(() => toast.dismiss(loadingToast))
+    },
+    enabled: deliveryCodeForDocumentDownload != "",
+  })
 
   return (
     <main>
@@ -163,7 +191,7 @@ export default function LossTeam() {
                   {row.confirmation &&
                     <IconButton
                       icon={<FaDownload size="20px" title={`Скачать документ накладной ${row.deliveryCode}`} />}
-                      onClick={() => getInvoiceWriteOffDocument(row.deliveryCode)}
+                      onClick={() => setDeliveryCodeForDocumentDownload(row.deliveryCode)}
                     />
                   }
                   {!row.confirmation &&

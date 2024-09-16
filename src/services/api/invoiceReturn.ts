@@ -3,7 +3,6 @@ import { IInvoiceReturn, IInvoiceReturnMaterials, IInvoiceReturnView } from "../
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
-import Material from "../interfaces/material"
 import { IMaterialCost } from "../interfaces/materialCost"
 import { InvoiceMaterialViewWithSerialNumbers, InvoiceMaterialViewWithoutSerialNumbers } from "../interfaces/invoiceMaterial"
 
@@ -35,7 +34,7 @@ export async function deleteInvoiceReturn(id: number): Promise<boolean> {
   }
 }
 export interface InvoiceReturnItem {
-  materialCostID: number
+  materialID: number
   amount: number
   serialNumbers: string[]
   isDefected: boolean
@@ -148,8 +147,16 @@ export async function buildReport(filter: InvoiceReturnReportFilter): Promise<bo
   }
 }
 
-export async function getUniqueMaterialsInLocation(locationType: string, locationID: number): Promise<Material[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<Material[]>>(`${URL}/material/${locationType}/${locationID}`)
+export interface InvoiceReturnMaterialsForSelect {
+  materialID: number
+  materialName: string
+  materialUnit: string
+  amount: number
+  hasSerialNumber: boolean
+}
+
+export async function getUniqueMaterialsInLocation(locationType: string, locationID: number): Promise<InvoiceReturnMaterialsForSelect[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceReturnMaterialsForSelect[]>>(`${URL}/material/${locationType}/${locationID}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
     return response.data
@@ -211,6 +218,16 @@ export async function getInvoiceReturnMaterilsWithSerialNumbersByID(id: number):
 
 export async function getInvoiceReturnMaterialsForEdit(id: number): Promise<IInvoiceReturnMaterials[]> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<IInvoiceReturnMaterials[]>>(`${URL}/invoice-materials/${id}`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export async function getMaterialAmountByMaterialID(materialID: number, locationID: number, locationType: string): Promise<number> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<number>>(`${URL}/amount/${locationType}/${locationID}/${materialID}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
     return response.data
