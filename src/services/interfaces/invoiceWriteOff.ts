@@ -15,8 +15,6 @@ export interface IInvoiceWriteOffMaterials {
   materialName: string
   unit: string
   amount: number
-  materialCostID: number
-  materialCost: number
   notes: string
   hasSerialNumber: boolean
   serialNumbers: string[]

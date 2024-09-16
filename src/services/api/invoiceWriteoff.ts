@@ -35,7 +35,7 @@ export async function deleteInvoiceWriteOff(id: number): Promise<boolean> {
 }
 
 export interface InvoiceWriteOffItem {
-  materialCostID: number
+  materialID: number
   amount: number
   notes: string
 }
@@ -132,5 +132,23 @@ export async function buildWriteOffReport(filter: InvoiceWriteOffReportParameter
     return true
   } else {
     throw new Error(responseRaw.data)
+  }
+}
+
+export interface InvoiceWriteOffMaterialsForSelect {
+  materialID: number
+  materialName: string
+  materialUnit: string
+  amount: number
+  hasSerialNumber: boolean
+}
+
+export async function getUniqueMaterialsInLocation(locationType: string, locationID: number): Promise<InvoiceWriteOffMaterialsForSelect[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceWriteOffMaterialsForSelect[]>>(`${URL}/material/${locationType}/${locationID}`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
   }
 }

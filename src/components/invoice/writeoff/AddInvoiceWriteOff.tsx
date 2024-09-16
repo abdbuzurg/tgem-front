@@ -4,10 +4,8 @@ import "react-datepicker/dist/react-datepicker.css";
 import Modal from '../../Modal';
 import { Fragment, useEffect, useState } from 'react';
 import { IInvoiceWriteOff, IInvoiceWriteOffMaterials } from '../../../services/interfaces/invoiceWriteOff';
-import Material from '../../../services/interfaces/material';
 import IReactSelectOptions from '../../../services/interfaces/react-select';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { IMaterialCost } from '../../../services/interfaces/materialCost';
 import LoadingDots from '../../UI/loadingDots';
 import Button from '../../UI/button';
 import toast from 'react-hot-toast';
@@ -19,8 +17,7 @@ import { TeamDataForSelect } from '../../../services/interfaces/teams';
 import { getAllObjects } from '../../../services/api/object';
 import { IObject } from '../../../services/interfaces/objects';
 import { objectTypeIntoRus } from '../../../services/lib/objectStatuses';
-import { InvoiceWriteOffItem, InvoiceWriteOffMutation, createInvoiceWriteOff } from '../../../services/api/invoiceWriteoff';
-import { getAllMaterialInALocation, getMaterailCostsInALocation } from '../../../services/api/materialLocation';
+import { InvoiceWriteOffItem, InvoiceWriteOffMaterialsForSelect, InvoiceWriteOffMutation, createInvoiceWriteOff, getUniqueMaterialsInLocation } from '../../../services/api/invoiceWriteoff';
 
 interface Props {
   setShowAddModal: React.Dispatch<React.SetStateAction<boolean>>
@@ -87,8 +84,6 @@ export default function AddInvoiceWriteOff({
     materialName: "",
     unit: "",
     amount: 0,
-    materialCostID: 0,
-    materialCost: 0,
     notes: "",
     hasSerialNumber: false,
     serialNumbers: [],
@@ -96,9 +91,9 @@ export default function AddInvoiceWriteOff({
   })
 
   // MATERIAL SELECT LOGIC
-  const materialQuery = useQuery<Material[], Error, Material[]>({
-    queryKey: ["material-location-all",],
-    queryFn: () => getAllMaterialInALocation(locationWriteOff, writeOffLocation.value),
+  const materialQuery = useQuery<InvoiceWriteOffMaterialsForSelect[], Error, InvoiceWriteOffMaterialsForSelect[]>({
+    queryKey: ["material-location-all"],
+    queryFn: () => getUniqueMaterialsInLocation(locationWriteOff, writeOffLocation.value),
     enabled: writeOffLocation.value != 0 || locationWriteOff == "warehouse"
   })
   const [allMaterialData, setAllMaterialData] = useState<IReactSelectOptions<number>[]>([])
@@ -108,7 +103,7 @@ export default function AddInvoiceWriteOff({
       setAllMaterialData([
         ...materialQuery
           .data
-          .map<IReactSelectOptions<number>>((value) => ({ value: value.id, label: value.name })),
+          .map<IReactSelectOptions<number>>((value) => ({ value: value.materialID, label: value.materialName })),
       ])
     }
   }, [materialQuery.data])
@@ -127,24 +122,17 @@ export default function AddInvoiceWriteOff({
     }
     setSelectedMaterial(value)
     if (materialQuery.data && materialQuery.isSuccess) {
-      const material = materialQuery.data.find((material) => material.id == value.value)!
+      const material = materialQuery.data.find((material) => material.materialID == value.value)!
       setInvoiceMaterial({
         ...invoiceMaterial,
-        unit: material.unit,
-        materialID: material.id,
-        materialName: material.name,
+        unit: material.materialUnit,
+        materialID: material.materialID,
+        materialName: material.materialName,
         hasSerialNumber: material.hasSerialNumber,
+        locationAmount: material.amount,
       })
-      materialCostQuery.refetch()
     }
   }
-
-  // MATERIAL COST SELECT LOGIC
-  const materialCostQuery = useQuery<IMaterialCost[], Error, IMaterialCost[]>({
-    queryKey: ["material-location-cost", selectedMaterial.value],
-    queryFn: () => getMaterailCostsInALocation(locationWriteOff, writeOffLocation.value, invoiceMaterial.materialID),
-    enabled: selectedMaterial.value != 0,
-  })
 
   //ADDING MATERIAL TO LIST LOGIC
   const onAddClick = () => {
@@ -156,16 +144,12 @@ export default function AddInvoiceWriteOff({
 
     const index = invoiceMaterials.findIndex((value) => value.materialID == invoiceMaterial.materialID)
     if (index != -1) {
-      if (invoiceMaterial.materialCost == invoiceMaterials[index].materialCost) {
+      if (invoiceMaterial.materialID == invoiceMaterials[index].materialID) {
         toast.error("Такой материал с такой ценой уже был выбран. Выберите другой ценник или же другой материл")
         return
       }
     }
 
-    if (invoiceMaterial.materialCostID == 0) {
-      toast.error("Не выбрана цена материала")
-      return
-    }
 
     if (invoiceMaterial.amount <= 0) {
       toast.error("Неправильно указано количество")
@@ -185,9 +169,7 @@ export default function AddInvoiceWriteOff({
     setInvoiceMaterials([invoiceMaterial, ...invoiceMaterials])
     setInvoiceMaterial({
       amount: 0,
-      materialCostID: 0,
       materialName: "",
-      materialCost: 0,
       materialID: 0,
       notes: "",
       unit: "",
@@ -228,7 +210,7 @@ export default function AddInvoiceWriteOff({
     createInvoiceWriteOffMutation.mutate({
       details: addInvoiceWriteOff,
       items: invoiceMaterials.map<InvoiceWriteOffItem>(val => ({
-        materialCostID: val.materialCostID,
+        materialID: val.materialID,
         amount: val.amount,
         notes: val.notes,
       }))
@@ -402,7 +384,6 @@ export default function AddInvoiceWriteOff({
                   <div className="px-4 py-3">{value.materialName}</div>
                   <div className="px-4 py-3">{value.unit}</div>
                   <div className="px-4 py-3">{value.amount}</div>
-                  <div className="px-4 py-3">{value.materialCost}</div>
                   <div className="px-4 py-3">{value.notes}</div>
                   <div className="px-4 py-3 flex items-center">
                     <Button buttonType="delete" onClick={() => onDeleteClick(index)} text="Удалить" />

@@ -7,10 +7,8 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { IObject } from "../../../services/interfaces/objects"
 import { getAllObjects } from "../../../services/api/object"
 import { objectTypeIntoRus } from "../../../services/lib/objectStatuses"
-import Material from "../../../services/interfaces/material"
-import { IMaterialCost } from "../../../services/interfaces/materialCost"
 import toast from "react-hot-toast"
-import { InvoiceWriteOffItem, InvoiceWriteOffMutation, getInvoiceWriteOffMaterialsForEdit, updateInvoiceWriteOff } from "../../../services/api/invoiceWriteoff"
+import { InvoiceWriteOffItem, InvoiceWriteOffMaterialsForSelect, InvoiceWriteOffMutation, getInvoiceWriteOffMaterialsForEdit, getUniqueMaterialsInLocation, updateInvoiceWriteOff } from "../../../services/api/invoiceWriteoff"
 import Modal from "../../Modal"
 import LoadingDots from "../../UI/loadingDots"
 import Select from 'react-select'
@@ -20,7 +18,6 @@ import IconButton from "../../IconButtons"
 import { IoIosAddCircleOutline } from "react-icons/io"
 import Input from "../../UI/Input"
 import Button from "../../UI/button"
-import { getAllMaterialInALocation, getAmountByCostAndLocation, getMaterailCostsInALocation } from "../../../services/api/materialLocation"
 
 interface Props {
   setShowEditModal: React.Dispatch<React.SetStateAction<boolean>>
@@ -99,8 +96,6 @@ export default function EditInvoiceWriteOff({
     materialName: "",
     unit: "",
     amount: 0,
-    materialCostID: 0,
-    materialCost: 0,
     notes: "",
     hasSerialNumber: false,
     serialNumbers: [],
@@ -108,9 +103,9 @@ export default function EditInvoiceWriteOff({
   })
 
   // MATERIAL SELECT LOGIC
-  const materialQuery = useQuery<Material[], Error, Material[]>({
-    queryKey: ["material-location-all",],
-    queryFn: () => getAllMaterialInALocation(locationWriteOff, writeOffLocation.value),
+  const materialQuery = useQuery<InvoiceWriteOffMaterialsForSelect[], Error, InvoiceWriteOffMaterialsForSelect[]>({
+    queryKey: ["material-location-all"],
+    queryFn: () => getUniqueMaterialsInLocation(locationWriteOff, writeOffLocation.value),
     enabled: writeOffLocation.value != 0 || locationWriteOff == "warehouse"
   })
   const [allMaterialData, setAllMaterialData] = useState<IReactSelectOptions<number>[]>([])
@@ -120,12 +115,11 @@ export default function EditInvoiceWriteOff({
       setAllMaterialData([
         ...materialQuery
           .data
-          .map<IReactSelectOptions<number>>((value) => ({ value: value.id, label: value.name })),
+          .map<IReactSelectOptions<number>>((value) => ({ value: value.materialID, label: value.materialName })),
       ])
     }
   }, [materialQuery.data])
   const onMaterialSelect = (value: IReactSelectOptions<number> | null) => {
-    setSelectedMaterialCost({ label: "", value: 0 })
     if (!value) {
       setSelectedMaterial({ label: "", value: 0 })
       setInvoiceMaterial({
@@ -139,67 +133,16 @@ export default function EditInvoiceWriteOff({
     }
     setSelectedMaterial(value)
     if (materialQuery.data && materialQuery.isSuccess) {
-      const material = materialQuery.data.find((material) => material.id == value.value)!
+      const material = materialQuery.data.find((material) => material.materialID == value.value)!
       setInvoiceMaterial({
         ...invoiceMaterial,
-        unit: material.unit,
-        materialID: material.id,
-        materialName: material.name,
+        unit: material.materialUnit,
+        materialID: material.materialID,
+        materialName: material.materialName,
         hasSerialNumber: material.hasSerialNumber,
       })
-      materialCostQuery.refetch()
     }
   }
-
-  // MATERIAL COST SELECT LOGIC
-  const materialCostQuery = useQuery<IMaterialCost[], Error, IMaterialCost[]>({
-    queryKey: ["material-location-cost", selectedMaterial.value],
-    queryFn: () => getMaterailCostsInALocation(locationWriteOff, writeOffLocation.value, invoiceMaterial.materialID),
-    enabled: selectedMaterial.value != 0,
-  })
-  const [allMaterialCostData, setAllMaterialCostData] = useState<IReactSelectOptions<number>[]>([])
-  const [selectedMaterialCost, setSelectedMaterialCost] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
-  useEffect(() => {
-    if (materialCostQuery.isSuccess && materialCostQuery.data) {
-      setAllMaterialCostData([...materialCostQuery.data.map<IReactSelectOptions<number>>((value) => ({ label: value.costM19.toString(), value: value.id }))])
-      if (materialCostQuery.data.length == 1) {
-        setSelectedMaterialCost({ label: materialCostQuery.data[0].costM19.toString(), value: materialCostQuery.data[0].id })
-        setInvoiceMaterial({
-          ...invoiceMaterial,
-          materialCost: materialCostQuery.data[0].costM19,
-          materialCostID: materialCostQuery.data[0].id,
-        })
-      }
-    }
-  }, [materialCostQuery.data])
-  const onMaterialCostSelect = (value: IReactSelectOptions<number> | null) => {
-    if (!value) {
-      setSelectedMaterialCost({ label: "", value: 0 })
-      setInvoiceMaterial({ ...invoiceMaterial, materialCostID: 0, materialCost: 0 })
-      return
-    }
-
-    setSelectedMaterialCost(value)
-    if (materialCostQuery.isSuccess && materialCostQuery.data) {
-      const materialCost = materialCostQuery.data!.find((cost) => cost.id == value.value)!
-      setInvoiceMaterial({ ...invoiceMaterial, materialCostID: materialCost.id, materialCost: materialCost.costM19 })
-    }
-  }
-
-  //Material Amount 
-  const materialAmounQuery = useQuery<number, Error, number>({
-    queryKey: ["material-location-amount", selectedMaterial.value],
-    queryFn: () => getAmountByCostAndLocation(locationWriteOff, writeOffLocation.value, invoiceMaterial.materialCostID),
-    enabled: selectedMaterialCost.value != 0,
-  })
-  useEffect(() => {
-    if (materialAmounQuery.isSuccess && materialAmounQuery.data) {
-      setInvoiceMaterial({
-        ...invoiceMaterial,
-        locationAmount: materialAmounQuery.data,
-      })
-    }
-  }, [materialAmounQuery.data])
 
   //ADDING MATERIAL TO LIST LOGIC
   const onAddClick = () => {
@@ -211,15 +154,10 @@ export default function EditInvoiceWriteOff({
 
     const index = invoiceMaterials.findIndex((value) => value.materialID == invoiceMaterial.materialID)
     if (index != -1) {
-      if (invoiceMaterial.materialCost == invoiceMaterials[index].materialCost) {
+      if (invoiceMaterial.materialID == invoiceMaterials[index].materialID) {
         toast.error("Такой материал с такой ценой уже был выбран. Выберите другой ценник или же другой материл")
         return
       }
-    }
-
-    if (invoiceMaterial.materialCostID == 0) {
-      toast.error("Не выбрана цена материала")
-      return
     }
 
     if (invoiceMaterial.amount <= 0) {
@@ -235,9 +173,7 @@ export default function EditInvoiceWriteOff({
     setInvoiceMaterials([invoiceMaterial, ...invoiceMaterials])
     setInvoiceMaterial({
       amount: 0,
-      materialCostID: 0,
       materialName: "",
-      materialCost: 0,
       materialID: 0,
       notes: "",
       unit: "",
@@ -246,7 +182,6 @@ export default function EditInvoiceWriteOff({
       locationAmount: 0,
     })
     setSelectedMaterial({ label: "", value: 0 })
-    setSelectedMaterialCost({ label: "", value: 0 })
   }
 
   // DELETE MATERIAL LOGIC
@@ -279,7 +214,7 @@ export default function EditInvoiceWriteOff({
     updateInvoiceWriteOffMutation.mutate({
       details: editInvoiceWriteOff,
       items: invoiceMaterials.map<InvoiceWriteOffItem>(val => ({
-        materialCostID: val.materialCostID,
+        materialID: val.materialID,
         amount: val.amount,
         notes: val.notes,
       }))
@@ -420,27 +355,6 @@ export default function EditInvoiceWriteOff({
                 onChange={(e) => setInvoiceMaterial((prev) => ({ ...prev, amount: e.target.valueAsNumber }))}
               />
             </div>
-            {materialCostQuery.isFetching &&
-              <div className="px-4 py-3">
-                <LoadingDots height={36} />
-              </div>
-            }
-            {(materialCostQuery.isSuccess || !materialCostQuery.isFetching) &&
-              <div className="px-4 py-3">
-                <Select
-                  className="basic-single"
-                  classNamePrefix="select"
-                  isSearchable={true}
-                  isClearable={true}
-                  menuPosition="fixed"
-                  name={"materials-costs"}
-                  placeholder={""}
-                  value={selectedMaterialCost}
-                  options={allMaterialCostData}
-                  onChange={(value) => onMaterialCostSelect(value)}
-                />
-              </div>
-            }
             <div className="px-4 py-3">{invoiceMaterial.locationAmount}</div>
             <div className="px-4 py-3">
               <Input
@@ -478,7 +392,6 @@ export default function EditInvoiceWriteOff({
                   <div className="px-4 py-3">{value.materialName}</div>
                   <div className="px-4 py-3">{value.unit}</div>
                   <div className="px-4 py-3">{value.amount}</div>
-                  <div className="px-4 py-3">{value.materialCost}</div>
                   <div className="px-4 py-3">{value.notes}</div>
                   <div className="px-4 py-3 flex items-center">
                     <Button buttonType="delete" onClick={() => onDeleteClick(index)} text="Удалить" />
