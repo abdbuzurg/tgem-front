@@ -143,6 +143,11 @@ export default function Materials() {
       return
     }
 
+    if (materialMutationData.plannedAmountForProject <= 0) {
+      toast.error("Запланированное количество должны быть больше 0")
+      return
+    }
+
     switch (mutationModalType) {
       case "create":
         createMaterialMutation.mutate(materialMutationData)

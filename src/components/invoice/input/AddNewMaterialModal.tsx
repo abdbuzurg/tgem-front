@@ -57,6 +57,8 @@ export default function AddNewMaterialModal({ setShowModal }: Props) {
     unit: "",
     article: "",
     hasSerialNumber: false,
+    plannedAmountForProject: 0,
+    showPlannedAmountInReport: false,
   })
 
   const [materialCostData, setMaterialCostData] = useState<IMaterialCost>({
@@ -134,6 +136,11 @@ export default function AddNewMaterialModal({ setShowModal }: Props) {
 
     if (materialData.article == "") {
       toast.error("Не указан пункт материала")
+      return
+    }
+
+    if (materialData.plannedAmountForProject <= 0) {
+      toast.error("Запланированное количество должны быть больше 0")
       return
     }
 
@@ -245,6 +252,30 @@ export default function AddNewMaterialModal({ setShowModal }: Props) {
                           }
                           />
                           <label htmlFor="hasSerialNumber">Серийный номер</label>
+                        </div>
+                        <div className="flex flex-col space-y-1">
+                          <label htmlFor="code">Запланированное количество<span className="text-red-600">*</span></label>
+                          <Input
+                            name="plannedAmountForProject"
+                            type="number"
+                            value={materialData.plannedAmountForProject}
+                            onChange={(e) => setMaterialData({ ...materialData, [e.target.name]: e.target.valueAsNumber })}
+                          />
+                        </div>
+                        <div className="flex flex-col space-y-1">
+                          <div className="flex space-x-2 items-center">
+                            <input type="checkbox" id="hasSerialNumber" value={1} name="hasSerialNumber" onChange={
+                              (e) => {
+                                if (e.target.checked) {
+                                  setMaterialData({ ...materialData, showPlannedAmountInReport: true })
+                                } else {
+                                  setMaterialData({ ...materialData, showPlannedAmountInReport: false })
+                                }
+                              }
+                            }
+                            />
+                            <label htmlFor="hasSerialNumber">Показать в отчете "Xод работы проекта"</label>
+                          </div>
                         </div>
                         <div className="flex flex-col space-y-1">
                           <label htmlFor="notes">Примичание</label>
