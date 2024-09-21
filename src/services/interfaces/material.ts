@@ -7,4 +7,6 @@ export default interface Material {
   notes: string
   article: string
   hasSerialNumber: boolean
+  plannedAmountForProject: number
+  showPlannedAmountInReport: boolean
 }

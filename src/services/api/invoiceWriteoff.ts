@@ -93,15 +93,19 @@ export interface InvoiceWriteOffConfirmationData {
 export async function sendInvoiceWriteOffConfirmationExcel(data: InvoiceWriteOffConfirmationData): Promise<boolean> {
   const formData = new FormData()
   formData.append("file", data.file)
-  const responseRaw = await axiosClient.post(`${URL}/confirm/${data.id}`, formData, {
+  const responseRaw = await axiosClient.post<IAPIResposeFormat<boolean>>(`${URL}/confirm/${data.id}`, formData, {
     headers: {
       "Content-Type": `multipart/form-data; boundary=WebAppBoundary`,
     }
   })
   if (responseRaw.status == 200) {
-    return true
+    if (responseRaw.data.success) {
+      return true
+    } else {
+      throw new Error(responseRaw.data.error)
+    }
   } else {
-    throw new Error(responseRaw.data)
+    throw new Error(responseRaw.data.error)
   }
 }
 

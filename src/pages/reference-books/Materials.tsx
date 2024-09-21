@@ -89,6 +89,8 @@ export default function Materials() {
     unit: "",
     article: "",
     hasSerialNumber: false,
+    plannedAmountForProject: 0,
+    showPlannedAmountInReport: false,
   })
 
   const measurements = MEASUREMENT.map<IReactSelectOptions<string>>((value) => ({ label: value, value: value }))
@@ -258,10 +260,10 @@ export default function Materials() {
               category: "",
               code: "",
             })
-            setSelectedMaterialUnit({label: "", value: ""})
-            setSelectedMaterialCategory({label:"", value: ""})
-            setSelectedMaterialName({label: "", value: ""})
-            setSelectedMaterialCode({label: "", value: ""})
+            setSelectedMaterialUnit({ label: "", value: "" })
+            setSelectedMaterialCategory({ label: "", value: "" })
+            setSelectedMaterialName({ label: "", value: "" })
+            setSelectedMaterialCode({ label: "", value: "" })
           }}
           className="text-white py-2.5 px-5 rounded-lg bg-red-700 hover:bg-red-800 hover:cursor-pointer"
         >
@@ -437,6 +439,30 @@ export default function Materials() {
                   }
                   />
                   <label htmlFor="hasSerialNumber">Необходимость контоля на уровне SN</label>
+                </div>
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="code">Запланированное количество<span className="text-red-600">*</span></label>
+                <Input
+                  name="plannedAmountForProject"
+                  type="number"
+                  value={materialMutationData.plannedAmountForProject}
+                  onChange={(e) => setMaterialMutationData({ ...materialMutationData, [e.target.name]: e.target.valueAsNumber })}
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <div className="flex space-x-2 items-center">
+                  <input type="checkbox" id="hasSerialNumber" value={1} name="hasSerialNumber" onChange={
+                    (e) => {
+                      if (e.target.checked) {
+                        setMaterialMutationData({ ...materialMutationData, showPlannedAmountInReport: true })
+                      } else {
+                        setMaterialMutationData({ ...materialMutationData, showPlannedAmountInReport: false })
+                      }
+                    }
+                  }
+                  />
+                  <label htmlFor="hasSerialNumber">Показать в отчете "Xод работы проекта"</label>
                 </div>
               </div>
               <div className="flex flex-col space-y-1">

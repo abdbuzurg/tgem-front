@@ -79,14 +79,14 @@ export default function Worker() {
   })
   const createMaterialMutation = useMutation<IWorker, Error, IWorker>({
     mutationFn: createWorker,
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries(["workers"])
       setShowMutationModal(false)
     }
   })
   const updateMaterialMutation = useMutation<IWorker, Error, IWorker>({
     mutationFn: updateWorker,
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries(["workers"])
       setShowMutationModal(false)
     }
@@ -326,11 +326,15 @@ export default function Worker() {
                   onChange={(e) => setWorkerMutationData({ ...workerMutationData, [e.target.name]: e.target.value })}
                 />
               </div>
-              <div>
-                <Button
-                  text={mutationModalType == "create" ? "Добавить" : "Подтвердить изменения"}
-                  onClick={onMutationSubmit}
-                />
+              <div className="mt-4 flex">
+                <div
+                  onClick={() => onMutationSubmit()}
+                  className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+                >
+                  {(createMaterialMutation.isLoading || updateMaterialMutation.isLoading) && <LoadingDots height={30} />}
+                  {!createMaterialMutation.isLoading && mutationModalType == "create" && "Опубликовать"}
+                  {!updateMaterialMutation.isLoading && mutationModalType == "update" && "Изменить"}
+                </div>
               </div>
             </div>
           </div>

@@ -398,7 +398,7 @@ export default function AddInvoiceReturnTeam({
             <p className="text-xl font-semibold text-gray-800">Материалы наклданой</p>
           </div>
           {/* table head START */}
-          <div className="grid grid-cols-8 text-sm font-bold shadow-md text-left mt-2 w-full border-box">
+          <div className="grid grid-cols-7 text-sm font-bold shadow-md text-left mt-2 w-full border-box">
             <div className="px-4 py-3">
               <span>Наименование</span>
             </div>
@@ -420,7 +420,7 @@ export default function AddInvoiceReturnTeam({
             <div className="px-4 py-3"></div>
           </div>
           {/* table head END */}
-          <div className="grid grid-cols-8 text-sm text-left mt-2 w-full border-box">
+          <div className="grid grid-cols-7 text-sm text-left mt-2 w-full border-box">
             <div className="px-4 py-3">
               <Select
                 className="basic-single"
@@ -482,7 +482,7 @@ export default function AddInvoiceReturnTeam({
             </div>
           </div>
           {invoiceMaterials.length > 0 &&
-            <div className="grid grid-cols-8 text-sm text-left mt-2 w-full border-box overflow-y-auto max-h-[50vh]">
+            <div className="grid grid-cols-7 text-sm text-left mt-2 w-full border-box overflow-y-auto max-h-[50vh]">
               {invoiceMaterials.map((value, index) =>
                 <Fragment key={index}>
                   <div className="px-4 py-3">{value.materialName}</div>
