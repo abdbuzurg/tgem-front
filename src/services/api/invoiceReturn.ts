@@ -69,9 +69,7 @@ export async function updateInvoiceReturn(data: InvoiceReturnMutation): Promise<
 export async function getInvoiceReturnDocument(deliveryCode: string): Promise<boolean> {
   const responseRaw = await axiosClient.get(`${URL}/document/${deliveryCode}`, { responseType: "blob", })
   if (responseRaw.status == 200) {
-    const contentType: string = responseRaw.headers["content-type"]
-    const extension = contentType.split("/")[1]
-    fileDownload(responseRaw.data, `${deliveryCode}.${extension}`)
+    fileDownload(responseRaw.data, `${deliveryCode}.xlsx`)
     return true
   } else {
     throw new Error(responseRaw.data)
@@ -216,8 +214,8 @@ export async function getInvoiceReturnMaterilsWithSerialNumbersByID(id: number):
   }
 }
 
-export async function getInvoiceReturnMaterialsForEdit(id: number): Promise<IInvoiceReturnMaterials[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<IInvoiceReturnMaterials[]>>(`${URL}/invoice-materials/${id}`)
+export async function getInvoiceReturnMaterialsForEdit(id: number, locationType: string, locationID: number): Promise<IInvoiceReturnMaterials[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IInvoiceReturnMaterials[]>>(`${URL}/invoice-materials/${id}/${locationType}/${locationID}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
     return response.data

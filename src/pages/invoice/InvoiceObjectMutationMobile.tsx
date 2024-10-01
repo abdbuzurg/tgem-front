@@ -5,11 +5,10 @@ import Button from "../../components/UI/button"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { TeamDataForSelect } from "../../services/interfaces/teams"
 import { IObject } from "../../services/interfaces/objects"
-import Material from "../../services/interfaces/material"
 import { IInvoiceObjectMaterials } from "../../services/interfaces/invoiceObject"
 import toast from "react-hot-toast"
 import { getAllObjects } from "../../services/api/object"
-import { InvoiceObjectCreateItems, createInvoiceObject, getMaterialAmount, getSerialNumbersOfMaterial, getTeamMaterials, getTeamsFromObjectID } from "../../services/api/invoiceObject"
+import { InvoiceObjectCreateItems, InvoiceObjectTeamMaterialData, createInvoiceObject,  getMaterialsDataFromTeam, getSerialNumbersOfMaterial, getTeamsFromObjectID } from "../../services/api/invoiceObject"
 import { useNavigate } from "react-router-dom"
 import { INVOICE_OBJECT } from "../../URLs"
 import { objectTypeIntoRus } from "../../services/lib/objectStatuses"
@@ -69,17 +68,17 @@ export default function InvoiceObjectMutationAdd() {
     value: 0,
   })
   const [availableMaterials, setAvailableMaterials] = useState<IReactSelectOptions<number>[]>([])
-  const allMaterialsQuery = useQuery<Material[], Error, Material[]>({
+  const allMaterialsQuery = useQuery<InvoiceObjectTeamMaterialData[], Error, InvoiceObjectTeamMaterialData[]>({
     queryKey: [`materials-in-team`, selectedTeam.value],
-    queryFn: () => getTeamMaterials(selectedTeam.value),
+    queryFn: () => getMaterialsDataFromTeam(selectedTeam.value),
     enabled: selectedTeam.value != 0,
   })
   useEffect(() => {
     if (allMaterialsQuery.isSuccess && allMaterialsQuery.data) {
       setAvailableMaterials([
         ...allMaterialsQuery.data.map<IReactSelectOptions<number>>((val) => ({
-          label: val.name,
-          value: val.id,
+          label: val.materialName,
+          value: val.materialID,
         }))
       ])
     }
@@ -94,29 +93,17 @@ export default function InvoiceObjectMutationAdd() {
 
     setSelectedMaterial(value)
     if (allMaterialsQuery.isSuccess && allMaterialsQuery.data) {
-      const material = allMaterialsQuery.data.find((val) => val.id == value.value)!
+      const material = allMaterialsQuery.data.find((val) => val.materialID == value.value)!
       setInvoiceMaterial({
         ...invoiceMaterial,
-        materialID: material.id,
-        materialName: material.name,
+        materialID: material.materialID,
+        materialName: material.materialName,
         hasSerialNumbers: material.hasSerialNumber,
-        unit: material.unit,
+        unit: material.materialUnit,
+        availableMaterial: material.amount,
       })
     }
   }
-
-  //Logic for getting the amount of selected material
-  const materialAmountQuery = useQuery<number, Error, number>({
-    queryKey: [`material-${selectedMaterial.value}-team-${selectedTeam.value}`],
-    queryFn: () => getMaterialAmount(selectedMaterial.value, selectedTeam.value),
-    enabled: selectedMaterial.value != 0 && selectedTeam.value != 0
-  })
-
-  useEffect(() => {
-    if (materialAmountQuery.isSuccess && materialAmountQuery.data) {
-      setInvoiceMaterial({ ...invoiceMaterial, availableMaterial: materialAmountQuery.data })
-    }
-  }, [materialAmountQuery.data])
 
   // Material list
   const [invoiceMaterials, setInvoiceMaterials] = useState<IInvoiceObjectMaterials[]>([])

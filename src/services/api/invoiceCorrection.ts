@@ -19,6 +19,7 @@ export interface InvoiceCorrectionPaginatedView {
   deliveryCode: string
   supervisorName: string
   objectName: string
+  objectType: string
   teamID: number
   teamNumber: string
   dateOfInvoice: Date

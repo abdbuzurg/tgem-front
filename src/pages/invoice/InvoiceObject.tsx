@@ -6,6 +6,7 @@ import { InvoiceObjectPaginated, InvoiceObjectPaginatedView, getInvoiceObjectPag
 import { ENTRY_LIMIT } from "../../services/api/constants";
 import { useEffect, useState } from "react";
 import LoadingDots from "../../components/UI/loadingDots";
+import { objectTypeIntoRus } from "../../services/lib/objectStatuses";
 
 export default function InvoiceObject() {
   const tableDataQuery = useInfiniteQuery<InvoiceObjectPaginated, Error>({
@@ -56,7 +57,7 @@ export default function InvoiceObject() {
             <div className="font-bold">Супервайзер</div>
             <div>{value.supervisorName}</div>
             <div className="font-bold">Объект</div>
-            <div>{value.objectName}</div>
+            <div>{value.objectName} ({objectTypeIntoRus(value.objectType)})</div>
             <div className="font-bold">Бригада</div>
             <div>{value.teamNumber}</div>
             <div className="font-bold">Дата поступления</div>

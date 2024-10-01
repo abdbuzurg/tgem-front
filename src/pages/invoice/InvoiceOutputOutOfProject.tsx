@@ -241,6 +241,10 @@ export default function InvoiceOutputOutOfProject() {
                       className="hidden"
                       value=''
                     />
+                    <IconButton
+                      icon={<FaDownload size="20px" title={`Скачать сгенерированный файл накладной ${row.deliveryCode}`} />}
+                      onClick={() => setDeliveryCodeForDocumentDownload(row.deliveryCode)}
+                    />
                     {/*   icon={<FaRegEdit size="20px" title={`Изменить данные накладной ${row.deliveryCode}`} />} */}
                     {/*   onClick={() => showDetails(index)} */}
                     {/* /> */}

@@ -68,9 +68,7 @@ export async function updateInvoiceOutputInProject(data: InvoiceOutputInProjectM
 export async function getInvoiceOutputInProjectDocument(deliveryCode: string):Promise<boolean>{
   const responseRaw = await axiosClient.get(`${URL}/document/${deliveryCode}`, { responseType: "blob" })
   if (responseRaw.status == 200) {
-    const contentType: string = responseRaw.headers["content-type"]
-    const extension = contentType.split("/")[1]
-    fileDownload(responseRaw.data, `${deliveryCode}.${extension}`)
+    fileDownload(responseRaw.data, `${deliveryCode}.xlsx`)
     return true
   } else {
     throw new Error(responseRaw.data)
@@ -85,15 +83,15 @@ export interface InvoiceOutputInProjectConfirmation {
 export async function sendInvoiceOutputInProjectConfirmationExcel(data: InvoiceOutputInProjectConfirmation): Promise<boolean> {
   const formData = new FormData()
   formData.append("file", data.file)
-  const responseRaw = await axiosClient.post(`${URL}/confirm/${data.id}`, formData, {
+  const responseRaw = await axiosClient.post<IAPIResposeFormat<boolean>>(`${URL}/confirm/${data.id}`, formData, {
     headers: {
       "Content-Type": `multipart/form-data; boundary=WebAppBoundary`,
     }
   })
-  if (responseRaw.status == 200) {
+  if (responseRaw.data.success && responseRaw.data.permission) {
     return true
   } else {
-    throw new Error(responseRaw.data)
+    throw new Error(responseRaw.data.error)
   }
 }
 

@@ -7,6 +7,7 @@ import IconButton from "../../components/IconButtons"
 import { FaBarcode } from "react-icons/fa"
 import SerialNumbersShowModal from "../../components/SerialNumberShowModal"
 import { InvoiceMaterialViewWithSerialNumbers } from "../../services/interfaces/invoiceMaterial"
+import { objectTypeIntoRus } from "../../services/lib/objectStatuses"
 
 export default function InvoiceObjectDetails() {
 
@@ -16,9 +17,11 @@ export default function InvoiceObjectDetails() {
       id: 0,
       deliveryCode: "",
       supervisorName: "",
+      objectType: "",
       objectName: "",
       teamNumber: "",
-      dateOfInvoice: new Date()
+      dateOfInvoice: new Date(),
+      ConfirmedByOperator: false,
     },
     materialsWithSN: [],
     materialsWithoutSN: [],
@@ -26,7 +29,8 @@ export default function InvoiceObjectDetails() {
 
   const fullDataQuery = useQuery<InvoiceObjectDescriptiveData, Error, InvoiceObjectDescriptiveData>({
     queryKey: [`invoice-object-${id}`],
-    queryFn: () => getInvoiceObjectDescriptiveDataByID(parseInt(id ?? ""))
+    queryFn: () => getInvoiceObjectDescriptiveDataByID(parseInt(id ?? "")),
+    enabled: id != "",
   })
 
   useEffect(() => {
@@ -64,19 +68,21 @@ export default function InvoiceObjectDetails() {
                 <div className="font-bold">Супервайзер</div>
                 <div>{displayData.invoiceData.supervisorName}</div>
                 <div className="font-bold">Объект</div>
-                <div>{displayData.invoiceData.objectName}</div>
+                <div>{displayData.invoiceData.objectName} ({objectTypeIntoRus(displayData.invoiceData.objectType)})</div>
                 <div className="font-bold">Бригада</div>
                 <div>{displayData.invoiceData.teamNumber}</div>
                 <div className="font-bold">Дата поступления</div>
                 <div>{displayData.invoiceData.dateOfInvoice.toString().substring(0, 10)}</div>
+                <div className="font-bold">Подтверждено оператором</div>
+                <div>{displayData.invoiceData.ConfirmedByOperator ? "ДА" : "НЕТ"}</div>
               </div>
             </div>
           </div>
           <div className="mt-1 px-3 flex flex-col space-y-2">
-            <div className="bg-gray-800 text-white rounded-md px-3 py-2">
-              <span className="text-xl">Поступившие метиралы без серийного номера</span>
-              <div className="flex flex-col space-y-2">
-                {displayData.materialsWithoutSN.map((val) =>
+            {displayData.materialsWithoutSN.map((val) =>
+              <div className="bg-gray-800 text-white rounded-md px-3 py-2">
+                <span className="text-xl">Поступившие метиралы без серийного номера</span>
+                <div className="flex flex-col space-y-2">
                   <div className="my-2 grid grid-cols-2 border border-white px-2 py-1 gap-1" key={val.id}>
                     <div className="font-bold">Наименование</div>
                     <div>{val.materialName}</div>
@@ -85,13 +91,13 @@ export default function InvoiceObjectDetails() {
                     <div className="font-bold">Примечание</div>
                     <div>{val.notes}</div>
                   </div>
-                )}
+                </div>
               </div>
-            </div>
-            <div className="bg-gray-800 text-white rounded-md px-3 py-2">
-              <span className="text-xl">Поступившие метиралы c серийного номера</span>
-              <div className="flex flex-col space-y-2">
-                {displayData.materialsWithSN.map((val) =>
+            )}
+            {displayData.materialsWithSN.map((val) =>
+              <div className="bg-gray-800 text-white rounded-md px-3 py-2">
+                <span className="text-xl">Поступившие метиралы c серийного номера</span>
+                <div className="flex flex-col space-y-2">
                   <div className="my-2 grid grid-cols-2 border border-white px-2 py-1 gap-1" key={val.id}>
                     <div className="font-bold">Наименование</div>
                     <div>{val.materialName}</div>
@@ -112,9 +118,9 @@ export default function InvoiceObjectDetails() {
                     <div className="font-bold">Примечание</div>
                     <div>{val.notes}</div>
                   </div>
-                )}
+                </div>
               </div>
-            </div>
+            )}
           </div>
         </>
       }

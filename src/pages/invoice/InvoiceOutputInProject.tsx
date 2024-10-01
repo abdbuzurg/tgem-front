@@ -44,7 +44,6 @@ export default function InvoiceOutputInProject() {
   //Confirmation logic
   const confirmationFileMutation = useMutation<boolean, Error, InvoiceOutputInProjectConfirmation>({
     mutationFn: sendInvoiceOutputInProjectConfirmationExcel,
-    onSuccess: () => queryClient.invalidateQueries(["invoice-output-in-project"])
   })
 
   const acceptConfirmationFile = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -91,7 +90,7 @@ export default function InvoiceOutputInProject() {
   const deleteMutation = useMutation({
     mutationFn: deleteInvoiceOutputInProject,
     onSuccess: () => {
-      queryClient.invalidateQueries(["invoice-output"])
+      queryClient.invalidateQueries(["invoice-output-in-project"])
     }
   })
   const [modalProps, setModalProps] = useState({
@@ -211,7 +210,7 @@ export default function InvoiceOutputInProject() {
                     />
                     <IconButton
                       icon={<FaDownload size="20px" title={`Скачать сгенерированный файл накладной ${row.deliveryCode}`} />}
-                      onClick={() => getInvoiceOutputInProjectDocument(row.deliveryCode)}
+                      onClick={() => setDeliveryCodeForDocumentDownload(row.deliveryCode)}
                     />               {/* <IconButton */}
                     {/*   icon={<FaRegEdit size="20px" title={`Изменить данные накладной ${row.deliveryCode}`} />} */}
                     {/*   onClick={() => showDetails(index)} */}

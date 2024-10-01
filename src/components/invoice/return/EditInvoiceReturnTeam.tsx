@@ -7,7 +7,7 @@ import { IInvoiceReturn, IInvoiceReturnMaterials, IInvoiceReturnView } from "../
 import Button from "../../UI/button";
 import IReactSelectOptions from "../../../services/interfaces/react-select";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { InvoiceReturnItem, InvoiceReturnMaterialsForSelect, InvoiceReturnMutation, getInvoiceReturnMaterialsForEdit,  getUniqueMaterialsInLocation, updateInvoiceReturn } from "../../../services/api/invoiceReturn";
+import { InvoiceReturnItem, InvoiceReturnMaterialsForSelect, InvoiceReturnMutation, getInvoiceReturnMaterialsForEdit, getUniqueMaterialsInLocation, updateInvoiceReturn } from "../../../services/api/invoiceReturn";
 import Input from "../../UI/Input";
 import toast from "react-hot-toast";
 import SerialNumberSelectReturnModal from "./SerialNumberSelectReturn";
@@ -133,7 +133,8 @@ export default function EditInvoiceReturnTeam({
   const [invoiceMaterials, setInvoiceMaterials] = useState<IInvoiceReturnMaterials[]>([])
   const invoiceMaterialsForEditQuery = useQuery<IInvoiceReturnMaterials[], Error, IInvoiceReturnMaterials[]>({
     queryKey: ["invoice-input-materials", invoiceReturnTeam.id],
-    queryFn: () => getInvoiceReturnMaterialsForEdit(invoiceReturnTeam.id)
+    queryFn: () => getInvoiceReturnMaterialsForEdit(invoiceReturnTeam.id, editInvoiceReturnTeamData.returnerType, selectedTeam.value),
+    enabled: selectedTeam.value != 0,
   })
   useEffect(() => {
     if (invoiceMaterialsForEditQuery.isSuccess && invoiceMaterialsForEditQuery.data) {

@@ -12,6 +12,7 @@ import DeleteModal from "../../components/deleteModal"
 import DetailsInvoiceWriteOff from "../../components/invoice/writeoff/DetailsInvoiceWriteOff"
 import EditInvoiceWriteOff from "../../components/invoice/writeoff/EditInvoiceWriteOff"
 import toast from "react-hot-toast"
+import ReportInvoiceWriteOff from "../../components/invoice/writeoff/ReportInvoiceWriteOff"
 
 export default function LossObject() {
 
@@ -134,12 +135,14 @@ export default function LossObject() {
     enabled: deliveryCodeForDocumentDownload != "",
   })
 
+  const [showReportModal, setShowReportModal] = useState(false)
+
   return (
     <main>
       <div className="mt-2 px-2 flex justify-between">
         <span className="text-3xl font-bold">Акт утери с Объекта</span>
         <div>
-          <Button onClick={() => { }} text="Отчет" buttonType="default" />
+          <Button onClick={() => setShowReportModal(true)} text="Отчет" buttonType="default" />
         </div>
       </div>
       <table className="table-auto text-sm text-left mt-2 w-full border-box">
@@ -265,6 +268,7 @@ export default function LossObject() {
         writeOffType="loss-object"
       />}
       {showEditModal && <EditInvoiceWriteOff setShowEditModal={setShowEditModal} invoiceWriteOff={rowToEdit!} writeOffType="loss-object" />}
+      {showReportModal && <ReportInvoiceWriteOff writeOffType="loss-object" setShowReportModal={setShowReportModal} />}
     </main>
   )
 }

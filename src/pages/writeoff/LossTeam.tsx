@@ -12,6 +12,7 @@ import DeleteModal from "../../components/deleteModal"
 import DetailsInvoiceWriteOff from "../../components/invoice/writeoff/DetailsInvoiceWriteOff"
 import EditInvoiceWriteOff from "../../components/invoice/writeoff/EditInvoiceWriteOff"
 import toast from "react-hot-toast"
+import ReportInvoiceWriteOff from "../../components/invoice/writeoff/ReportInvoiceWriteOff"
 
 export default function LossTeam() {
   const tableDataQuery = useInfiniteQuery<InvoiceWriteOffPagianted, Error>({
@@ -133,12 +134,14 @@ export default function LossTeam() {
     enabled: deliveryCodeForDocumentDownload != "",
   })
 
+  const [showReportModal, setShowReportModal] = useState(false)
+
   return (
     <main>
       <div className="mt-2 px-2 flex justify-between">
         <span className="text-3xl font-bold">Акт утери с бригады</span>
         <div>
-          <Button onClick={() => { }} text="Отчет" buttonType="default" />
+          <Button onClick={() => setShowReportModal(true)} text="Отчет" buttonType="default" />
         </div>
       </div>
       <table className="table-auto text-sm text-left mt-2 w-full border-box">
@@ -264,6 +267,7 @@ export default function LossTeam() {
         writeOffType="loss-team"
       />}
       {showEditModal && <EditInvoiceWriteOff setShowEditModal={setShowEditModal} invoiceWriteOff={rowToEdit!} writeOffType="loss-team" />}
+      {showReportModal && <ReportInvoiceWriteOff writeOffType="loss-team" setShowReportModal={setShowReportModal} />}
     </main>
   )
 }

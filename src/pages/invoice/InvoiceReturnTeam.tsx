@@ -81,7 +81,10 @@ export default function InvoiceReturnTeam() {
       return getInvoiceReturnDocument(deliveryCodeForDocumentDownload)
         .then(() => toast.success("Документ скачан"))
         .catch(err => toast.error(`Ошибка при скачке документа: ${err}`))
-        .finally(() => toast.dismiss(loadingToast))
+        .finally(() => {
+          toast.dismiss(loadingToast)
+          setDeliveryCodeForDocumentDownload("")
+        })
     },
     enabled: deliveryCodeForDocumentDownload != "",
   })
@@ -213,7 +216,7 @@ export default function InvoiceReturnTeam() {
                   />
                   <IconButton
                     icon={<FaDownload size="20px" title={`Скачать сгенерированный файл накладной ${value.deliveryCode}`} />}
-                    onClick={() => getInvoiceReturnDocument(value.deliveryCode)}
+                    onClick={() => setDeliveryCodeForDocumentDownload(value.deliveryCode)}
                   />               {/* <IconButton */}
                   {/*   icon={<FaRegEdit size="20px" title={`Изменить данные накладной ${row.deliveryCode}`} />} */}
                   {/*   onClick={() => showDetails(index)} */}

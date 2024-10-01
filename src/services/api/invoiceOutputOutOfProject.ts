@@ -88,9 +88,7 @@ export async function sendInvoiceOutputOutOfProjectConfirmationExcel(data: Invoi
 export async function getInvoiceOutputOutOfProjectDocument(deliveryCode: string): Promise<boolean> {
   const responseRaw = await axiosClient.get(`${URL}/document/${deliveryCode}`, { responseType: "blob" })
   if (responseRaw.status == 200) {
-    const contentType: string = responseRaw.headers["content-type"]
-    const extension = contentType.split("/")[1]
-    fileDownload(responseRaw.data, `${deliveryCode}.${extension}`)
+    fileDownload(responseRaw.data, `${deliveryCode}.xlsx`)
     return true
   } else {
     throw new Error(responseRaw.data)

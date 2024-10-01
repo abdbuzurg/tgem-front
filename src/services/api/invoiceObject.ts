@@ -65,8 +65,10 @@ export interface InvoiceObjectPaginatedView {
   deliveryCode: string
   supervisorName: string
   objectName: string
+  objectType: string
   teamNumber: string
   dateOfInvoice: Date
+  ConfirmedByOperator: boolean
 }
 
 export interface InvoiceObjectPaginated {
@@ -122,3 +124,26 @@ export async function getTeamsFromObjectID(objectID: number): Promise<TeamDataFo
     throw new Error(response.error)
   }
 }
+
+export interface InvoiceObjectTeamMaterialData {
+  materialID: number
+  materialName: string
+  materialUnit: string
+  hasSerialNumber: boolean
+  amount: number
+}
+
+export async function getMaterialsDataFromTeam(teamID: number): Promise<InvoiceObjectTeamMaterialData[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceObjectTeamMaterialData[]>>(`${URL}/team-materials/${teamID}`)
+  const response = responseRaw.data
+  if (response.success && response.permission) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export interface ConfirmedMaterialData {
+  materialID: number
+}
+

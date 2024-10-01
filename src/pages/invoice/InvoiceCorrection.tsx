@@ -5,6 +5,7 @@ import LoadingDots from "../../components/UI/loadingDots"
 import Button from "../../components/UI/button"
 import CorrectionModal from "../../components/invoice/correction/CorrectionModal"
 import { ENTRY_LIMIT } from "../../services/api/constants"
+import { objectTypeIntoRus } from "../../services/lib/objectStatuses"
 
 export default function InvoiceCorrection() {
 
@@ -88,7 +89,7 @@ export default function InvoiceCorrection() {
               <tr key={index} className="border-b">
                 <td className="px-4 py-3">{row.deliveryCode}</td>
                 <td className="px-4 py-3">{row.supervisorName}</td>
-                <td className="px-4 py-3">{row.objectName}</td>
+                <td className="px-4 py-3">{row.objectName} ({objectTypeIntoRus(row.objectType)})</td>
                 <td className="px-4 py-3">{row.teamNumber}</td>
                 <td className="px-4 py-3">{row.dateOfInvoice.toString().substring(0, 10)}</td>
                 <td className="px-4 py-3 border-box flex space-x-3">

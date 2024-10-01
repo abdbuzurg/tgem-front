@@ -292,7 +292,7 @@ export default function AddInvoiceWriteOff({
             <p className="text-xl font-semibold text-gray-800">Материалы наклданой</p>
 
           </div>
-          <div className="grid grid-cols-7 text-sm font-bold shadow-md text-left mt-2 w-full border-box">
+          <div className="grid grid-cols-6 text-sm font-bold shadow-md text-left mt-2 w-full border-box">
             {/* table head START */}
             <div className="px-4 py-3">
               <span>Наименование</span>
@@ -316,7 +316,7 @@ export default function AddInvoiceWriteOff({
             <div className="px-4 py-3"></div>
             {/* table head END */}
           </div>
-          <div className="grid grid-cols-7 text-sm text-left mt-2 w-full border-box items-center">
+          <div className="grid grid-cols-6 text-sm text-left mt-2 w-full border-box items-center">
             {materialQuery.isFetching &&
               <div className="px-4 py-3">
                 <LoadingDots height={36} />
@@ -383,6 +383,7 @@ export default function AddInvoiceWriteOff({
                 <Fragment key={index}>
                   <div className="px-4 py-3">{value.materialName}</div>
                   <div className="px-4 py-3">{value.unit}</div>
+                  <div className="px-4 py-3">{value.locationAmount}</div>
                   <div className="px-4 py-3">{value.amount}</div>
                   <div className="px-4 py-3">{value.notes}</div>
                   <div className="px-4 py-3 flex items-center">
