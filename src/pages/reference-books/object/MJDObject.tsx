@@ -22,7 +22,6 @@ import { getAllTPs } from "../../../services/api/tp_object"
 export default function MJDObject() {
 
   //PAGINATED DATA
-
   const [searchParameters, setSearchParameters] = useState<MJDObjectSearchParameters>({
     objectName: "",
     teamID: 0,
@@ -101,6 +100,8 @@ export default function MJDObject() {
     teams: [],
     nourashedByTP: [],
   })
+
+
 
   const [selectedSupervisorsWorkerID, setselectedSupervisorsWorkerID] = useState<IReactSelectOptions<number>[]>([])
   const [avaiableSupervisors, setAvailableSupervisors] = useState<IReactSelectOptions<number>[]>([])
@@ -330,7 +331,7 @@ export default function MJDObject() {
         </div>
         <Button text="Импорт" onClick={() => setShowImportModal(true)} />
         <div
-          onClick={() => exportMJD()}
+          onClick={() => mjdExport.refetch()}
           className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
         >
           {mjdExport.fetchStatus == "fetching" ? <LoadingDots height={20} /> : "Экспорт"}
@@ -691,7 +692,7 @@ export default function MJDObject() {
       }
       {showImportModal &&
         <Modal setShowModal={setShowImportModal}>
-          <span className="font-bold text-xl px-2 py-1">Импорт данных в Справочник - КЛ 04 КВ</span>
+          <span className="font-bold text-xl px-2 py-1">Импорт данных в Справочник - МЖД</span>
           <div className="grid grid-cols-2 gap-2 items-center px-2 pt-2">
             <div
               onClick={() => importTemplateQuery.refetch()}

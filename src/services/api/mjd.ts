@@ -113,7 +113,7 @@ export async function importMJD(data: File): Promise<boolean> {
 }
 
 export async function exportMJD(): Promise<boolean> {
-  const response = await axiosClient.get(`${URL}/export/document`, { responseType: "blob" })
+  const response = await axiosClient.get(`${URL}/document/export`, { responseType: "blob" })
   if (response.status == 200) {
     fileDownload(response.data, "Экспорт МЖД.xlsx")
     return true
@@ -130,5 +130,6 @@ export async function getMJDObjectNames(): Promise<IReactSelectOptions<string>[]
   } else {
     throw new Error(response.error)
   }
-
 }
+
+

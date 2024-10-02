@@ -1,6 +1,6 @@
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import Select from "react-select"
-import { ISTVTObjectCreate, ISTVTObjectGetAllResponse, ISTVTObjectPaginated, createSTVTObject, deleteSTVTObject, getPaginatedSTVTObjects, getSTVTTemplateDocument, importSTVT, updateSTVTObject } from "../../../services/api/stvt_object"
+import { ISTVTObjectCreate, ISTVTObjectGetAllResponse, ISTVTObjectPaginated, STVTSearchParameters, createSTVTObject, deleteSTVTObject, exportSTVT, getPaginatedSTVTObjects, getSTVTObjectNames, getSTVTTemplateDocument, importSTVT, updateSTVTObject } from "../../../services/api/stvt_object"
 import { ENTRY_LIMIT } from "../../../services/api/constants"
 import { useEffect, useState } from "react"
 import DeleteModal from "../../../components/deleteModal"
@@ -19,10 +19,14 @@ import arrayListToString from "../../../services/lib/arrayListToStringWithCommas
 
 export default function STVTObject() {
 
-  //PAGINATED DATA
+  const [searchParameters, setSearchParameters] = useState<STVTSearchParameters>({
+    objectName: "",
+    teamID: 0,
+    supervisorWorkerID: 0,
+  })
   const tableDataQuery = useInfiniteQuery<ISTVTObjectGetAllResponse, Error>({
-    queryKey: ["stvt-object"],
-    queryFn: ({ pageParam }) => getPaginatedSTVTObjects({ pageParam }),
+    queryKey: ["stvt-object", searchParameters],
+    queryFn: ({ pageParam }) => getPaginatedSTVTObjects({ pageParam }, searchParameters),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
@@ -199,6 +203,12 @@ export default function STVTObject() {
     setMutationType("update")
   }
 
+  const importTemplateQuery = useQuery<boolean, Error, boolean>({
+    queryKey: ["stvt-template"],
+    queryFn: getSTVTTemplateDocument,
+    enabled: false,
+  })
+
   const [showImportModal, setShowImportModal] = useState(false)
 
   const importMutation = useMutation<boolean, Error, File>({
@@ -221,11 +231,88 @@ export default function STVTObject() {
     })
   }
 
+  const stvtExport = useQuery<boolean, Error, boolean>({
+    queryKey: ["stvt-export"],
+    queryFn: exportSTVT,
+    enabled: false,
+  })
+
+  const [showSearchModal, setShowSearchModal] = useState(false)
+
+  const [selectedObjectName, setSelectedObjectName] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
+  const [allObjectNames, setAllObjectNames] = useState<IReactSelectOptions<string>[]>([])
+  const allObjectNamesQuery = useQuery<IReactSelectOptions<string>[], Error, IReactSelectOptions<string>[]>({
+    queryKey: ["stvt-object-names"],
+    queryFn: getSTVTObjectNames,
+    enabled: showSearchModal,
+  })
+  useEffect(() => {
+    if (allObjectNamesQuery.isSuccess && allObjectNamesQuery.data) {
+      setAllObjectNames(allObjectNamesQuery.data)
+    }
+  }, [allObjectNamesQuery.data])
+
+  const [selectedSupervisor, setSelectedSupervisor] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [allSupervisors, setAllSupervisors] = useState<IReactSelectOptions<number>[]>([])
+  const allSupervisorsQuery = useQuery<IWorker[], Error, IWorker[]>({
+    queryKey: ["all-workers", "Супервайзер"],
+    queryFn: () => getWorkerByJobTitle("Супервайзер"),
+    enabled: showSearchModal,
+  })
+  useEffect(() => {
+    if (allSupervisorsQuery.isSuccess && allSupervisorsQuery.data) {
+      setAllSupervisors(allSupervisorsQuery.data.map<IReactSelectOptions<number>>(val => ({
+        label: val.name,
+        value: val.id,
+      })))
+    }
+  }, [allSupervisorsQuery.data])
+
+  const [selectedTeam, setSelectedTeam] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [allTeams, setAllTeams] = useState<IReactSelectOptions<number>[]>([])
+  const allTeamsQuery = useQuery<TeamDataForSelect[], Error, TeamDataForSelect[]>({
+    queryKey: ["all-teams-for-select"],
+    queryFn: getAllTeamsForSelect,
+    enabled: showSearchModal,
+  })
+  useEffect(() => {
+    if (allTeamsQuery.isSuccess && allTeamsQuery.data) {
+      setAllTeams(allTeamsQuery.data.map<IReactSelectOptions<number>>(val => ({
+        label: val.teamNumber + " (" + val.teamLeaderName + ")",
+        value: val.id,
+      })))
+    }
+  }, [allTeamsQuery.data])
+
   return (
     <main>
       <div className="mt-2 pl-2 flex space-x-2">
         <span className="text-3xl font-bold">Объекты - СТВТ</span>
+        <div onClick={() => setShowSearchModal(true)} className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer">
+          Поиск
+        </div>
         <Button text="Импорт" onClick={() => setShowImportModal(true)} />
+        <div
+          onClick={() => stvtExport.refetch()}
+          className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+        >
+          {stvtExport.fetchStatus == "fetching" ? <LoadingDots height={20} /> : "Экспорт"}
+        </div>
+        <div
+          onClick={() => {
+            setSearchParameters({
+              objectName: "",
+              teamID: 0,
+              supervisorWorkerID: 0,
+            })
+            setSelectedObjectName({ label: "", value: "" })
+            setSelectedSupervisor({ label: "", value: 0 })
+            setSelectedTeam({ label: "", value: 0 })
+          }}
+          className="text-white py-2.5 px-5 rounded-lg bg-red-700 hover:bg-red-800 hover:cursor-pointer"
+        >
+          Сброс поиска
+        </div>
       </div>
       <table className="table-auto text-sm text-left mt-2 w-full border-box">
         <thead className="shadow-md border-t-2">
@@ -466,16 +553,28 @@ export default function STVTObject() {
       }
       {showImportModal &&
         <Modal setShowModal={setShowImportModal}>
-          <span className="font-bold text-xl px-2 py-1">Импорт данных в Справочник - СТВТ</span>
+          <span className="font-bold text-xl px-2 py-1">Импорт данных в Справочник - МЖД</span>
           <div className="grid grid-cols-2 gap-2 items-center px-2 pt-2">
-            <Button text="Скачать шаблон" onClick={() => getSTVTTemplateDocument()} />
+            <div
+              onClick={() => importTemplateQuery.refetch()}
+              className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer text-center"
+            >
+              {importTemplateQuery.fetchStatus == "fetching" ? <LoadingDots height={20} /> : "Скачать шаблон"}
+            </div>
             <div className="w-full">
-              <label
-                htmlFor="file"
-                className="w-full text-white py-3 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
-              >
-                Импортировать данные
-              </label>
+              {importMutation.status == "loading"
+                ?
+                <div className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800">
+                  <LoadingDots height={25} />
+                </div>
+                :
+                <label
+                  htmlFor="file"
+                  className="w-full text-white py-3 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer text-center"
+                >
+                  Импортировать данные
+                </label>
+              }
               <input
                 name="file"
                 type="file"
@@ -486,6 +585,74 @@ export default function STVTObject() {
             </div>
           </div>
           <span className="text-sm italic px-2 w-full text-center">При импортировке система будет следовать правилам шаблона</span>
+        </Modal>
+      }
+      {showSearchModal &&
+        <Modal setShowModal={setShowSearchModal}>
+          <span className="font-bold text-xl py-1">Параметры Поиска по сравочнику МЖД</span>
+
+          <div className="p-2 flex flex-col space-y-2">
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="object-names">Наименование Объекта</label>
+              <Select
+                className="basic-single"
+                classNamePrefix="select"
+                isSearchable={true}
+                isClearable={true}
+                name={"object-names"}
+                placeholder={""}
+                value={selectedObjectName}
+                options={allObjectNames}
+                onChange={value => {
+                  setSelectedObjectName(value ?? { label: "", value: "" })
+                  setSearchParameters({
+                    ...searchParameters,
+                    objectName: value?.value ?? "",
+                  })
+                }}
+              />
+            </div>
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="supervisors">Супервайзеры</label>
+              <Select
+                className="basic-single"
+                classNamePrefix="select"
+                isSearchable={true}
+                isClearable={true}
+                name={"supervisors"}
+                placeholder={""}
+                value={selectedSupervisor}
+                options={allSupervisors}
+                onChange={value => {
+                  setSelectedSupervisor(value ?? { label: "", value: 0 })
+                  setSearchParameters({
+                    ...searchParameters,
+                    supervisorWorkerID: value?.value ?? 0,
+                  })
+                }}
+              />
+            </div>
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="team">Бригада</label>
+              <Select
+                className="basic-single"
+                classNamePrefix="select"
+                isSearchable={true}
+                isClearable={true}
+                name={"team"}
+                placeholder={""}
+                value={selectedTeam}
+                options={allTeams}
+                onChange={value => {
+                  setSelectedTeam(value ?? { label: "", value: 0 })
+                  setSearchParameters({
+                    ...searchParameters,
+                    teamID: value?.value ?? 0,
+                  })
+                }}
+              />
+            </div>
+          </div>
         </Modal>
       }
     </main>

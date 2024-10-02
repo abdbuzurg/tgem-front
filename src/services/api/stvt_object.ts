@@ -3,6 +3,7 @@ import { IObject } from "../interfaces/objects"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
+import IReactSelectOptions from "../interfaces/react-select"
 
 const URL = "/stvt"
 
@@ -24,11 +25,17 @@ export interface ISTVTObjectGetAllResponse {
   page: number
 }
 
-export async function getPaginatedSTVTObjects({ pageParam = 1 }): Promise<ISTVTObjectGetAllResponse> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<ISTVTObjectGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
+export interface STVTSearchParameters {
+  objectName: string
+  teamID: number
+  supervisorWorkerID: number
+}
+
+export async function getPaginatedSTVTObjects({ pageParam = 1 }, searchParameters: STVTSearchParameters): Promise<ISTVTObjectGetAllResponse> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<ISTVTObjectGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&teamID=${searchParameters.teamID}&supervisorWorkerID=${searchParameters.supervisorWorkerID}&objectName=${searchParameters.objectName}`)
   const response = responseRaw.data
-  if (response.permission && response.success) { 
-    return {...response.data, page: pageParam}
+  if (response.permission && response.success) {
+    return { ...response.data, page: pageParam }
   } else {
     throw new Error(response.error)
   }
@@ -98,3 +105,24 @@ export async function importSTVT(data: File): Promise<boolean> {
     throw new Error(responseRaw.data)
   }
 }
+
+export async function getSTVTObjectNames(): Promise<IReactSelectOptions<string>[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IReactSelectOptions<string>[]>>(`${URL}/search/object-names`)
+  const response = responseRaw.data
+  if (response.success && response.permission) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export async function exportSTVT(): Promise<boolean> {
+  const response = await axiosClient.get(`${URL}/document/export`, { responseType: "blob" })
+  if (response.status == 200) {
+    fileDownload(response.data, "Экспорт МЖД.xlsx")
+    return true
+  } else {
+    throw new Error(response.statusText)
+  }
+}
+

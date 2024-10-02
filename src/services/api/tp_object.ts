@@ -3,6 +3,7 @@ import { IObject } from "../interfaces/objects"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
+import IReactSelectOptions from "../interfaces/react-select"
 
 const URL = "/tp"
 
@@ -24,8 +25,14 @@ export interface ITPObjectGetAllResponse {
   page: number
 }
 
-export async function getPaginatedTPObjects({ pageParam = 1 }): Promise<ITPObjectGetAllResponse> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<ITPObjectGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
+export interface TPObjectSearchParameters {
+  objectName: string
+  teamID: number
+  supervisorWorkerID: number
+}
+
+export async function getPaginatedTPObjects({ pageParam = 1 }, searchParameters: TPObjectSearchParameters): Promise<ITPObjectGetAllResponse> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<ITPObjectGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&teamID=${searchParameters.teamID}&supervisorWorkerID=${searchParameters.supervisorWorkerID}&objectName=${searchParameters.objectName}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
     return {...response.data, page: pageParam}
@@ -109,3 +116,24 @@ export async function getAllTPs(): Promise<IObject[]> {
     throw new Error(response.error)
   }
 }
+
+export async function getTPObjectNames(): Promise<IReactSelectOptions<string>[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IReactSelectOptions<string>[]>>(`${URL}/search/object-names`)
+  const response = responseRaw.data
+  if (response.success && response.permission) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export async function exportTP(): Promise<boolean> {
+  const response = await axiosClient.get(`${URL}/document/export`, { responseType: "blob" })
+  if (response.status == 200) {
+    fileDownload(response.data, "Экспорт МЖД.xlsx")
+    return true
+  } else {
+    throw new Error(response.statusText)
+  }
+}
+
