@@ -340,9 +340,6 @@ export default function TPObject() {
             <th className="px-4 py-3">
               <span>Класс Напряжения</span>
             </th>
-            <th className="px-4 py-3">
-              <span>Питает</span>
-            </th>
             <th className="px-4 py-3 w-[150px]">
               <span>Супервайзер</span>
             </th>
@@ -397,7 +394,6 @@ export default function TPObject() {
                 <td className="px-4 py-3">{row.status}</td>
                 <td className="px-4 py-3">{row.model}</td>
                 <td className="px-4 py-3">{row.voltageClass}</td>
-                <td className="px-4 py-3">{row.nourashes}</td>
                 <td className="px-4 py-3">{arrayListToString(row.supervisors)}</td>
                 <td className="px-4 py-3">{arrayListToString(row.teams)}</td>
                 <td className="px-4 py-3 border-box flex space-x-3">

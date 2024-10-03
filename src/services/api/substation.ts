@@ -3,6 +3,7 @@ import { IObject } from "../interfaces/objects"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
+import IReactSelectOptions from "../interfaces/react-select"
 
 const URL = "/substation"
 
@@ -23,8 +24,14 @@ export interface ISubstationObjectGetAllResponse {
   page: number
 }
 
-export async function getPaginatedSubstationObjects({ pageParam = 1 }): Promise<ISubstationObjectGetAllResponse> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<ISubstationObjectGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
+export interface SubstationObjectSearchParameters {
+  objectName: string
+  teamID: number
+  supervisorWorkerID: number
+}
+
+export async function getPaginatedSubstationObjects({ pageParam = 1 }, searchParameters: SubstationObjectSearchParameters): Promise<ISubstationObjectGetAllResponse> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<ISubstationObjectGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&teamID=${searchParameters.teamID}&supervisorWorkerID=${searchParameters.supervisorWorkerID}&objectName=${searchParameters.objectName}`)
   const response = responseRaw.data
   if (response.permission && response.success) { 
     return {...response.data, page: pageParam}
@@ -97,3 +104,26 @@ export async function importSubstation(data: File): Promise<boolean> {
     throw new Error(responseRaw.data)
   }
 }
+
+
+export async function getSubstationObjectNames(): Promise<IReactSelectOptions<string>[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IReactSelectOptions<string>[]>>(`${URL}/search/object-names`)
+  const response = responseRaw.data
+  if (response.success && response.permission) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+
+export async function exportSubstation(): Promise<boolean> {
+  const response = await axiosClient.get(`${URL}/document/export`, { responseType: "blob" })
+  if (response.status == 200) {
+    fileDownload(response.data, "Экспорт Подстанции.xlsx")
+    return true
+  } else {
+    throw new Error(response.statusText)
+  }
+}
+
