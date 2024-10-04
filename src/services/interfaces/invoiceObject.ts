@@ -17,3 +17,10 @@ export interface IInvoiceObjectMaterials {
   hasSerialNumbers: boolean
   serialNumbers: string[]
 }
+
+export interface IInvoiceObjectOperations {
+  operationID: number
+  operationName: string
+  amount: number
+  notes: string
+}

@@ -9,7 +9,7 @@ import { ENTRY_LIMIT } from "./constants"
 const URL = "/invoice-object"
 
 export async function getTeamMaterials(teamID: number): Promise<Material[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<Material[]>>(`${URL}/materials/team/${teamID}`)
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<Material[]>>(`${URL}/team-materials/${teamID}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
     return response.data
@@ -35,9 +35,16 @@ export interface InvoiceObjectCreateItems {
   notes: string
 }
 
+export interface InvoiceObjectOperationsCreate {
+  operationID: number
+  amount: number
+  notes: string
+}
+
 export interface InvoiceObjectCreate {
   details: IInvoiceObject
   items: InvoiceObjectCreateItems[]
+  operations: InvoiceObjectOperationsCreate[]
 }
 
 export async function createInvoiceObject(data: InvoiceObjectCreate): Promise<boolean> {
@@ -143,7 +150,19 @@ export async function getMaterialsDataFromTeam(teamID: number): Promise<InvoiceO
   }
 }
 
-export interface ConfirmedMaterialData {
+export interface InvoiceObjectOperations{
+  operationID: number
+  operationName: string
   materialID: number
+  materialName: string
 }
 
+export async function getOperationsBasedOnTeamID(teamID: number): Promise<InvoiceObjectOperations[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceObjectOperations[]>>(`${URL}/available-operations-for-team/${teamID}`)
+  const response = responseRaw.data
+  if (response.success && response.permission) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}

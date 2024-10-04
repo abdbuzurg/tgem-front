@@ -109,30 +109,6 @@ export default function CorrectionModal({
 
   const onCorrectionSubmit = () => {
 
-    let materialCount = 0
-    let operationCount = 0
-    for (let index = 0; index < operationsForCorrection.length; index++) {
-      if (!operationsForCorrection[index]) continue
-      operationCount++
-
-      for (let subIndex = 0; subIndex < invoiceMaterialsForCorrection.length; subIndex++) {
-        if (operationsForCorrection[index].materialName == invoiceMaterialsForCorrection[subIndex].materialName) {
-          if (operationsForCorrection[index].amount != invoiceMaterialsForCorrection[subIndex].materialAmount) {
-            toast.error(`Услуга ${operationsForCorrection[index].operationName} и материал ${invoiceMaterialsForCorrection[subIndex].materialName} имеют разное количество`)
-            return
-          }
-
-          materialCount++
-          break
-        }
-      }
-    }
-
-    if (materialCount != operationCount) {
-      toast.error("Количество услуг и количество материалов привязанные к этим услугам не совпадают")
-      return
-    }
-
     createInvoiceCorrectionMutation.mutate({
       details: {
         id: invoiceObject.id,
@@ -191,6 +167,7 @@ export default function CorrectionModal({
                   materialName: "",
                   materialID: 0,
                   materialAmount: 0,
+                  materialAvailableAmount: 0,
                   materialUnit: "",
                   notes: "",
                 }, -1)}
@@ -198,7 +175,11 @@ export default function CorrectionModal({
               />
             </div>
           </div>
-
+          {materialsForCorrectionQuery.isLoading &&
+            <div className="grid grid-cols-4 gap-1 border-b-2 border-b-black font-bold text-l">
+              <div className="px-2 py-1 col-span-4"><LoadingDots /></div>
+            </div>
+          }
           {invoiceMaterialsForCorrection.map((row, index) =>
             <div className="grid grid-cols-4 gap-1 border-b border-b-black" key={index}>
               <div className="px-2 py-1 flex items-center">{row.materialName}</div>
@@ -229,7 +210,11 @@ export default function CorrectionModal({
               />
             </div>
           </div>
-
+          {operationsForCorrectionQuery.isLoading &&
+            <div className="grid grid-cols-4 gap-1 border-b-2 border-b-black font-bold text-l">
+              <div className="px-2 py-1 col-span-4"><LoadingDots /></div>
+            </div>
+          }
           {operationsForCorrection.map((row, index) =>
             <div className="grid grid-cols-4 gap-1 border-b border-b-black" key={index}>
               <div className="px-2 py-1 flex items-center">{row.operationName}</div>
@@ -258,6 +243,7 @@ export default function CorrectionModal({
           operationData={selectedOperation!}
           correctionFunction={operationCorrection}
           correctionIndex={selectedInvoiceCorrectionOperationIndex}
+          teamID={invoiceObject.teamID}
         />
       }
     </Modal>

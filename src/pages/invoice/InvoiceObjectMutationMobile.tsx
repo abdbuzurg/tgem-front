@@ -5,10 +5,10 @@ import Button from "../../components/UI/button"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { TeamDataForSelect } from "../../services/interfaces/teams"
 import { IObject } from "../../services/interfaces/objects"
-import { IInvoiceObjectMaterials } from "../../services/interfaces/invoiceObject"
+import { IInvoiceObjectMaterials, IInvoiceObjectOperations } from "../../services/interfaces/invoiceObject"
 import toast from "react-hot-toast"
 import { getAllObjects } from "../../services/api/object"
-import { InvoiceObjectCreateItems, InvoiceObjectTeamMaterialData, createInvoiceObject,  getMaterialsDataFromTeam, getSerialNumbersOfMaterial, getTeamsFromObjectID } from "../../services/api/invoiceObject"
+import { InvoiceObjectCreateItems, InvoiceObjectOperations, InvoiceObjectOperationsCreate, InvoiceObjectTeamMaterialData, createInvoiceObject, getMaterialsDataFromTeam, getOperationsBasedOnTeamID, getSerialNumbersOfMaterial, getTeamsFromObjectID } from "../../services/api/invoiceObject"
 import { useNavigate } from "react-router-dom"
 import { INVOICE_OBJECT } from "../../URLs"
 import { objectTypeIntoRus } from "../../services/lib/objectStatuses"
@@ -105,9 +105,48 @@ export default function InvoiceObjectMutationAdd() {
     }
   }
 
+  const [selectedOperation, setSelectedOperation] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [availableOperations, setAvailableOperations] = useState<IReactSelectOptions<number>[]>([])
+  const allOperationsQuery = useQuery<InvoiceObjectOperations[], Error, InvoiceObjectOperations[]>({
+    queryKey: ["operations-based-on-team", selectedTeam.value],
+    queryFn: () => getOperationsBasedOnTeamID(selectedTeam.value),
+    enabled: selectedTeam.value != 0,
+  })
+  useEffect(() => {
+    if (allOperationsQuery.isSuccess && allOperationsQuery.data) {
+      setAvailableOperations(allOperationsQuery.data
+        .filter(val => val.materialID == 0)
+        .map<IReactSelectOptions<number>>(val => ({
+          label: val.operationName,
+          value: val.operationID,
+        })))
+    }
+  }, [allOperationsQuery.data])
+  const onOperationSelect = (value: IReactSelectOptions<number> | null) => {
+    if (!value) {
+      setSelectedOperation({ label: "", value: 0 })
+      return
+    }
+
+    setSelectedOperation(value)
+    setInvoiceOperation({
+      ...invoiceOperation,
+      operationID: value.value,
+      operationName: value.label,
+    })
+  }
+
+  //Operation List
+  const [invoiceOperations, setInvoiceOperations] = useState<IInvoiceObjectOperations[]>([])
+  const [invoiceOperation, setInvoiceOperation] = useState<IInvoiceObjectOperations>({
+    operationID: 0,
+    operationName: "",
+    amount: 0,
+    notes: "",
+  })
+
   // Material list
   const [invoiceMaterials, setInvoiceMaterials] = useState<IInvoiceObjectMaterials[]>([])
-
   const [invoiceMaterial, setInvoiceMaterial] = useState<IInvoiceObjectMaterials>({
     materialID: 0,
     materialName: "",
@@ -119,16 +158,26 @@ export default function InvoiceObjectMutationAdd() {
     serialNumbers: [],
   })
 
-  const resetInvoiceMaterialObject = () => setInvoiceMaterial({
-    materialID: 0,
-    materialName: "",
-    availableMaterial: 0,
-    unit: "",
-    amount: 0,
-    notes: "",
-    hasSerialNumbers: false,
-    serialNumbers: [],
-  })
+  const resetInvoiceMaterialObject = () => {
+    setInvoiceOperations([])
+    setInvoiceOperation({
+      operationID: 0,
+      operationName: "",
+      amount: 0,
+      notes: "",
+    })
+    setInvoiceMaterials([])
+    setInvoiceMaterial({
+      materialID: 0,
+      materialName: "",
+      availableMaterial: 0,
+      unit: "",
+      amount: 0,
+      notes: "",
+      hasSerialNumbers: false,
+      serialNumbers: [],
+    })
+  }
 
   // Serial Numbers logic
   const [availableSerialNumbers, setAvaiableSerialNumbers] = useState<IReactSelectOptions<string>[]>([])
@@ -210,6 +259,21 @@ export default function InvoiceObjectMutationAdd() {
       return
     }
 
+    if (allOperationsQuery.data) {
+      const operation = allOperationsQuery.data.find(val => val.materialID == invoiceMaterial.materialID)
+      if (operation) {
+        setInvoiceOperations([
+          ...invoiceOperations,
+          {
+            operationID: operation.operationID,
+            operationName: operation.operationName,
+            amount: invoiceMaterial.amount,
+            notes: "",
+          }
+        ])
+      }
+    }
+
     setInvoiceMaterials([invoiceMaterial, ...invoiceMaterials])
     setInvoiceMaterial({
       materialID: 0,
@@ -226,11 +290,59 @@ export default function InvoiceObjectMutationAdd() {
     setAvaiableSerialNumbers([])
     setToBeDeletedSerialNumber({ label: "", value: "" })
     setAlreadySelectedSerialNumbers([])
+
+
+  }
+
+  const addOperationToTheList = () => {
+    if (invoiceOperation.operationID == 0) {
+      toast.error("Не выбрана услуга")
+      return
+    }
+
+    if (invoiceOperations.findIndex((val) => val.operationID == invoiceOperation.operationID) != -1) {
+      toast.error("Такая услуга уже выбрана")
+      return
+    }
+
+    if (invoiceOperation.amount <= 0) {
+      toast.error("Неправильно указано количество услуги")
+      return
+    }
+
+    setInvoiceOperations([...invoiceOperations, invoiceOperation])
+    setInvoiceOperation({
+      operationID: 0,
+      operationName: "",
+      amount: 0,
+      notes: "",
+    })
+    setSelectedOperation({label: "", value: 0})
   }
 
   // Delete from the list
-  const deleteFromList = (index: number) => {
+  const deleteFromMaterialsList = (index: number) => {
+    const materialID = invoiceMaterials[index].materialID
     setInvoiceMaterials(invoiceMaterials.filter((_, i) => i != index))
+    if (allOperationsQuery.data) {
+      const operation = allOperationsQuery.data.find(val => val.materialID == materialID)
+      if (operation){
+        setInvoiceOperations(invoiceOperations.filter((val) => val.operationID != operation.operationID))
+      }
+    }
+  }
+
+  const deleteFromOperationsList = (index: number) => {
+    const operation = invoiceOperations[index] 
+    if (allOperationsQuery.data) {
+      const operationWithMaterial = allOperationsQuery.data.find(val => val.operationID == operation.operationID)
+      if (operationWithMaterial) {
+        if (operationWithMaterial.materialID != 0) {
+          setInvoiceMaterials(invoiceMaterials.filter(val => val.materialID != operationWithMaterial.materialID))
+        }
+      }
+    }
+    setInvoiceOperations(invoiceOperations.filter((_, i) => i != index))
   }
 
   const createInvoiceObjectMutation = useMutation({
@@ -240,7 +352,6 @@ export default function InvoiceObjectMutationAdd() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const submitInvoice = () => {
-
     if (selectedObject.value == 0) {
       toast.error("Не выбрана объект")
       return
@@ -253,6 +364,7 @@ export default function InvoiceObjectMutationAdd() {
 
     if (invoiceMaterials.length == 0) {
       toast.error("Не указаны материалы для поступления")
+      return
     }
 
     createInvoiceObjectMutation.mutate({
@@ -271,6 +383,13 @@ export default function InvoiceObjectMutationAdd() {
           serialNumbers: val.serialNumbers,
           notes: val.notes,
         }))
+      ],
+      operations: [
+        ...invoiceOperations.map<InvoiceObjectOperationsCreate>(val => ({
+          operationID: val.operationID,
+          amount: val.amount,
+          notes: val.notes,
+        }))
       ]
     }, {
       onSuccess: () => {
@@ -278,6 +397,11 @@ export default function InvoiceObjectMutationAdd() {
         navigate(INVOICE_OBJECT)
       }
     })
+  }
+
+  const [activeTab, setActiveTab] = useState<"operations" | "materials">("materials")
+  const onTabClick = (tabName: "operations" | "materials") => {
+    setActiveTab(tabName)
   }
 
   return (
@@ -296,7 +420,6 @@ export default function InvoiceObjectMutationAdd() {
         </div>
         <span className="font-semibold text-lg">Основная информация</span>
         <div className="px-3 py-4 bg-gray-800 text-white rounded-md ">
-
           {allObjectsQuery.isLoading &&
             <div className="flex items-center">
               <LoadingDots height={40} />
@@ -358,148 +481,268 @@ export default function InvoiceObjectMutationAdd() {
         </div>
       </div>
       <div className="px-2 py-1">
-        <span className="font-semibold text-lg">Материалы</span>
-        <div className="grid grid-cols-1 gap-2">
-          <div className="flex flex-col space-y-3 px-3 py-2 bg-gray-800 text-white rounded-md">
-
-            {allMaterialsQuery.isLoading && allMaterialsQuery.fetchStatus == "fetching" &&
-              <div className="flex items-center">
-                <LoadingDots height={40} />
-              </div>
-            }
-            {(allMaterialsQuery.isSuccess || allMaterialsQuery.fetchStatus == "idle") &&
-              <div className="flex flex-col space-y-1">
-                <span className="font-semibold">Материалы</span>
-                <Select
-                  className="basic-single text-black"
-                  classNamePrefix="select"
-                  isSearchable={true}
-                  isClearable={true}
-                  name={"material-cost-material-select"}
-                  placeholder={""}
-                  value={selectedMaterial}
-                  options={availableMaterials}
-                  onChange={(value) => onMaterialSelect(value)}
-                />
-              </div>
-            }
-
-            <div className="flex flex-col space-y-1">
-              <span className="font-semibold">Кол-во</span>
-              <div className="flex space-x-2 items-center">
-                <input
-                  type="number"
-                  value={invoiceMaterial.amount}
-                  onChange={(e) => setInvoiceMaterial({
-                    ...invoiceMaterial,
-                    amount: e.target.valueAsNumber
-                  })}
-                  className="text-black rounded-sm px-2 py-1.5"
-                />
-                <span>Доступно: {invoiceMaterial.availableMaterial} {invoiceMaterial.unit}</span>
-              </div>
-            </div>
-            {invoiceMaterial.hasSerialNumbers &&
-              <div className="flex flex-col space-y-4">
-                <div className="flex space-x-2">
-                  <div className="flex flex-col space-y-1">
-                    <label>Доступные серийные номера</label>
-                    <Select
-                      className="basic-single text-black"
-                      classNamePrefix="select"
-                      isSearchable={true}
-                      isClearable={true}
-                      name={"material-cost-material-select"}
-                      placeholder={""}
-                      value={selectedSerialNumber}
-                      options={availableSerialNumbers}
-                      onChange={(value) => setSelectedSerialNumber({
-                        label: value?.label ?? "",
-                        value: value?.value ?? "",
-                      })}
-                    />
-                  </div>
-                  <Button onClick={() => addToSerialNumberList()} text="Выбрать" />
-                </div>
-                <div className="flex space-x-2">
-                  <div className="flex flex-col space-y-1">
-                    <label>Выбранные серийные номера</label>
-                    <Select
-                      className="basic-single text-black"
-                      classNamePrefix="select"
-                      isSearchable={true}
-                      isClearable={true}
-                      name={"material-cost-material-select"}
-                      placeholder={""}
-                      value={toBeDeletedSerialNumber}
-                      options={alreadySelectedSerialNumbers}
-                      onChange={(value) => setToBeDeletedSerialNumber({
-                        label: value?.label ?? "",
-                        value: value?.value ?? "",
-                      })}
-                    />
-                  </div>
-                  <Button onClick={() => deleteSerialNumberFromList()} text="Удалить" buttonType="delete" />
-                </div>
-              </div>
-            }
-            <div className="flex flex-col space-y-1">
-              <span className="font-semibold">Примичание</span>
-              <textarea
-                className="w-full text-black"
-                value={invoiceMaterial.notes}
-                onChange={(e) => setInvoiceMaterial({
-                  ...invoiceMaterial,
-                  notes: e.target.value,
-                })}
-              />
-            </div>
-            <div className="col-span-2 flex space-x-2">
-              <Button
-                text="Добавить в список"
-                onClick={() => addMaterialToTheList()}
-              />
-            </div>
+        <span className="font-semibold text-lg">Расход</span>
+        <div className="bg-gray-800 text-white rounded-md px-2 py-2">
+          <div
+            className="flex w-full bg-gray-700 rounded-md"
+            id="tabs"
+          >
+            <div className={`py-2 w-full text-center rounded-md cursor-pointer ${activeTab == "materials" ? "bg-gray-500" : ""}`} onClick={() => onTabClick("materials")}>Материалы</div>
+            <div className={`py-2 w-full text-center rounded-md cursor-pointer ${activeTab == "operations" ? "bg-gray-500" : ""}`} onClick={() => onTabClick("operations")}>Услуги</div>
           </div>
         </div>
       </div>
-      <div className="px-2 py-1">
-        <span className="font-semibold text-lg">Список материалов на объект</span>
-        <div className="grid grid-cols-1 gap-2">
-          {invoiceMaterials.length == 0 &&
-            <div className="px-3 py-2 bg-gray-800 text-white italic rounded-md">
-              Список материалов пока пустой
-            </div>
-          }
-          {invoiceMaterials.map((value, index) => (
-            <div key={index} className="grid grid-cols-2 gap-3 px-3 py-2 bg-gray-800 text-white rounded-md overflow-auto">
-              <div className="font-bold">Материал:</div>
-              <div>{value.materialName}</div>
-              <div className="font-bold">Количество:</div>
-              <div>{value.amount} {value.unit}</div>
-              {value.notes == ""
-                ?
-                <Fragment>
-                  <div className="font-bold">Примичание:</div>
-                  <div className="font-light italic">Отсутсвует</div>
-                </Fragment>
-                :
-                <Fragment>
-                  <div className="font-bold col-span-2">Примичание:</div>
-                  <div className="col-span-2">{value.notes}</div>
-                </Fragment>
-              }
-              <div className="col-span-2 flex space-x-2">
-                <Button
-                  text="Удалить со списка"
-                  buttonType="delete"
-                  onClick={() => deleteFromList(index)}
-                />
+
+      {activeTab == "materials" &&
+        <>
+          <div className="px-2 py-1">
+            <span className="font-semibold text-lg">Материалы</span>
+            <div className="grid grid-cols-1 gap-2">
+              <div className="flex flex-col space-y-3 px-3 py-2 bg-gray-800 text-white rounded-md">
+                {allMaterialsQuery.isLoading && allMaterialsQuery.fetchStatus == "fetching" &&
+                  <div className="flex items-center">
+                    <LoadingDots height={40} />
+                  </div>
+                }
+                {(allMaterialsQuery.isSuccess || allMaterialsQuery.fetchStatus == "idle") &&
+                  <div className="flex flex-col space-y-1">
+                    <span className="font-semibold">Материалы бригады</span>
+                    <Select
+                      className="basic-single text-black"
+                      classNamePrefix="select"
+                      isSearchable={true}
+                      isClearable={true}
+                      name={"material-cost-material-select"}
+                      placeholder={""}
+                      value={selectedMaterial}
+                      options={availableMaterials}
+                      onChange={(value) => onMaterialSelect(value)}
+                    />
+                  </div>
+                }
+
+                <div className="flex flex-col space-y-1">
+                  <span className="font-semibold">Количество</span>
+                  <div className="flex space-x-2 items-center">
+                    <input
+                      type="number"
+                      value={invoiceMaterial.amount}
+                      onChange={(e) => setInvoiceMaterial({
+                        ...invoiceMaterial,
+                        amount: e.target.valueAsNumber
+                      })}
+                      className="text-black rounded-sm px-2 py-1.5"
+                    />
+                    <span>Доступно: {invoiceMaterial.availableMaterial} {invoiceMaterial.unit}</span>
+                  </div>
+                </div>
+                {invoiceMaterial.hasSerialNumbers &&
+                  <div className="flex flex-col space-y-4">
+                    <div className="flex space-x-2">
+                      <div className="flex flex-col space-y-1">
+                        <label>Доступные серийные номера</label>
+                        <Select
+                          className="basic-single text-black"
+                          classNamePrefix="select"
+                          isSearchable={true}
+                          isClearable={true}
+                          name={"material-cost-material-select"}
+                          placeholder={""}
+                          value={selectedSerialNumber}
+                          options={availableSerialNumbers}
+                          onChange={(value) => setSelectedSerialNumber({
+                            label: value?.label ?? "",
+                            value: value?.value ?? "",
+                          })}
+                        />
+                      </div>
+                      <Button onClick={() => addToSerialNumberList()} text="Выбрать" />
+                    </div>
+                    <div className="flex space-x-2">
+                      <div className="flex flex-col space-y-1">
+                        <label>Выбранные серийные номера</label>
+                        <Select
+                          className="basic-single text-black"
+                          classNamePrefix="select"
+                          isSearchable={true}
+                          isClearable={true}
+                          name={"material-cost-material-select"}
+                          placeholder={""}
+                          value={toBeDeletedSerialNumber}
+                          options={alreadySelectedSerialNumbers}
+                          onChange={(value) => setToBeDeletedSerialNumber({
+                            label: value?.label ?? "",
+                            value: value?.value ?? "",
+                          })}
+                        />
+                      </div>
+                      <Button onClick={() => deleteSerialNumberFromList()} text="Удалить" buttonType="delete" />
+                    </div>
+                  </div>
+                }
+                <div className="flex flex-col space-y-1">
+                  <span className="font-semibold">Примичание</span>
+                  <textarea
+                    className="w-full text-black"
+                    value={invoiceMaterial.notes}
+                    onChange={(e) => setInvoiceMaterial({
+                      ...invoiceMaterial,
+                      notes: e.target.value,
+                    })}
+                  />
+                </div>
+                <div className="col-span-2 flex space-x-2">
+                  <Button
+                    text="Добавить в список"
+                    onClick={() => addMaterialToTheList()}
+                  />
+                </div>
               </div>
             </div>
-          ))}
-        </div>
-      </div>
+          </div>
+
+          <div className="px-2 py-1">
+            <span className="font-semibold text-lg">Список материалов на объект</span>
+            <div className="grid grid-cols-1 gap-2">
+              {invoiceMaterials.length == 0 &&
+                <div className="px-3 py-2 bg-gray-800 text-white italic rounded-md">
+                  Список материалов пока пустой
+                </div>
+              }
+              {invoiceMaterials.map((value, index) => (
+                <div key={index} className="grid grid-cols-2 gap-3 px-3 py-2 bg-gray-800 text-white rounded-md overflow-auto">
+                  <div className="font-bold">Материал:</div>
+                  <div>{value.materialName}</div>
+                  <div className="font-bold">Количество:</div>
+                  <div>{value.amount} {value.unit}</div>
+                  {value.notes == ""
+                    ?
+                    <Fragment>
+                      <div className="font-bold">Примичание:</div>
+                      <div className="font-light italic">Отсутсвует</div>
+                    </Fragment>
+                    :
+                    <Fragment>
+                      <div className="font-bold col-span-2">Примичание:</div>
+                      <div className="col-span-2">{value.notes}</div>
+                    </Fragment>
+                  }
+                  <div className="col-span-2 flex space-x-2">
+                    <Button
+                      text="Удалить из списка"
+                      buttonType="delete"
+                      onClick={() => deleteFromMaterialsList(index)}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      }
+      {activeTab == "operations" &&
+        <>
+          <div className="px-2 py-1">
+            <span className="font-semibold text-lg">Услуги</span>
+            <div className="grid grid-cols-1 gap-2">
+              <div className="flex flex-col space-y-3 px-3 py-2 bg-gray-800 text-white rounded-md">
+                {allOperationsQuery.isLoading && allOperationsQuery.fetchStatus == "fetching" &&
+                  <div className="flex items-center">
+                    <LoadingDots height={40} />
+                  </div>
+                }
+                {(allOperationsQuery.isSuccess || allOperationsQuery.fetchStatus == "idle") &&
+                  <div className="flex flex-col space-y-1">
+                    <span className="font-semibold">Доступные услуги</span>
+                    <Select
+                      className="basic-single text-black"
+                      classNamePrefix="select"
+                      isSearchable={true}
+                      isClearable={true}
+                      name={"available-operations-select"}
+                      placeholder={""}
+                      value={selectedOperation}
+                      options={availableOperations}
+                      onChange={(value) => onOperationSelect(value)}
+                    />
+                    <span className="italic text-sm">
+                      Примичание: в данном списке доступны услуги которые не привязаны к материалам. Остальные услуги будут добавлятся в список услуг на объект автоматически при выборе материалов
+                    </span>
+                  </div>
+                }
+                <div className="flex flex-col space-y-1">
+                  <span className="font-semibold">Количество</span>
+                  <div className="flex space-x-2 items-center">
+                    <input
+                      type="number"
+                      value={invoiceOperation.amount}
+                      onChange={(e) => setInvoiceOperation({
+                        ...invoiceOperation,
+                        amount: e.target.valueAsNumber
+                      })}
+                      className="text-black rounded-sm px-2 py-1.5"
+                    />
+                  </div>
+                </div>
+                <div className="flex flex-col space-y-1">
+                  <span className="font-semibold">Примичание</span>
+                  <textarea
+                    className="w-full text-black"
+                    value={invoiceOperation.notes}
+                    onChange={(e) => setInvoiceOperation({
+                      ...invoiceOperation,
+                      notes: e.target.value,
+                    })}
+                  />
+                </div>
+                <div className="col-span-2 flex space-x-2">
+                  <Button
+                    text="Добавить в список"
+                    onClick={() => addOperationToTheList()}
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+          <div className="px-2 py-1">
+            <span className="font-semibold text-lg">Список услуг на объект</span>
+            <div className="grid grid-cols-1 gap-2">
+              {invoiceOperations.length == 0 &&
+                <div className="px-3 py-2 bg-gray-800 text-white italic rounded-md">
+                  Список услуг пока пустой
+                </div>
+              }
+              {invoiceOperations.map((value, index) => (
+                <div key={index} className="grid grid-cols-2 gap-3 px-3 py-2 bg-gray-800 text-white rounded-md overflow-auto">
+                  <div className="font-bold">Услуга:</div>
+                  <div>{value.operationName}</div>
+                  <div className="font-bold">Количество:</div>
+                  <div>{value.amount}</div>
+                  {value.notes == ""
+                    ?
+                    <Fragment>
+                      <div className="font-bold">Примичание:</div>
+                      <div className="font-light italic">Отсутсвует</div>
+                    </Fragment>
+                    :
+                    <Fragment>
+                      <div className="font-bold col-span-2">Примичание:</div>
+                      <div className="col-span-2">{value.notes}</div>
+                    </Fragment>
+                  }
+                  <div className="col-span-2 flex space-x-2">
+                    <Button
+                      text="Удалить из списка"
+                      buttonType="delete"
+                      onClick={() => deleteFromOperationsList(index)}
+                    />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </>
+      }
     </main>
   )
 }

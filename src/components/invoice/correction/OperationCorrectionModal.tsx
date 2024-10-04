@@ -2,16 +2,17 @@ import { useQuery } from "@tanstack/react-query";
 import IReactSelectOptions from "../../../services/interfaces/react-select";
 import Modal from "../../Modal";
 import Select from 'react-select'
-import { OperationPaginated, getAllOperations } from "../../../services/api/operation";
 import { useEffect, useState } from "react";
 import { InvoiceCorrectionOperation } from "../../../services/api/invoiceCorrection";
 import Input from "../../UI/Input";
 import toast from "react-hot-toast";
+import { InvoiceObjectOperations, getOperationsBasedOnTeamID } from "../../../services/api/invoiceObject";
 
 interface Props {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>
   operationData: InvoiceCorrectionOperation
   correctionIndex: number
+  teamID: number
   correctionFunction: (index: number, correction: InvoiceCorrectionOperation) => void
 }
 
@@ -20,6 +21,7 @@ export default function OperationCorrectionModal({
   operationData,
   correctionIndex,
   correctionFunction,
+  teamID
 }: Props) {
 
   const [correction, setCorrection] = useState<InvoiceCorrectionOperation>(operationData)
@@ -30,32 +32,32 @@ export default function OperationCorrectionModal({
   })
   useEffect(() => {
     if (allOperationsQuery.isSuccess && allOperationsQuery.data && selectedOperation.value != 0) {
-      const operation = allOperationsQuery.data.find(val => val.id == selectedOperation.value)!
+      const operation = allOperationsQuery.data.find(val => val.operationID == selectedOperation.value)!
       setCorrection({
         ...correction,
-        operationName: operation.name,
-        operationID:  operation.id,
+        operationName: operation.operationName,
+        operationID:  operation.operationID,
         materialName: operation.materialName,
       })
     }
   }, [selectedOperation])
   const [allOperations, setAllOperations] = useState<IReactSelectOptions<number>[]>([])
-  const allOperationsQuery = useQuery<OperationPaginated[], Error, OperationPaginated[]>({
-    queryKey: [""],
-    queryFn: getAllOperations,
+  const allOperationsQuery = useQuery<InvoiceObjectOperations[], Error, InvoiceObjectOperations[]>({
+    queryKey: ["operations-in-team", teamID],
+    queryFn: () => getOperationsBasedOnTeamID(teamID),
   })
   useEffect(() => {
     if (allOperationsQuery.isSuccess && allOperationsQuery.data) {
       setAllOperations(allOperationsQuery.data.map<IReactSelectOptions<number>>(val => ({
-        label: val.name,
-        value: val.id,
+        label: val.operationName,
+        value: val.operationID,
       })))
 
       if (operationData.operationID != 0) {
-        const operation = allOperationsQuery.data.find(val => val.id == operationData.operationID)!
+        const operation = allOperationsQuery.data.find(val => val.operationID == operationData.operationID)!
         setSelectedOperation({
-          label: operation.name,
-          value: operation.id,
+          label: operation.operationName,
+          value: operation.operationID,
         })
       }
     }
@@ -94,7 +96,7 @@ export default function OperationCorrectionModal({
               setSelectedOperation(value ?? {value: 0, label:  ""})
             }}
           />
-          {selectedOperation.value != 0 && <span className="text-sm italic">Привязанный материал - {correction.materialName ?? "Отсутсвует"}</span>}
+          {selectedOperation.value != 0 && <span className="text-sm italic">Привязанный материал - {correction.materialName == "" ? "Отсутсвует" : correction.materialName}</span>}
         </div>
         <div className="flex space-x-2 items-center">
           <div className="flex flex-col space-y-1">

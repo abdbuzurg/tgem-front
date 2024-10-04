@@ -51,6 +51,7 @@ export interface InvoiceCorrectionMaterial {
   materialName: string
   materialID: number
   materialAmount: number
+  materialAvailableAmount: number
   materialUnit: string
   notes: string
 }

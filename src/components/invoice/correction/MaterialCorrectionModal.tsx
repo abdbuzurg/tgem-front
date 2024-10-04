@@ -3,11 +3,10 @@ import IReactSelectOptions from "../../../services/interfaces/react-select";
 import Modal from "../../Modal";
 import Select from 'react-select'
 import { useQuery } from "@tanstack/react-query";
-import Material from "../../../services/interfaces/material";
 import Input from "../../UI/Input";
 import { InvoiceCorrectionMaterial } from "../../../services/api/invoiceCorrection";
 import toast from "react-hot-toast";
-import { getMaterialAmount, getTeamMaterials } from "../../../services/api/invoiceObject"
+import { InvoiceObjectTeamMaterialData, getMaterialsDataFromTeam,  } from "../../../services/api/invoiceObject"
 
 interface Props {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>
@@ -28,9 +27,9 @@ export default function MaterialCorrectionModal({
   const [selectedMaterial, setSelectedMaterial] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   const [availableMaterials, setAvailableMaterials] = useState<IReactSelectOptions<number>[]>([])
 
-  const materialQuery = useQuery<Material[], Error, Material[]>({
+  const materialQuery = useQuery<InvoiceObjectTeamMaterialData[], Error, InvoiceObjectTeamMaterialData[]>({
     queryKey: ["materials-in-team", teamID],
-    queryFn: () => getTeamMaterials(teamID),
+    queryFn: () => getMaterialsDataFromTeam(teamID),
   })
 
   useEffect(() => {
@@ -38,16 +37,16 @@ export default function MaterialCorrectionModal({
 
       setAvailableMaterials([
         ...materialQuery.data.map<IReactSelectOptions<number>>(val => ({
-          value: val.id,
-          label: val.name,
+          value: val.materialID,
+          label: val.materialName,
         }))
       ])
 
       if (materialData.materialID != 0) {
-        const material = materialQuery.data.find((val) => val.id == materialData.materialID)!
+        const material = materialQuery.data.find((val) => val.materialID == materialData.materialID)!
         setSelectedMaterial({
-          value: material.id,
-          label: material.name,
+          value: material.materialID,
+          label: material.materialName,
         })
       }
     }
@@ -59,12 +58,13 @@ export default function MaterialCorrectionModal({
     }
 
     if (materialQuery.isSuccess && materialQuery.data) {
-      const material = materialQuery.data.find((val) => val.id == selectedMaterial.value)!
+      const material = materialQuery.data.find((val) => val.materialID == selectedMaterial.value)!
       setCorrection({
         ...correction,
-        materialID: material.id,
-        materialUnit: material.unit,
-        materialName: material.name,
+        materialID: material.materialID,
+        materialUnit: material.materialUnit,
+        materialName: material.materialName,
+        materialAvailableAmount: material.amount,
       })
     }
 
@@ -75,16 +75,11 @@ export default function MaterialCorrectionModal({
   const resetCorrection = () => setCorrection({
     invoiceMaterialID: 0,
     materialAmount: 0,
+    materialAvailableAmount: 0,
     materialID: 0,
     materialName: "",
     notes: "",
     materialUnit: "",
-  })
-
-  const materialAmountQuery = useQuery<number, Error, number>({
-    queryKey: [`total-amount-material-team-number`, teamID, selectedMaterial.value],
-    queryFn: () => getMaterialAmount(selectedMaterial.value, teamID),
-    enabled: selectedMaterial.value != 0,
   })
 
   // const [availableSerialNumbers, setAvaiableSerialNumbers] = useState<IReactSelectOptions<string>[]>([])
@@ -128,8 +123,8 @@ export default function MaterialCorrectionModal({
       return
     }
 
-    if (correction.materialAmount > materialAmountQuery.data!) {
-      toast.error(`Кол-во материала превышает доступное количество: ${correction.materialAmount} > ${materialAmountQuery.data!}`)
+    if (correction.materialAmount > correction.materialAvailableAmount) {
+      toast.error(`Кол-во материала превышает доступное количество: ${correction.materialAmount} > ${correction.materialAvailableAmount}`)
       return
     }
 
@@ -173,7 +168,7 @@ export default function MaterialCorrectionModal({
               })}
             />
           </div>
-          <span>Доступно - {materialAmountQuery.data ?? 0} {correction.materialUnit}</span>
+          <span>Доступно - {correction.materialAvailableAmount} {correction.materialUnit}</span>
         </div>
         {/* {correction.hasSerialNumbers && */}
         {/*   <div className="flex flex-col space-y-4"> */}
