@@ -9,10 +9,10 @@ import IconButton from "../../components/IconButtons"
 import { FaDownload, FaEdit, FaRegListAlt, FaRegTrashAlt, FaUpload } from "react-icons/fa"
 import DetailsInvoiceWriteOff from "../../components/invoice/writeoff/DetailsInvoiceWriteOff"
 import DeleteModal from "../../components/deleteModal"
-import AddInvoiceWriteOff from "../../components/invoice/writeoff/AddInvoiceWriteOff"
-import EditInvoiceWriteOff from "../../components/invoice/writeoff/EditInvoiceWriteOff"
 import toast from "react-hot-toast"
 import ReportInvoiceWriteOff from "../../components/invoice/writeoff/ReportInvoiceWriteOff"
+import AddWriteOffObjectWriteOff from "../../components/invoice/writeoff/writeoff_object/AddWriteOffObjectWriteOff"
+import EditWriteOffObjectWriteOff from "../../components/invoice/writeoff/writeoff_object/EditWriteOffObjectWriteOff"
 
 export default function WriteOffObject() {
 
@@ -263,11 +263,8 @@ export default function WriteOffObject() {
           <span>При подтверждении накладая приход с кодом {modalProps.no_delivery} и все связанные материалы будут удалены</span>
         </DeleteModal>
       }
-      {showAddModal && <AddInvoiceWriteOff
-        setShowAddModal={setShowAddModal}
-        writeOffType="writeoff-object"
-      />}
-      {showEditModal && <EditInvoiceWriteOff setShowEditModal={setShowEditModal} invoiceWriteOff={rowToEdit!} writeOffType="writeoff-object" />}
+      {showAddModal && <AddWriteOffObjectWriteOff setShowAddModal={setShowAddModal} />}
+      {showEditModal && <EditWriteOffObjectWriteOff setShowEditModal={setShowEditModal} invoiceWriteOff={rowToEdit!} />}
       {showReportModal && <ReportInvoiceWriteOff writeOffType="writeoff-object" setShowReportModal={setShowReportModal} />}
     </main>
   )

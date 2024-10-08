@@ -1,47 +1,37 @@
 import { Fragment, useEffect, useState } from "react"
-import { IInvoiceWriteOff, IInvoiceWriteOffMaterials, IInvoiceWriteOffView } from "../../../services/interfaces/invoiceWriteOff"
-import IReactSelectOptions from "../../../services/interfaces/react-select"
-import { TeamDataForSelect } from "../../../services/interfaces/teams"
-import { getAllTeamsForSelect } from "../../../services/api/team"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
-import { IObject } from "../../../services/interfaces/objects"
-import { getAllObjects } from "../../../services/api/object"
-import { objectTypeIntoRus } from "../../../services/lib/objectStatuses"
 import toast from "react-hot-toast"
-import { InvoiceWriteOffItem, InvoiceWriteOffMaterialsForSelect, InvoiceWriteOffMutation, getInvoiceWriteOffMaterialsForEdit, getUniqueMaterialsInLocation, updateInvoiceWriteOff } from "../../../services/api/invoiceWriteoff"
-import Modal from "../../Modal"
-import LoadingDots from "../../UI/loadingDots"
 import Select from 'react-select'
 import DatePicker from "react-datepicker";
 import "react-datepicker/dist/react-datepicker.css";
-import IconButton from "../../IconButtons"
 import { IoIosAddCircleOutline } from "react-icons/io"
-import Input from "../../UI/Input"
-import Button from "../../UI/button"
+import { IInvoiceWriteOff, IInvoiceWriteOffMaterials, IInvoiceWriteOffView } from "../../../../services/interfaces/invoiceWriteOff"
+import IReactSelectOptions from "../../../../services/interfaces/react-select"
+import { IObject } from "../../../../services/interfaces/objects"
+import { getAllObjects } from "../../../../services/api/object"
+import { objectTypeIntoRus } from "../../../../services/lib/objectStatuses"
+import Modal from "../../../Modal"
+import Button from "../../../UI/button"
+import IconButton from "../../../IconButtons"
+import Input from "../../../UI/Input"
+import LoadingDots from "../../../UI/loadingDots"
+import { InvoiceWriteOffItem, InvoiceWriteOffMaterialsForSelect, InvoiceWriteOffMutation, getInvoiceWriteOffMaterialsForEdit, getUniqueMaterialsInLocation, updateInvoiceWriteOff } from "../../../../services/api/invoiceWriteoff";
 
 interface Props {
   setShowEditModal: React.Dispatch<React.SetStateAction<boolean>>
-  writeOffType: "loss-object" | "loss-team" | "loss-warehouse" | "writeoff-warehouse" | "writeoff-object",
   invoiceWriteOff: IInvoiceWriteOffView
 }
 
-export default function EditInvoiceWriteOff({
+export default function EditLossObjectWriteOff({
   setShowEditModal,
-  writeOffType,
   invoiceWriteOff,
 }: Props) {
-
-  const [locationWriteOff, _] = useState<"warehouse" | "team" | "object">(() => {
-    if (writeOffType == "loss-team") return "team"
-    if (writeOffType == "loss-object" || writeOffType == "writeoff-object") return "object"
-    return "warehouse"
-  })
 
   const [editInvoiceWriteOff, setEditInvoiceWriteOff] = useState<IInvoiceWriteOff>({
     id: invoiceWriteOff.id,
     projectID: invoiceWriteOff.projectID,
     releasedWorkerID: invoiceWriteOff.releasedWorkerID,
-    writeOffType: writeOffType,
+    writeOffType: "loss-object",
     writeOffLocationID: invoiceWriteOff.writeOffLocationID,
     dateOfInvoice: new Date(invoiceWriteOff.dateOfInvoice),
     confirmation: false,
@@ -52,24 +42,9 @@ export default function EditInvoiceWriteOff({
   const [writeOffLocation, setWriteOffLocation] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   const [availableLocations, setAvailableLocations] = useState<IReactSelectOptions<number>[]>([])
 
-  const allTeamsQuery = useQuery<TeamDataForSelect[], Error, TeamDataForSelect[]>({
-    queryKey: ["team-data-for-select"],
-    queryFn: () => getAllTeamsForSelect(),
-    enabled: writeOffType == "loss-team",
-  })
-  useEffect(() => {
-    if (allTeamsQuery.isSuccess && allTeamsQuery.data) {
-      setAvailableLocations(allTeamsQuery.data.map<IReactSelectOptions<number>>(val => ({
-        label: val.teamNumber + " (" + val.teamLeaderName + ")",
-        value: val.id,
-      })))
-    }
-  }, [allTeamsQuery.data])
-
   const allObjectQuery = useQuery<IObject[], Error, IObject[]>({
     queryKey: ["all-objects"],
     queryFn: () => getAllObjects(),
-    enabled: writeOffType == "loss-object" || writeOffType == "writeoff-object",
   })
   useEffect(() => {
     if (allObjectQuery.isSuccess && allObjectQuery.data) {
@@ -77,14 +52,24 @@ export default function EditInvoiceWriteOff({
         label: val.name + " (" + objectTypeIntoRus(val.type) + ")",
         value: val.id,
       })))
+
+      const object = allObjectQuery.data.find((val) => val.id == invoiceWriteOff.writeOffLocationID)
+      if (object) {
+        setWriteOffLocation({
+          value: object.id,
+          label: `${object.name} (${objectTypeIntoRus(object.type)})`
+        })
+      }
     }
+
   }, [allObjectQuery.data])
 
   // Invoice materials information
   const [invoiceMaterials, setInvoiceMaterials] = useState<IInvoiceWriteOffMaterials[]>([])
   const invoiceMaterialsForEditQuery = useQuery<IInvoiceWriteOffMaterials[], Error, IInvoiceWriteOffMaterials[]>({
     queryKey: ["invoice-input-materials", invoiceWriteOff.id],
-    queryFn: () => getInvoiceWriteOffMaterialsForEdit(invoiceWriteOff.id)
+    queryFn: () => getInvoiceWriteOffMaterialsForEdit(invoiceWriteOff.id, "object", writeOffLocation.value),
+    enabled: writeOffLocation.value != 0,
   })
   useEffect(() => {
     if (invoiceMaterialsForEditQuery.isSuccess && invoiceMaterialsForEditQuery.data) {
@@ -105,8 +90,8 @@ export default function EditInvoiceWriteOff({
   // MATERIAL SELECT LOGIC
   const materialQuery = useQuery<InvoiceWriteOffMaterialsForSelect[], Error, InvoiceWriteOffMaterialsForSelect[]>({
     queryKey: ["material-location-all"],
-    queryFn: () => getUniqueMaterialsInLocation(locationWriteOff, writeOffLocation.value),
-    enabled: writeOffLocation.value != 0 || locationWriteOff == "warehouse"
+    queryFn: () => getUniqueMaterialsInLocation("object", writeOffLocation.value),
+    enabled: writeOffLocation.value != 0,
   })
   const [allMaterialData, setAllMaterialData] = useState<IReactSelectOptions<number>[]>([])
   const [selectedMaterial, setSelectedMaterial] = useState<IReactSelectOptions<number>>({ value: 0, label: "" })
@@ -140,6 +125,7 @@ export default function EditInvoiceWriteOff({
         materialID: material.materialID,
         materialName: material.materialName,
         hasSerialNumber: material.hasSerialNumber,
+        locationAmount: material.amount,
       })
     }
   }
@@ -194,7 +180,7 @@ export default function EditInvoiceWriteOff({
   const updateInvoiceWriteOffMutation = useMutation<InvoiceWriteOffMutation, Error, InvoiceWriteOffMutation>({
     mutationFn: updateInvoiceWriteOff,
     onSuccess: () => {
-      queryClient.invalidateQueries(["invoice-writeoff", writeOffType])
+      queryClient.invalidateQueries(["invoice-writeoff", "loss-object"])
       setShowEditModal(false)
     }
   })
@@ -232,17 +218,14 @@ export default function EditInvoiceWriteOff({
         <div className="flex flex-col">
           <p className="text-xl font-semibold text-gray-800">Детали накладной</p>
           <div className="flex space-x-2 items-center w-full">
-            {(allTeamsQuery.isFetching || allObjectQuery.isFetching) &&
+            {allObjectQuery.isFetching &&
               <div className="flex h-full w-[200px] items-center">
                 <LoadingDots height={40} />
               </div>
             }
-            {(allTeamsQuery.isSuccess || allObjectQuery.isSuccess) &&
+            {allObjectQuery.isSuccess &&
               <div className="flex flex-col space-y-1">
-                <label htmlFor="warehouse-manager">
-                  {writeOffType == "loss-team" && "Бригада"}
-                  {(writeOffType == "loss-object" || writeOffType == "writeoff-object") && "Объект"}
-                </label>
+                <label htmlFor="warehouse-manager">Объект</label>
                 <div className="w-[200px]">
                   <Select
                     className="basic-single"
@@ -305,19 +288,11 @@ export default function EditInvoiceWriteOff({
               <span>Ед.Изм.</span>
             </div>
             <div className="px-4 py-3">
+              <span>На объекте</span>
+            </div>
+            <div className="px-4 py-3">
               <span>Количество</span>
             </div>
-            <div className="px-4 py-3">
-              <span>Цена</span>
-            </div>
-            <div className="px-4 py-3">
-              <span>
-                {locationWriteOff == "warehouse" && "На складе"}
-                {locationWriteOff == "team" && "У бригады"}
-                {locationWriteOff == "object" && "На объекте"}
-              </span>
-            </div>
-
             <div className="px-4 py-3">
               <span>Примичание</span>
             </div>
@@ -325,12 +300,12 @@ export default function EditInvoiceWriteOff({
             {/* table head END */}
           </div>
           <div className="grid grid-cols-6 text-sm text-left mt-2 w-full border-box items-center">
-            {materialQuery.isFetching &&
+            {materialQuery.isLoading &&
               <div className="px-4 py-3">
                 <LoadingDots height={36} />
               </div>
             }
-            {(materialQuery.isSuccess || !materialQuery.isFetching) &&
+            {materialQuery.isSuccess &&
               <div className="px-4 py-3">
                 <Select
                   className="basic-single"
@@ -347,6 +322,7 @@ export default function EditInvoiceWriteOff({
               </div>
             }
             <div className="px-4 py-3 flex items-center">{invoiceMaterial.unit}</div>
+            <div className="px-4 py-3">{invoiceMaterial.locationAmount}</div>
             <div className="px-4 py-3">
               <Input
                 name="amount"
@@ -355,7 +331,6 @@ export default function EditInvoiceWriteOff({
                 onChange={(e) => setInvoiceMaterial((prev) => ({ ...prev, amount: e.target.valueAsNumber }))}
               />
             </div>
-            <div className="px-4 py-3">{invoiceMaterial.locationAmount}</div>
             <div className="px-4 py-3">
               <Input
                 name="notes"

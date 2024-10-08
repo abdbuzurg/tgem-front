@@ -75,8 +75,8 @@ export async function getInvoiceWriteOffMaterilsWithoutSerialNumbersByID(id: num
   }
 }
 
-export async function getInvoiceWriteOffMaterialsForEdit(id: number): Promise<IInvoiceWriteOffMaterials[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<IInvoiceWriteOffMaterials[]>>(`${URL}/invoice-materials/${id}`)
+export async function getInvoiceWriteOffMaterialsForEdit(id: number, locationType: string, locationID: number): Promise<IInvoiceWriteOffMaterials[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<IInvoiceWriteOffMaterials[]>>(`${URL}/invoice-materials/${id}/${locationType}/${locationID}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
     return response.data

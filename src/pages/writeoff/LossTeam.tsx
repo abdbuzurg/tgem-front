@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react"
 import Button from "../../components/UI/button"
-import AddInvoiceWriteOff from "../../components/invoice/writeoff/AddInvoiceWriteOff"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { ENTRY_LIMIT } from "../../services/api/constants"
 import { InvoiceWriteOffConfirmationData, InvoiceWriteOffPagianted, deleteInvoiceWriteOff, getInvoiceWriteOffDocument, getPaginatedInvoiceWriteOff, sendInvoiceWriteOffConfirmationExcel } from "../../services/api/invoiceWriteoff"
@@ -10,9 +9,10 @@ import IconButton from "../../components/IconButtons"
 import { FaDownload, FaEdit, FaRegListAlt, FaRegTrashAlt, FaUpload } from "react-icons/fa"
 import DeleteModal from "../../components/deleteModal"
 import DetailsInvoiceWriteOff from "../../components/invoice/writeoff/DetailsInvoiceWriteOff"
-import EditInvoiceWriteOff from "../../components/invoice/writeoff/EditInvoiceWriteOff"
 import toast from "react-hot-toast"
 import ReportInvoiceWriteOff from "../../components/invoice/writeoff/ReportInvoiceWriteOff"
+import AddLossTeamWriteOff from "../../components/invoice/writeoff/loss_team/AddLossTeamWriteOff"
+import EditLossTeamWriteOff from "../../components/invoice/writeoff/loss_team/EditLossTeamWriteOff"
 
 export default function LossTeam() {
   const tableDataQuery = useInfiniteQuery<InvoiceWriteOffPagianted, Error>({
@@ -262,11 +262,8 @@ export default function LossTeam() {
           <span>При подтверждении накладая приход с кодом {modalProps.no_delivery} и все связанные материалы будут удалены</span>
         </DeleteModal>
       }
-      {showAddModal && <AddInvoiceWriteOff
-        setShowAddModal={setShowAddModal}
-        writeOffType="loss-team"
-      />}
-      {showEditModal && <EditInvoiceWriteOff setShowEditModal={setShowEditModal} invoiceWriteOff={rowToEdit!} writeOffType="loss-team" />}
+      {showAddModal && <AddLossTeamWriteOff setShowAddModal={setShowAddModal} />}
+      {showEditModal && <EditLossTeamWriteOff setShowEditModal={setShowEditModal} invoiceWriteOff={rowToEdit!} />}
       {showReportModal && <ReportInvoiceWriteOff writeOffType="loss-team" setShowReportModal={setShowReportModal} />}
     </main>
   )

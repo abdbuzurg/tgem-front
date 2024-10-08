@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react"
 import Button from "../../components/UI/button"
-import AddInvoiceWriteOff from "../../components/invoice/writeoff/AddInvoiceWriteOff"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { ENTRY_LIMIT } from "../../services/api/constants"
 import { InvoiceWriteOffConfirmationData, InvoiceWriteOffPagianted, deleteInvoiceWriteOff, getInvoiceWriteOffDocument, getPaginatedInvoiceWriteOff, sendInvoiceWriteOffConfirmationExcel } from "../../services/api/invoiceWriteoff"
@@ -10,9 +9,10 @@ import IconButton from "../../components/IconButtons"
 import { FaDownload, FaEdit, FaRegListAlt, FaRegTrashAlt, FaUpload } from "react-icons/fa"
 import DeleteModal from "../../components/deleteModal"
 import DetailsInvoiceWriteOff from "../../components/invoice/writeoff/DetailsInvoiceWriteOff"
-import EditInvoiceWriteOff from "../../components/invoice/writeoff/EditInvoiceWriteOff"
 import toast from "react-hot-toast"
 import ReportInvoiceWriteOff from "../../components/invoice/writeoff/ReportInvoiceWriteOff"
+import AddWriteOffWarehouseWriteOff from "../../components/invoice/writeoff/writeoff_warehouse/AddWriteOffWarehouse"
+import EditWriteOffWarehouseWriteOff from "../../components/invoice/writeoff/writeoff_warehouse/EditWriteOffWarehouseWriteOff"
 
 export default function WriteOffWarehouse() {
 
@@ -259,11 +259,8 @@ export default function WriteOffWarehouse() {
           <span>При подтверждении накладая приход с кодом {modalProps.no_delivery} и все связанные материалы будут удалены</span>
         </DeleteModal>
       }
-      {showAddModal && <AddInvoiceWriteOff
-        setShowAddModal={setShowAddModal}
-        writeOffType="writeoff-warehouse"
-      />}
-      {showEditModal && <EditInvoiceWriteOff setShowEditModal={setShowEditModal} invoiceWriteOff={rowToEdit!} writeOffType="writeoff-warehouse" />}
+      {showAddModal && <AddWriteOffWarehouseWriteOff setShowAddModal={setShowAddModal}/>}
+      {showEditModal && <EditWriteOffWarehouseWriteOff setShowEditModal={setShowEditModal} invoiceWriteOff={rowToEdit!} />}
       {showReportModal && <ReportInvoiceWriteOff writeOffType="writeoff-warehouse" setShowReportModal={setShowReportModal} />}
     </main>
   )

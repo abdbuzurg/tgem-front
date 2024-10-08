@@ -1,6 +1,5 @@
 import { useEffect, useState } from "react"
 import Button from "../../components/UI/button"
-import AddInvoiceWriteOff from "../../components/invoice/writeoff/AddInvoiceWriteOff"
 import { useInfiniteQuery, useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { ENTRY_LIMIT } from "../../services/api/constants"
 import { InvoiceWriteOffConfirmationData, InvoiceWriteOffPagianted, deleteInvoiceWriteOff, getInvoiceWriteOffDocument, getPaginatedInvoiceWriteOff, sendInvoiceWriteOffConfirmationExcel } from "../../services/api/invoiceWriteoff"
@@ -10,9 +9,10 @@ import IconButton from "../../components/IconButtons"
 import { FaDownload, FaEdit, FaRegListAlt, FaRegTrashAlt, FaUpload } from "react-icons/fa"
 import DeleteModal from "../../components/deleteModal"
 import DetailsInvoiceWriteOff from "../../components/invoice/writeoff/DetailsInvoiceWriteOff"
-import EditInvoiceWriteOff from "../../components/invoice/writeoff/EditInvoiceWriteOff"
 import toast from "react-hot-toast"
 import ReportInvoiceWriteOff from "../../components/invoice/writeoff/ReportInvoiceWriteOff"
+import AddLossWarehouseWriteOff from "../../components/invoice/writeoff/loss_warehouse/AddLossWarehouseWriteOff"
+import EditLossWarehouseWriteOff from "../../components/invoice/writeoff/loss_warehouse/EditLossWarehouseWriteOff"
 
 export default function LossWarehouse() {
 
@@ -259,11 +259,8 @@ export default function LossWarehouse() {
           <span>При подтверждении накладая приход с кодом {modalProps.no_delivery} и все связанные материалы будут удалены</span>
         </DeleteModal>
       }
-      {showAddModal && <AddInvoiceWriteOff
-        setShowAddModal={setShowAddModal}
-        writeOffType="loss-warehouse"
-      />}
-      {showEditModal && <EditInvoiceWriteOff setShowEditModal={setShowEditModal} invoiceWriteOff={rowToEdit!} writeOffType="loss-warehouse" />}
+      {showAddModal && <AddLossWarehouseWriteOff setShowAddModal={setShowAddModal}/>}
+      {showEditModal && <EditLossWarehouseWriteOff setShowEditModal={setShowEditModal} invoiceWriteOff={rowToEdit!} />}
       {showReportModal && <ReportInvoiceWriteOff writeOffType="loss-warehouse" setShowReportModal={setShowReportModal} />}
     </main>
   )
