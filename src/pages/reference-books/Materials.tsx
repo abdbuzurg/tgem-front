@@ -143,8 +143,8 @@ export default function Materials() {
       return
     }
 
-    if (materialMutationData.plannedAmountForProject <= 0) {
-      toast.error("Запланированное количество должны быть больше 0")
+    if (materialMutationData.showPlannedAmountInReport && materialMutationData.plannedAmountForProject <= 0) {
+      toast.error('Запланированное количество должны быть больше 0 если вы ставите галочку в - Показать в отчете "Xод работы проекта"')
       return
     }
 

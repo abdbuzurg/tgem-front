@@ -13,6 +13,8 @@ export interface OperationMutation {
   costPrime: number
   costWithCustomer: number
   materialID: number
+  plannedAmountForProject: number
+  showPlannedAmountInReport: boolean
 }
 
 export async function createOperation(data: OperationMutation): Promise<IOperation> {
@@ -61,6 +63,8 @@ export interface OperationPaginated {
   costWithCustomer: number
   materialID: number
   materialName: string
+  showPlannedAmountInReport: boolean
+  plannedAmountForProject: number
 }
 
 export interface OperationSearchParameters {
@@ -69,11 +73,11 @@ export interface OperationSearchParameters {
   materialID: number
 }
 
-export async function getPaginatedOperations({pageParam = 1}, searchParameters: OperationSearchParameters): Promise<OperationGetAllResponse> {
+export async function getPaginatedOperations({ pageParam = 1 }, searchParameters: OperationSearchParameters): Promise<OperationGetAllResponse> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<OperationGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&name=${searchParameters.name}&code=${searchParameters.code}&materialID=${searchParameters.materialID}`)
   const responseData = responseRaw.data
   if (responseData.success) {
-    return {...responseData.data, page: pageParam}
+    return { ...responseData.data, page: pageParam }
   } else {
     throw new Error(responseData.error)
   }
