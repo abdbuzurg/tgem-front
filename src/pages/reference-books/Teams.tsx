@@ -183,8 +183,15 @@ export default function Team() {
 
   const [showImportModal, setShowImportModal] = useState(false)
 
+const importTemplateQuery = useQuery<boolean, Error, boolean>({
+    queryKey: ["worker-template"],
+    queryFn: getTeamTemplateDocument,
+    enabled: false,
+  })
+
   const importMutation = useMutation<boolean, Error, File>({
     mutationFn: importTeam,
+    onError: (err: Error) => toast.error(`${err.message}`)
   })
 
   const acceptExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -357,14 +364,26 @@ export default function Team() {
         <Modal setShowModal={setShowImportModal}>
           <span className="font-bold text-xl px-2 py-1">Импорт данных в Справочник - Бригады</span>
           <div className="grid grid-cols-2 gap-2 items-center px-2 pt-2">
-            <Button text="Скачать шаблон" onClick={() => getTeamTemplateDocument()} />
+            <div
+              onClick={() => importTemplateQuery.refetch()}
+              className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer text-center"
+            >
+              {importTemplateQuery.fetchStatus == "fetching" ? <LoadingDots height={20} /> : "Скачать шаблон"}
+            </div>
             <div className="w-full">
-              <label
-                htmlFor="file"
-                className="w-full text-white py-3 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
-              >
-                Импортировать данные
-              </label>
+              {importMutation.status == "loading"
+                ?
+                <div className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800">
+                  <LoadingDots height={25} />
+                </div>
+                :
+                <label
+                  htmlFor="file"
+                  className="w-full text-white py-3 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer text-center"
+                >
+                  Импортировать данные
+                </label>
+              }
               <input
                 name="file"
                 type="file"

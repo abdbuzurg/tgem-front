@@ -106,7 +106,16 @@ export async function importMJD(data: File): Promise<boolean> {
     }
   })
   if (responseRaw.status == 200) {
-    return true
+    if (typeof responseRaw.data == 'object') {
+      const response: IAPIResposeFormat<string> = responseRaw.data
+      if (!response.success) {
+        throw new Error(response.error)
+      } else {
+        return true
+      }
+    } else {
+      return true
+    }
   } else {
     throw new Error(responseRaw.data)
   }

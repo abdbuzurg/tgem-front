@@ -35,7 +35,7 @@ export async function getPaginatedTPObjects({ pageParam = 1 }, searchParameters:
   const responseRaw = await axiosClient.get<IAPIResposeFormat<ITPObjectGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&teamID=${searchParameters.teamID}&supervisorWorkerID=${searchParameters.supervisorWorkerID}&objectName=${searchParameters.objectName}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
-    return {...response.data, page: pageParam}
+    return { ...response.data, page: pageParam }
   } else {
     throw new Error(response.error)
   }
@@ -101,7 +101,16 @@ export async function importTP(data: File): Promise<boolean> {
     }
   })
   if (responseRaw.status == 200) {
-    return true
+    if (typeof responseRaw.data == 'object') {
+      const response: IAPIResposeFormat<string> = responseRaw.data
+      if (!response.success) {
+        throw new Error(response.error)
+      } else {
+        return true
+      }
+    } else {
+      return true
+    }
   } else {
     throw new Error(responseRaw.data)
   }
