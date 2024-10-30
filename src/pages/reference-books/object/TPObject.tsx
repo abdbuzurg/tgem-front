@@ -158,11 +158,6 @@ export default function TPObject() {
       return
     }
 
-    if (mutationData.detailedInfo.nourashes == "") {
-      toast.error("Не указано питание объекта ТП")
-      return
-    }
-
     if (mutationType == "create") createMutation.mutate(mutationData, {
       onSuccess: () => {
         queryClient.invalidateQueries(["tp-object"])
@@ -335,7 +330,7 @@ export default function TPObject() {
               <span>Статус</span>
             </th>
             <th className="px-4 py-3">
-              <span>Модель</span>
+              <span>Тип</span>
             </th>
             <th className="px-4 py-3">
               <span>Класс Напряжения</span>
@@ -553,21 +548,6 @@ export default function TPObject() {
                     ...mutationData.detailedInfo,
                     voltageClass: value?.value ?? "",
                   }
-                })}
-              />
-            </div>
-            <div className="flex flex-col space-y-1">
-              <label htmlFor="name">Питает<span className="text-red-600">*</span></label>
-              <Input
-                name="nourashes"
-                type="text"
-                value={mutationData.detailedInfo.nourashes}
-                onChange={(e) => setMutationData({
-                  ...mutationData,
-                  detailedInfo: {
-                    ...mutationData.detailedInfo,
-                    nourashes: e.target.value,
-                  },
                 })}
               />
             </div>

@@ -16,6 +16,8 @@ import { OBJECT_STATUSES_FOR_SELECT } from "../../../services/lib/objectStatuses
 import { TeamDataForSelect } from "../../../services/interfaces/teams"
 import { getAllTeamsForSelect } from "../../../services/api/team"
 import arrayListToString from "../../../services/lib/arrayListToStringWithCommas"
+import { IObject } from "../../../services/interfaces/objects"
+import { getAllTPs } from "../../../services/api/tp_object"
 
 export default function SIPObject() {
   const [searchParameters, setSearchParameters] = useState<SIPObjectSearchParameters>({
@@ -27,7 +29,7 @@ export default function SIPObject() {
   const tableDataQuery = useInfiniteQuery<ISIPObjectGetAllResponse, Error>({
     queryKey: ["sip-objects", searchParameters],
     queryFn: ({ pageParam }) => getPaginatedSIPObjects({ pageParam }, searchParameters),
-    getNextPageParam: (lastPage) => {
+    getNextPageParam: (lastPage: any) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
     }
@@ -35,7 +37,7 @@ export default function SIPObject() {
   const [tableData, setTableData] = useState<ISIPObjectPaginated[]>([])
   useEffect(() => {
     if (tableDataQuery.isSuccess && tableDataQuery.data) {
-      const data: ISIPObjectPaginated[] = tableDataQuery.data.pages.reduce<ISIPObjectPaginated[]>((acc, page) => [...acc, ...page.data], [])
+      const data: ISIPObjectPaginated[] = tableDataQuery.data.pages.reduce<ISIPObjectPaginated[]>((acc: ISIPObjectPaginated[], page) => [...acc, ...page.data], [])
       setTableData(data)
     }
   }, [tableDataQuery.data])
@@ -90,6 +92,7 @@ export default function SIPObject() {
     },
     supervisors: [],
     teams: [],
+    nourashedByTP: [],
   })
 
   const [selectedName, setSelectedName] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
@@ -100,7 +103,7 @@ export default function SIPObject() {
   })
   useEffect(() => {
     if (tpNamesQuery.isSuccess && tpNamesQuery.data) {
-      setAvailableNames(tpNamesQuery.data.map<IReactSelectOptions<string>>((val) => ({ label: val, value: val })))
+      setAvailableNames(tpNamesQuery.data.map<IReactSelectOptions<string>>((val: string) => ({ label: val, value: val })))
     }
   }, [tpNamesQuery.data])
 
@@ -113,7 +116,7 @@ export default function SIPObject() {
   useEffect(() => {
     if (supervisorsQuery.isSuccess && supervisorsQuery.data) {
       setAvailableSupervisors([
-        ...supervisorsQuery.data.map<IReactSelectOptions<number>>((val) => ({ label: val.name, value: val.id }))
+        ...supervisorsQuery.data.map<IReactSelectOptions<number>>((val: IWorker) => ({ label: val.name, value: val.id }))
       ])
     }
   }, [supervisorsQuery.data])
@@ -127,13 +130,27 @@ export default function SIPObject() {
   useEffect(() => {
     if (teamsQuery.isSuccess && teamsQuery.data) {
       setAvailableTeams([
-        ...teamsQuery.data.map<IReactSelectOptions<number>>((val) => ({
+        ...teamsQuery.data.map<IReactSelectOptions<number>>((val: TeamDataForSelect) => ({
           label: val.teamNumber + " (" + val.teamLeaderName + ")",
           value: val.id
         }))
       ])
     }
   }, [teamsQuery.data])
+
+  const [selectedTP, setSelectedTP] = useState<IReactSelectOptions<number>[]>([])
+  const [availableTPs, setAvailableTPs] = useState<IReactSelectOptions<number>[]>([])
+  const tpsQuery = useQuery<IObject[], Error, IObject[]>({
+    queryKey: ["all-tp-objects"],
+    queryFn: getAllTPs,
+  })
+  useEffect(() => {
+    if (tpsQuery.isSuccess && tpsQuery.data) {
+      setAvailableTPs([
+        ...tpsQuery.data.map<IReactSelectOptions<number>>((val: IObject) => ({ label: val.name, value: val.id }))
+      ])
+    }
+  }, [tpsQuery.data])
 
   const createMutation = useMutation<boolean, Error, ISIPObjectCreate>({
     mutationFn: createSIPObject,
@@ -172,6 +189,8 @@ export default function SIPObject() {
   }
 
   const onEditClick = (index: number) => {
+
+    console.log(tableData[index])
     const supervisors = tableData[index].supervisors.map<IReactSelectOptions<number>>((value) => {
       const subIndex = avaiableSupervisors.findIndex((val) => val.label == value)!
       return avaiableSupervisors[subIndex]
@@ -180,6 +199,11 @@ export default function SIPObject() {
     const teams = tableData[index].teams.map<IReactSelectOptions<number>>((value) => {
       const subIndex = availableTeams.findIndex((val) => val.label == value)!
       return availableTeams[subIndex]
+    }).filter((val) => val)!
+
+    const tps = tableData[index].tpNames.map<IReactSelectOptions<number>>((value) => {
+      const subIndex = availableTPs.findIndex((val) => val.label == value)!
+      return availableTPs[subIndex]
     }).filter((val) => val)!
 
     setMutationData({
@@ -195,7 +219,8 @@ export default function SIPObject() {
         amountFeeders: tableData[index].amountFeeders,
       },
       supervisors: supervisors.map(val => val.value),
-      teams: teams.map(val => val.value)
+      teams: teams.map(val => val.value),
+      nourashedByTP: tps.map(val => val.value),
     })
 
     setselectedSupervisorsWorkerID(supervisors)
@@ -221,7 +246,7 @@ export default function SIPObject() {
       onSettled: () => {
         e.target.value = ""
       },
-      onError: (error) => {
+      onError: (error: Error) => {
         toast.error(`Импортированный файл имеет неправильные данные: ${error.message}`)
       }
     })
@@ -263,7 +288,7 @@ export default function SIPObject() {
   })
   useEffect(() => {
     if (allSupervisorsQuery.isSuccess && allSupervisorsQuery.data) {
-      setAllSupervisors(allSupervisorsQuery.data.map<IReactSelectOptions<number>>(val => ({
+      setAllSupervisors(allSupervisorsQuery.data.map<IReactSelectOptions<number>>((val: IWorker) => ({
         label: val.name,
         value: val.id,
       })))
@@ -279,7 +304,7 @@ export default function SIPObject() {
   })
   useEffect(() => {
     if (allTeamsQuery.isSuccess && allTeamsQuery.data) {
-      setAllTeams(allTeamsQuery.data.map<IReactSelectOptions<number>>(val => ({
+      setAllTeams(allTeamsQuery.data.map<IReactSelectOptions<number>>((val: TeamDataForSelect) => ({
         label: val.teamNumber + " (" + val.teamLeaderName + ")",
         value: val.id,
       })))
@@ -334,6 +359,9 @@ export default function SIPObject() {
             <th className="px-4 py-3 w-[150px]">
               <span>Бригады</span>
             </th>
+            <th className="px-4 py-3 w-[150px]">
+              <span>Питается от ТП</span>
+            </th>
             <th className="px-4 py-3">
               <Button text="Добавить" onClick={() => {
                 setMutationType("create")
@@ -353,6 +381,7 @@ export default function SIPObject() {
                   },
                   supervisors: [],
                   teams: [],
+                  nourashedByTP: [],
                 })
               }} />
             </th>
@@ -384,6 +413,9 @@ export default function SIPObject() {
                 </td>
                 <td className="px-4 py-3">
                   {arrayListToString(row.teams)}
+                </td>
+                <td className="px-4 py-3">
+                  {arrayListToString(row.tpNames)}
                 </td>
                 <td className="px-4 py-3 border-box flex space-x-3">
                   <Button text="Изменить" onClick={() => onEditClick(index)} />
@@ -522,6 +554,27 @@ export default function SIPObject() {
                     amountFeeders: e.target.valueAsNumber,
                   },
                 })}
+              />
+            </div>
+            <div>
+              <label htmlFor="">Питается от ТП</label>
+              <Select
+                className="basic-single text-black"
+                classNamePrefix="select"
+                isSearchable={true}
+                isClearable={true}
+                isMulti
+                name={"supervisors-select"}
+                placeholder={""}
+                value={selectedTP}
+                options={availableTPs}
+                onChange={(value) => {
+                  setSelectedTP([...value])
+                  setMutationData({
+                    ...mutationData,
+                    nourashedByTP: value.map((val) => val.value),
+                  })
+                }}
               />
             </div>
           </div>
