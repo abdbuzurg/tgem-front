@@ -45,7 +45,6 @@ export default function InvoiceInput() {
   //Confirmation logic
   const confirmationFileMutation = useMutation<boolean, Error, InvoiceInputConfirmationData>({
     mutationFn: sendInvoiceInputConfirmationExcel,
-
   })
 
   const acceptConfirmationFile = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
@@ -54,6 +53,14 @@ export default function InvoiceInput() {
     if (!e.target.files) return
 
     const confirmationFileToast = toast.loading("Загрузка подтвердающего файла...")
+
+    const fileName = e.target.files[0].name.split(".").pop()
+    if (fileName != "pdf") {
+      toast.dismiss(confirmationFileToast)
+      toast.error("Подтверждающий файл должен быть формата PDF")
+      return 
+    }
+
     confirmationFileMutation.mutate({
       id: tableData[index].id,
       file: e.target.files[0]!

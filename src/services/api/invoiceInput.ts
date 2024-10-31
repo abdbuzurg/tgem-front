@@ -68,6 +68,14 @@ export async function updateInvoiceInput(data: InvoiceInputMutation): Promise<In
 export async function getInvoiceInputDocument(deliveryCode: string): Promise<boolean> {
   const responseRaw = await axiosClient.get(`${URL}/document/${deliveryCode}`, { responseType: "blob", })
   if (responseRaw.status == 200) {
+    if (typeof responseRaw.data == "object") {
+      const response: IAPIResposeFormat<null> = responseRaw.data
+      if (!response.success || !response.permission) {
+        throw new Error(response.error)
+      }
+
+      return true
+    }
     const contentType: string = responseRaw.headers["content-type"]
     const extension = contentType.split("/")[1]
     fileDownload(responseRaw.data, `${deliveryCode}.${extension}`)
@@ -91,6 +99,15 @@ export async function sendInvoiceInputConfirmationExcel(data: InvoiceInputConfir
     }
   })
   if (responseRaw.status == 200) {
+    if (typeof responseRaw.data == 'object') {
+      const response: IAPIResposeFormat<string> = responseRaw.data
+      if (response.success && response.permission) {
+        return true
+      } else {
+        throw new Error(response.error)
+      }
+    }
+
     return true
   } else {
     throw new Error(responseRaw.data)

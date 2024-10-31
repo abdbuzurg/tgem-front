@@ -83,12 +83,21 @@ export interface InvoiceOutputInProjectConfirmation {
 export async function sendInvoiceOutputInProjectConfirmationExcel(data: InvoiceOutputInProjectConfirmation): Promise<boolean> {
   const formData = new FormData()
   formData.append("file", data.file)
-  const responseRaw = await axiosClient.post<IAPIResposeFormat<boolean>>(`${URL}/confirm/${data.id}`, formData, {
+  const responseRaw = await axiosClient.post(`${URL}/confirm/${data.id}`, formData, {
     headers: {
       "Content-Type": `multipart/form-data; boundary=WebAppBoundary`,
     }
   })
   if (responseRaw.data.success && responseRaw.data.permission) {
+    if (typeof responseRaw.data == 'object') {
+      const response: IAPIResposeFormat<string> = responseRaw.data
+      if (response.success && response.permission) {
+        return true
+      } else {
+        throw new Error(response.error)
+      }
+    }
+
     return true
   } else {
     throw new Error(responseRaw.data.error)

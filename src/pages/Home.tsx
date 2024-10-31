@@ -1,5 +1,6 @@
 import { Link } from "react-router-dom";
 import { HR_ATTENDANCE, INVOICE_CORRECTION, INVOICE_INPUT, INVOICE_OBJECT, INVOICE_OUTPUT_IN_PROJECT, INVOICE_OUTPUT_OUT_OF_PROJECT, INVOICE_RETURN_OBJECT, INVOICE_RETURN_TEAM, LOSS_OBJECT, LOSS_TEAM, LOSS_WAREHOUSE, WRITEOFF_OBJECT, WRITEOFF_WAREHOUSE, } from "../URLs";
+import MainReports from "../components/MainReports";
 
 const homePageCategorized = [
   {
@@ -44,7 +45,7 @@ const homePageCategorized = [
     pages: [
       { name: "МОРФО", url: HR_ATTENDANCE }
     ],
-  }
+  },
 ]
 
 export default function Home() {
@@ -67,6 +68,7 @@ export default function Home() {
             </div>
           </div>
         ))}
+        <MainReports />
       </div>
     </div>
   )

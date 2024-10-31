@@ -156,7 +156,7 @@ export default function Operatons() {
       return
     }
 
-
+    console.log(operationMutationData)
     switch (mutationModalType) {
       case "create":
         createOperationMutation.mutate(operationMutationData)
@@ -393,27 +393,25 @@ export default function Operatons() {
                 }
               </div>
               <div className="flex flex-col space-y-1">
-                <label htmlFor="code">Запланированное количество<span className="text-red-600">*</span></label>
+                <label htmlFor="plannedAmountForProject">Запланированное количество<span className="text-red-600">*</span></label>
                 <Input
                   name="plannedAmountForProject"
                   type="number"
                   value={operationMutationData.plannedAmountForProject}
-                  onChange={(e) => setOperationMutationData({ ...operationMutationData, [e.target.name]: e.target.valueAsNumber })}
+                  onChange={(e) => setOperationMutationData({ ...operationMutationData, plannedAmountForProject: e.target.valueAsNumber })}
                 />
               </div>
               <div className="flex flex-col space-y-1">
                 <div className="flex space-x-2 items-center">
-                  <input type="checkbox" id="hasSerialNumber" value={1} name="hasSerialNumber" onChange={
-                    (e) => {
-                      if (e.target.checked) {
-                        setOperationMutationData({ ...operationMutationData, showPlannedAmountInReport: true })
-                      } else {
-                        setOperationMutationData({ ...operationMutationData, showPlannedAmountInReport: false })
-                      }
-                    }
-                  }
+                  <input 
+                    type="checkbox" 
+                    id="showPlannedAmountInReport" 
+                    value={1} 
+                    name="showPlannedAmountInReport" 
+                    checked={operationMutationData.showPlannedAmountInReport}
+                    onChange={(e) => setOperationMutationData({...operationMutationData, showPlannedAmountInReport: e.target.checked})}
                   />
-                  <label htmlFor="hasSerialNumber">Показать в отчете "Xод работы проекта"</label>
+                  <label htmlFor="showPlannedAmountInReport">Показать в отчете "Xод работы проекта"</label>
                 </div>
               </div>
               <div className="flex">

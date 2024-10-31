@@ -52,6 +52,14 @@ export default function InvoiceOutputInProject() {
     if (!e.target.files) return
 
     const confirmationFileToast = toast.loading("Загрузка подтвердающего файла...")
+
+    const fileName = e.target.files[0].name.split(".").pop()
+    if (fileName != "pdf") {
+      toast.dismiss(confirmationFileToast)
+      toast.error("Подтверждающий файл должен быть формата PDF")
+      return 
+    }
+
     confirmationFileMutation.mutate({
       id: tableData[index].id,
       file: e.target.files[0]!
@@ -59,7 +67,7 @@ export default function InvoiceOutputInProject() {
       onSuccess: () => {
         toast.dismiss(confirmationFileToast)
         toast.success("Подтвердающий файл загружен")
-        queryClient.invalidateQueries(["invoice-input"])
+        queryClient.invalidateQueries(["invoice-output-in-project"])
       },
       onError: (err) => {
         toast.dismiss(confirmationFileToast)

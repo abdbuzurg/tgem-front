@@ -108,14 +108,14 @@ export default function Materials() {
 
   const createMaterialMutation = useMutation<Material, Error, Material>({
     mutationFn: createMaterial,
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries(["materials"])
       setShowMutationModal(false)
     }
   })
   const updateMaterialMutation = useMutation<Material, Error, Material>({
     mutationFn: updateMaterial,
-    onSettled: () => {
+    onSuccess: () => {
       queryClient.invalidateQueries(["materials"])
       setShowMutationModal(false)
     }
@@ -298,6 +298,20 @@ export default function Materials() {
             </th>
             <th className="px-4 py-3">
               <Button text="Добавить" onClick={() => {
+                setMaterialMutationData({
+                  category: "",
+                  code: "",
+                  id: 0,
+                  name: "",
+                  notes: "",
+                  unit: "",
+                  article: "",
+                  hasSerialNumber: false,
+                  plannedAmountForProject: 0,
+                  showPlannedAmountInReport: false,
+                })
+                setSelectedMeasurement({ label: "", value: "" })
+                setSelectedMaterialCategory({ label: "", value: "" })
                 setMutationModalType("create")
                 setShowMutationModal(true)
               }} />
@@ -433,15 +447,13 @@ export default function Materials() {
               </div>
               <div className="flex flex-col space-y-1">
                 <div className="flex space-x-2 items-center">
-                  <input type="checkbox" id="hasSerialNumber" value={1} name="hasSerialNumber" onChange={
-                    (e) => {
-                      if (e.target.checked) {
-                        setMaterialMutationData({ ...materialMutationData, hasSerialNumber: true })
-                      } else {
-                        setMaterialMutationData({ ...materialMutationData, hasSerialNumber: false })
-                      }
-                    }
-                  }
+                  <input
+                    type="checkbox"
+                    id="hasSerialNumber"
+                    value={1}
+                    name="hasSerialNumber"
+                    checked={materialMutationData.hasSerialNumber}
+                    onChange={(e) => setMaterialMutationData({ ...materialMutationData, hasSerialNumber: e.target.checked })}
                   />
                   <label htmlFor="hasSerialNumber">Необходимость контоля на уровне SN</label>
                 </div>
@@ -457,17 +469,15 @@ export default function Materials() {
               </div>
               <div className="flex flex-col space-y-1">
                 <div className="flex space-x-2 items-center">
-                  <input type="checkbox" id="hasSerialNumber" value={1} name="hasSerialNumber" onChange={
-                    (e) => {
-                      if (e.target.checked) {
-                        setMaterialMutationData({ ...materialMutationData, showPlannedAmountInReport: true })
-                      } else {
-                        setMaterialMutationData({ ...materialMutationData, showPlannedAmountInReport: false })
-                      }
-                    }
-                  }
+                  <input
+                    type="checkbox"
+                    id="showPlannedAmountInReport"
+                    value={1}
+                    name="showPlannedAmountInReport"
+                    checked={materialMutationData.showPlannedAmountInReport}
+                    onChange={(e) => setMaterialMutationData({ ...materialMutationData, showPlannedAmountInReport: e.target.checked })}
                   />
-                  <label htmlFor="hasSerialNumber">Показать в отчете "Xод работы проекта"</label>
+                  <label htmlFor="showPlannedAmountInReport">Показать в отчете "Xод работы проекта"</label>
                 </div>
               </div>
               <div className="flex flex-col space-y-1">
