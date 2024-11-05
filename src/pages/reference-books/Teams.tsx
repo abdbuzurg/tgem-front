@@ -12,30 +12,30 @@ import Select from 'react-select'
 import toast from "react-hot-toast";
 import IWorker from "../../services/interfaces/worker";
 import { getAllWorkers } from "../../services/api/worker";
-import { TeamMutation, TeamGetAllResponse, TeamPaginated, createTeam, deleteTeam, getPaginatedTeams, updateTeam, importTeam, getTeamTemplateDocument } from "../../services/api/team";
+import { TeamMutation, TeamGetAllResponse, TeamPaginated, createTeam, deleteTeam, getPaginatedTeams, updateTeam, importTeam, getTeamTemplateDocument, TeamSearchParameters, exportTeam, getAllUniqueNumber, getAllUniqueMobileNumber, getAllUniqueCompany } from "../../services/api/team";
 
 export default function Team() {
   //fetching data logic
+  const [searchParameters, setSearchParameters] = useState<TeamSearchParameters>({
+    number: "",
+    leaderID: 0,
+    mobileNumber: "",
+    company: "",
+  })
   const [tableData, setTableData] = useState<TeamPaginated[]>([])
   const tableDataQuery = useInfiniteQuery<TeamGetAllResponse, Error>({
-    queryKey: ["teams"],
-    queryFn: ({ pageParam }) => getPaginatedTeams({ pageParam }),
+    queryKey: ["teams", searchParameters],
+    queryFn: ({ pageParam }) => getPaginatedTeams({ pageParam }, searchParameters),
     getNextPageParam: (lastPage) => {
-
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
-
     }
   })
   useEffect(() => {
-
     if (tableDataQuery.isSuccess && tableDataQuery.data) {
-
       const data: TeamPaginated[] = tableDataQuery.data.pages.reduce<TeamPaginated[]>((acc, page) => [...acc, ...page.data], [])
       setTableData(data)
-
     }
-
   }, [tableDataQuery.data])
 
   const loadDataOnScrollEnd = () => {
@@ -66,14 +66,12 @@ export default function Team() {
   })
 
   const onDeleteButtonClick = (row: TeamPaginated) => {
-
     setShowModal(true)
     setModalProps({
       deleteFunc: () => deleteMutation.mutate(row.id),
       no_delivery: row.number,
       setShowModal: setShowModal,
     })
-
   }
 
   //mutation CREATE AND EDIT logic
@@ -140,7 +138,6 @@ export default function Team() {
 
     setShowMutationModal(true)
     setMutationModalType("update")
-
   }
 
   const onMutationSubmit = () => {
@@ -183,7 +180,7 @@ export default function Team() {
 
   const [showImportModal, setShowImportModal] = useState(false)
 
-const importTemplateQuery = useQuery<boolean, Error, boolean>({
+  const importTemplateQuery = useQuery<boolean, Error, boolean>({
     queryKey: ["worker-template"],
     queryFn: getTeamTemplateDocument,
     enabled: false,
@@ -210,11 +207,104 @@ const importTemplateQuery = useQuery<boolean, Error, boolean>({
     })
   }
 
+  const teamExport = useQuery<boolean, Error, boolean>({
+    queryKey: ["team-export"],
+    queryFn: exportTeam,
+    enabled: false,
+    cacheTime: 0,
+  })
+
+  const [showSearchModal, setShowSearchModal] = useState(false)
+
+  const [selectedTeamNumber, setSelectedTeamNumber] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
+  const [allTeamNumbers, setAllTeamNumbers] = useState<IReactSelectOptions<string>[]>([])
+  const uniqueTeamNumberQuery = useQuery<string[], Error, string[]>({
+    queryKey: ["unique-team-number"],
+    queryFn: getAllUniqueNumber,
+    enabled: false,
+  })
+  useEffect(() => {
+    if (uniqueTeamNumberQuery.isSuccess && uniqueTeamNumberQuery.data) {
+      setAllTeamNumbers(uniqueTeamNumberQuery.data.map<IReactSelectOptions<string>>(val => ({
+        value: val,
+        label: val,
+      })))
+    }
+  }, [uniqueTeamNumberQuery.data])
+
+  const [selectedTeamLeaderID, setSelectedTeamLeaderID] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+
+  const [selectedMobileNumber, setSelectedMobileNumber] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
+  const [allMobileNumbers, setAllMobileNumbers] = useState<IReactSelectOptions<string>[]>([])
+  const uniqueTeamMobileNumbersQuery = useQuery<string[], Error, string[]>({
+    queryKey: ["unique-mobile-number"],
+    queryFn: getAllUniqueMobileNumber,
+    enabled: false,
+  })
+  useEffect(() => {
+    if (uniqueTeamMobileNumbersQuery.isSuccess && uniqueTeamMobileNumbersQuery.data) {
+      setAllMobileNumbers(uniqueTeamMobileNumbersQuery.data.map<IReactSelectOptions<string>>(val => ({
+        value: val,
+        label: val,
+      })))
+    }
+  }, [uniqueTeamMobileNumbersQuery.data])
+
+  const [selectedCompany, setSelectedCompany] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
+  const [allCompanies, setAllCompanies] = useState<IReactSelectOptions<string>[]>([])
+  const uniqueTeamCompaniesQuery = useQuery<string[], Error, string[]>({
+    queryKey: ["unique-companies"],
+    queryFn: getAllUniqueCompany,
+    enabled: false,
+  })
+  useEffect(() => {
+    if (uniqueTeamCompaniesQuery.isSuccess && uniqueTeamCompaniesQuery.data) {
+      setAllCompanies(uniqueTeamCompaniesQuery.data.map<IReactSelectOptions<string>>(val => ({
+        value: val,
+        label: val,
+      })))
+    }
+  }, [uniqueTeamCompaniesQuery.data])
+
   return (
     <main>
       <div className="mt-2 pl-2 flex space-x-2">
         <span className="text-3xl font-bold">Бригады</span>
+        <div
+          onClick={() => {
+            uniqueTeamNumberQuery.refetch()
+            uniqueTeamMobileNumbersQuery.refetch()
+            uniqueTeamCompaniesQuery.refetch()
+            setShowSearchModal(true)
+          }}
+          className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+        >
+          Поиск
+        </div>
         <Button text="Импорт" onClick={() => setShowImportModal(true)} />
+        <div
+          onClick={() => teamExport.refetch()}
+          className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+        >
+          {teamExport.fetchStatus == "fetching" ? <LoadingDots height={20} /> : "Экспорт"}
+        </div>
+        <div
+          onClick={() => {
+            setSearchParameters({
+              number: "",
+              mobileNumber: "",
+              company: "",
+              leaderID: 0,
+            })
+            setSelectedTeamNumber({ label: "", value: "" })
+            setSelectedMobileNumber({ label: "", value: "" })
+            setSelectedMobileNumber({ label: "", value: "" })
+            setSelectedTeamLeaderID({ label: "", value: 0 })
+          }}
+          className="text-white py-2.5 px-5 rounded-lg bg-red-700 hover:bg-red-800 hover:cursor-pointer"
+        >
+          Сброс поиска
+        </div>
       </div>
       <table className="table-auto text-sm text-left mt-2 w-full border-box">
         <thead className="shadow-md border-t-2">
@@ -394,6 +484,93 @@ const importTemplateQuery = useQuery<boolean, Error, boolean>({
             </div>
           </div>
           <span className="text-sm italic px-2 w-full text-center">При импортировке система будет следовать правилам шаблона</span>
+        </Modal>
+      }
+      {showSearchModal &&
+        <Modal setShowModal={setShowSearchModal}>
+          <span className="font-bold text-xl py-1">Параметры Поиска по сравочнику бригад</span>
+            <div className="p-2 flex flex-col space-y-2">
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="material-names">Номер Бригады</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"team-number"}
+                  placeholder={""}
+                  value={selectedTeamNumber}
+                  options={allTeamNumbers}
+                  onChange={value => {
+                    setSelectedTeamNumber(value ?? { label: "", value: "" })
+                    setSearchParameters({
+                      ...searchParameters,
+                      number: value?.value ?? "",
+                    })
+                  }}
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="material-category">Бригадир</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"team-leader-select"}
+                  placeholder={""}
+                  value={selectedTeamLeaderID}
+                  options={availableTeamLeaders}
+                  onChange={value => {
+                    setSelectedTeamLeaderID(value ?? { label: "", value: 0 })
+                    setSearchParameters({
+                      ...searchParameters,
+                      leaderID: value?.value ?? 0,
+                    })
+                  }}
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="material-code">Телефон</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"team-mobile-number-select"}
+                  placeholder={""}
+                  value={selectedMobileNumber}
+                  options={allMobileNumbers}
+                  onChange={value => {
+                    setSelectedMobileNumber(value ?? { label: "", value: "" })
+                    setSearchParameters({
+                      ...searchParameters,
+                      mobileNumber: value?.value ?? "",
+                    })
+                  }}
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="material-unit">Компания</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"team-company-select"}
+                  placeholder={""}
+                  value={selectedCompany}
+                  options={allCompanies}
+                  onChange={value => {
+                    setSelectedCompany(value ?? { label: "", value: "" })
+                    setSearchParameters({
+                      ...searchParameters,
+                      company: value?.value ?? "",
+                    })
+                  }}
+                />
+              </div>
+            </div>
         </Modal>
       }
     </main>

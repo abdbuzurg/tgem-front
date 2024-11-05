@@ -3,6 +3,7 @@ import { ITeam, TeamDataForSelect } from "../interfaces/teams"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
+import isCorrectResponseFormat from "../lib/typeGuardForResponse"
 
 const URL = "/team"
 
@@ -52,11 +53,17 @@ export interface TeamGetAllResponse {
 
 export interface TeamPaginated extends Omit<ITeam, "leaderWorkerID">{
   leaderNames: string[]
-  objects: string[]
 }
 
-export async function getPaginatedTeams({pageParam = 1}): Promise<TeamGetAllResponse> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<TeamGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
+export interface TeamSearchParameters {
+  number: string
+  leaderID: number
+  mobileNumber: string
+  company: string
+}
+
+export async function getPaginatedTeams({pageParam = 1}, searchParameters: TeamSearchParameters): Promise<TeamGetAllResponse> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<TeamGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&number=${searchParameters.number}&leaderID=${searchParameters.leaderID}&mobileNumber=${searchParameters.mobileNumber}&company=${searchParameters.company}`)
   const responseData = responseRaw.data
   if (responseData.success) {
     return {...responseData.data, page: pageParam}
@@ -129,3 +136,47 @@ export async function getAllTeamsForSelect(): Promise<TeamDataForSelect[]> {
   }
 }
 
+export async function exportTeam(): Promise<boolean> {
+  const responseRaw = await axiosClient.get(`${URL}/document/export`, { responseType: "blob" })
+  if (isCorrectResponseFormat<null>(responseRaw.data)) {
+    const response = responseRaw.data as IAPIResposeFormat<null>
+    throw new Error(response.error)
+  } else {
+    if (responseRaw.status == 200) {
+      fileDownload(responseRaw.data, "Эспорт Материалов.xlsx")
+      return true
+    } else {
+      throw new Error(responseRaw.statusText)
+    }
+  }
+}
+
+export async function getAllUniqueNumber(): Promise<string[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/unique/team-number`)
+  const response = responseRaw.data
+  if (response.success && response.permission) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export async function getAllUniqueMobileNumber(): Promise<string[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/unique/mobile-number`)
+  const response = responseRaw.data
+  if (response.success && response.permission) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export async function getAllUniqueCompany(): Promise<string[]> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/unique/team-company`)
+  const response = responseRaw.data
+  if (response.success && response.permission) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
