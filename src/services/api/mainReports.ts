@@ -3,10 +3,10 @@ import axiosClient from "./axiosClient"
 
 const URL = "/main-reports"
 
-export async function projectProgressReport(): Promise<boolean> {
-  const responseRaw = await axiosClient.get(`${URL}/project-progress`, { responseType: "blob", })
+export async function projectProgressReport(date: Date): Promise<boolean> {
+  const responseRaw = await axiosClient.post(`${URL}/project-progress`, {date: date}, { responseType: "blob", })
   if (responseRaw.status == 200) {
-    fileDownload(responseRaw.data, "Прогресс Реализации Проекта.xlsx")
+    fileDownload(responseRaw.data, `Прогресс Реализации Проекта ${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}.xlsx`)
     return true
   } else {
     throw new Error("Неизветсная ошибка при создании отсчета")

@@ -145,7 +145,7 @@ export default function AddWriteOffWarehouseWriteOff({
   const createInvoiceWriteOffMutation = useMutation<InvoiceWriteOffMutation, Error, InvoiceWriteOffMutation>({
     mutationFn: createInvoiceWriteOff,
     onSuccess: () => {
-      queryClient.invalidateQueries(["invoice-writeoff", "loss-warehouse"])
+      queryClient.invalidateQueries(["invoice-writeoff", "writeoff-warehouse"])
       setShowAddModal(false)
     }
   })
