@@ -5,33 +5,32 @@ import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
 import IReactSelectOptions from "../interfaces/react-select"
 
-const URL = "/substation"
+const URL = "/cell-substation"
 
-export interface ISubstationObjectPaginated {
+export interface ISubstationCellObjectPaginated {
   objectID: number
   objectDetailedID: number
   name: string
   status: string
-  voltageClass: string
-  numberOfTransformers: number
   supervisors: string[]
   teams: string[]
+  substationName: string
 }
 
-export interface ISubstationObjectGetAllResponse {
-  data: ISubstationObjectPaginated[]
+export interface ISubstationCellObjectGetAllResponse {
+  data: ISubstationCellObjectPaginated[]
   count: number
   page: number
 }
 
-export interface SubstationObjectSearchParameters {
+export interface SubstationCellObjectSearchParameters {
   objectName: string
   teamID: number
   supervisorWorkerID: number
 }
 
-export async function getPaginatedSubstationObjects({ pageParam = 1 }, searchParameters: SubstationObjectSearchParameters): Promise<ISubstationObjectGetAllResponse> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<ISubstationObjectGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&teamID=${searchParameters.teamID}&supervisorWorkerID=${searchParameters.supervisorWorkerID}&objectName=${searchParameters.objectName}`)
+export async function getPaginatedSubstationCellObjects({ pageParam = 1 }, searchParameters: SubstationCellObjectSearchParameters): Promise<ISubstationCellObjectGetAllResponse> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<ISubstationCellObjectGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&teamID=${searchParameters.teamID}&supervisorWorkerID=${searchParameters.supervisorWorkerID}&objectName=${searchParameters.objectName}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
     return { ...response.data, page: pageParam }
@@ -40,17 +39,15 @@ export async function getPaginatedSubstationObjects({ pageParam = 1 }, searchPar
   }
 }
 
-export interface ISubstationObjectCreate {
+export interface ISubstationCellObjectCreate {
   baseInfo: IObject
-  detailedInfo: {
-    voltageClass: string
-    numberOfTransformers: number
-  }
+  detailedInfo: {}
   supervisors: number[]
   teams: number[]
+  substationObjectID: number
 }
 
-export async function createSubstationObject(data: ISubstationObjectCreate): Promise<boolean> {
+export async function createSubstationCellObject(data: ISubstationCellObjectCreate): Promise<boolean> {
   const responseRaw = await axiosClient.post<IAPIResposeFormat<boolean>>(`${URL}/`, data)
   const response = responseRaw.data
   if (response.success && response.permission) {
@@ -60,7 +57,7 @@ export async function createSubstationObject(data: ISubstationObjectCreate): Pro
   }
 }
 
-export async function updateSubstationObject(data: ISubstationObjectCreate): Promise<boolean> {
+export async function updateSubstationCellObject(data: ISubstationCellObjectCreate): Promise<boolean> {
   const responseRaw = await axiosClient.patch<IAPIResposeFormat<boolean>>(`${URL}/`, data)
   const response = responseRaw.data
   if (response.success && response.permission) {
@@ -70,7 +67,7 @@ export async function updateSubstationObject(data: ISubstationObjectCreate): Pro
   }
 }
 
-export async function deleteSubstationObject(id: number): Promise<boolean> {
+export async function deleteSubstationCellObject(id: number): Promise<boolean> {
   const responseRaw = await axiosClient.delete<IAPIResposeFormat<boolean>>(`${URL}/${id}`)
   const response = responseRaw.data
   if (response.success && response.permission) {
@@ -80,17 +77,17 @@ export async function deleteSubstationObject(id: number): Promise<boolean> {
   }
 }
 
-export async function getSubstationTemplateDocument(): Promise<boolean> {
+export async function getSubstationCellTemplateDocument(): Promise<boolean> {
   const response = await axiosClient.get(`${URL}/document/template`, { responseType: "blob" })
   if (response.status == 200) {
-    fileDownload(response.data, "Шаблон для импорта объектов - Подстанция.xlsx")
+    fileDownload(response.data, "Шаблон для импорта объектов - Ячейки Подстанции.xlsx")
     return true
   } else {
     throw new Error(response.statusText)
   }
 }
 
-export async function importSubstation(data: File): Promise<boolean> {
+export async function importSubstationCell(data: File): Promise<boolean> {
   const formData = new FormData()
   formData.append("file", data)
   const responseRaw = await axiosClient.post(`${URL}/document/import`, formData, {
@@ -115,7 +112,7 @@ export async function importSubstation(data: File): Promise<boolean> {
 }
 
 
-export async function getSubstationObjectNames(): Promise<IReactSelectOptions<string>[]> {
+export async function getSubstationCellObjectNames(): Promise<IReactSelectOptions<string>[]> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<IReactSelectOptions<string>[]>>(`${URL}/search/object-names`)
   const response = responseRaw.data
   if (response.success && response.permission) {
@@ -126,7 +123,7 @@ export async function getSubstationObjectNames(): Promise<IReactSelectOptions<st
 }
 
 
-export async function exportSubstation(): Promise<boolean> {
+export async function exportSubstationCell(): Promise<boolean> {
   const response = await axiosClient.get(`${URL}/document/export`, { responseType: "blob" })
   if (response.status == 200) {
     fileDownload(response.data, "Экспорт Подстанции.xlsx")
@@ -134,15 +131,4 @@ export async function exportSubstation(): Promise<boolean> {
   } else {
     throw new Error(response.statusText)
   }
-}
-
-export async function getAllSubstations(): Promise<IObject[]> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<IObject[]>>(`${URL}/all`)
-  const response = responseRaw.data
-  if (response.success && response.permission) {
-    return response.data
-  } else {
-    throw new Error(response.error)
-  }
-
 }
