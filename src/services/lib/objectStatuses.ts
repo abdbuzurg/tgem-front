@@ -117,6 +117,7 @@ export function objectTypeIntoRus(objectType: string) {
       return "ТП"
     case "substation_objects":
       return "Подстанция"
-
+    case "substation_cell_objects":
+      return "Ячейка Подстанции"
   }
 }
