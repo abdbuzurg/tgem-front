@@ -24,6 +24,7 @@ export default function SubstationCellObject() {
     objectName: "",
     teamID: 0,
     supervisorWorkerID: 0,
+    substationObjectID: 0,
   })
   //PAGINATED DATA
   const tableDataQuery = useInfiniteQuery<ISubstationCellObjectGetAllResponse, Error>({
@@ -240,7 +241,7 @@ export default function SubstationCellObject() {
     enabled: false,
   })
 
-  useEffect(()=> {
+  useEffect(() => {
     if (importTemplateQuery.isSuccess && importTemplateQuery.data) {
       queryClient.invalidateQueries(["substation-cell-objects"])
     }
@@ -299,6 +300,8 @@ export default function SubstationCellObject() {
     }
   }, [allTeamsQuery.data])
 
+  const [selectedSubstationForSearch, setSelectedSubstationForSearch] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+
   return (
     <main>
       <div className="mt-2 pl-2 flex space-x-2">
@@ -319,10 +322,12 @@ export default function SubstationCellObject() {
               objectName: "",
               teamID: 0,
               supervisorWorkerID: 0,
+              substationObjectID: 0,
             })
             setSelectedObjectName({ label: "", value: "" })
             setSelectedSupervisor({ label: "", value: 0 })
             setSelectedTeam({ label: "", value: 0 })
+            setSelectedSubstationForSearch({label: "", value: 0})
           }}
           className="text-white py-2.5 px-5 rounded-lg bg-red-700 hover:bg-red-800 hover:cursor-pointer"
         >
@@ -646,6 +651,26 @@ export default function SubstationCellObject() {
                   setSearchParameters({
                     ...searchParameters,
                     teamID: value?.value ?? 0,
+                  })
+                }}
+              />
+            </div>
+            <div className="flex flex-col space-y-1">
+              <label htmlFor="team">Подстанция</label>
+              <Select
+                className="basic-single"
+                classNamePrefix="select"
+                isSearchable={true}
+                isClearable={true}
+                name={"substation_object_search"}
+                placeholder={""}
+                value={selectedSubstationForSearch}
+                options={allSubstations}
+                onChange={value => {
+                  setSelectedSubstationForSearch(value ?? { label: "", value: 0 })
+                  setSearchParameters({
+                    ...searchParameters,
+                    substationObjectID: value?.value ?? 0,
                   })
                 }}
               />

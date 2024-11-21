@@ -42,6 +42,14 @@ export async function getAllWorkers(): Promise<IWorker[]> {
   }
 }
 
+export interface WorkerSearchParameters {
+  name: string
+  jobTitleInCompany: string
+  companyWorkerID: string
+  jobTitleInProject: string
+  mobileNumber: string
+}
+
 export interface WorkerPaginatedData {
   data: IWorker[]
   count: number
@@ -100,4 +108,45 @@ export async function importWorker(data: File): Promise<boolean> {
   } else {
     throw new Error(responseRaw.data)
   }
+}
+
+export async function exportWorker(): Promise<boolean> {
+  const responseRaw = await axiosClient.get(`${URL}/document/export`, {
+    headers: {
+      "Content-Type": `multipart/form-data; boundary=WebAppBoundary`,
+    }
+  })
+  if (responseRaw.status == 200) {
+    if (typeof responseRaw.data == 'object') {
+      const response: IAPIResposeFormat<string> = responseRaw.data
+      if (!response.success) {
+        throw new Error(response.error)
+      } else {
+        return true
+      }
+    } else {
+      return true
+    }
+  } else {
+    throw new Error(responseRaw.data)
+  }
+}
+
+export interface WorkerInformation {
+  name: string[]
+  jobTitleInCompany: string[]
+  companyWorkerID: string[]
+  jobTitleInProject: string[]
+  mobileNumber: string[]
+}
+
+export async function getWorkerInformation(): Promise<WorkerInformation> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<WorkerInformation>>(`${URL}/unique/worker-information`)
+  const response = responseRaw.data
+  if (response.permission && response.success) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+
 }

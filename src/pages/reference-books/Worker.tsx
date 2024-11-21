@@ -10,11 +10,18 @@ import Input from "../../components/UI/Input";
 import Select from 'react-select'
 import IReactSelectOptions from "../../services/interfaces/react-select";
 import { JOB_TITLES } from "../../services/lib/jobTitles";
-import { WorkerPaginatedData, createWorker, deleteWorker, getPaginatedWorker, getWorkerTemplateDocument, importWorker, updateWorker } from "../../services/api/worker";
+import { WorkerInformation, WorkerPaginatedData, WorkerSearchParameters, createWorker, deleteWorker, exportWorker, getPaginatedWorker, getWorkerInformation, getWorkerTemplateDocument, importWorker, updateWorker } from "../../services/api/worker";
 import toast from "react-hot-toast";
 
 export default function Worker() {
   //fetching data logic
+  const [searchParameters, setSearchParameters] = useState<WorkerSearchParameters>({
+    name: "",
+    jobTitleInCompany: "",
+    jobTitleInProject: "",
+    companyWorkerID: "",
+    mobileNumber: "",
+  })
   const tableDataQuery = useInfiniteQuery<WorkerPaginatedData, Error>({
     queryKey: ["workers"],
     queryFn: ({ pageParam }) => getPaginatedWorker({ pageParam }),
@@ -156,11 +163,69 @@ export default function Worker() {
     })
   }
 
+  const workerExport = useQuery<boolean, Error, boolean>({
+    queryKey: ["worker-export"],
+    queryFn: exportWorker,
+    enabled: false,
+    cacheTime: 0,
+  })
+
+  const [showSearchModal, setShowSearchModal] = useState(false)
+
+  const [allNamesForSearch, setAllNamesForSearch] = useState<IReactSelectOptions<string>[]>([])
+  const [allJobTitleInProjectForSearch, setAllJobTitleInProjectForSearch] = useState<IReactSelectOptions<string>[]>([])
+  const [allJobTitleInCompanyForSearch, setAllJobTitleInCompanyForSearch] = useState<IReactSelectOptions<string>[]>([])
+  const [allCompanyWorkerIDsForSearch, setAllCompanyWorkerIDsForSearch] = useState<IReactSelectOptions<string>[]>([])
+  const [allMobileNumberForSearch, setAllMobileNumberForSearch] = useState<IReactSelectOptions<string>[]>([])
+  const workerInformationQuery = useQuery<WorkerInformation, Error, WorkerInformation>({
+    queryKey: ["worker-information"],
+    queryFn: getWorkerInformation,
+    enabled: showSearchModal,
+  })
+  useEffect(() => {
+    if (workerInformationQuery.isSuccess && workerInformationQuery.data) {
+      setAllNamesForSearch(workerInformationQuery.data.name.map(val => ({ label: val, value: val })))
+      setAllJobTitleInProjectForSearch(workerInformationQuery.data.jobTitleInProject.map(val => ({ label: val, value: val })))
+      setAllJobTitleInCompanyForSearch(workerInformationQuery.data.jobTitleInCompany.map(val => ({ label: val, value: val })))
+      setAllCompanyWorkerIDsForSearch(workerInformationQuery.data.companyWorkerID.map(val => ({ label: val, value: val })))
+      setAllMobileNumberForSearch(workerInformationQuery.data.mobileNumber.map(val => ({ label: val, value: val })))
+    }
+  }, [workerInformationQuery.data])
+
+
   return (
     <main>
       <div className="mt-2 pl-2 flex space-x-2">
         <span className="text-3xl font-bold">Рабочий Персонал</span>
+        <div
+          onClick={() => {
+            setShowSearchModal(true)
+          }}
+          className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+        >
+          Поиск
+        </div>
         <Button text="Импорт" onClick={() => setShowImportModal(true)} />
+        <div
+          onClick={() => workerExport.refetch()}
+          className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer"
+        >
+          {workerExport.fetchStatus == "fetching" ? <LoadingDots height={20} /> : "Экспорт"}
+        </div>
+        <div
+          onClick={() => {
+            setSearchParameters({
+              name: "",
+              jobTitleInCompany: "",
+              jobTitleInProject: "",
+              companyWorkerID: "",
+              mobileNumber: "",
+            })
+          }}
+          className="text-white py-2.5 px-5 rounded-lg bg-red-700 hover:bg-red-800 hover:cursor-pointer"
+        >
+          Сброс поиска
+        </div>
       </div>
       <table className="table-auto text-sm text-left mt-2 w-full border-box">
         <thead className="shadow-md border-t-2">
@@ -295,7 +360,7 @@ export default function Worker() {
                 />
               </div>
               <div className="flex flex-col space-y-1">
-                <label htmlFor="mobileNumber">ID сотрудника</label>
+                <label htmlFor="mobileNumber">ID сотрудника<span className="text-red-600">*</span></label>
                 <Input
                   name="companyWorkerID"
                   type="text"
@@ -380,6 +445,111 @@ export default function Worker() {
             </div>
           </div>
           <span className="text-sm italic px-2 w-full text-center">При импортировке система будет следовать правилам шаблона</span>
+        </Modal>
+      }
+      {showSearchModal &&
+        <Modal setShowModal={setShowSearchModal}>
+          <span className="font-bold text-xl py-1">Параметры Поиска по сравочнику - Рабочий Персонал</span>
+          {workerInformationQuery.isLoading && <LoadingDots />}
+          {workerInformationQuery.isSuccess &&
+            <div className="p-2 flex flex-col space-y-2">
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="material-names">Имя</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"material-names"}
+                  placeholder={""}
+                  value={{ label: searchParameters.name, value: searchParameters.name }}
+                  options={allNamesForSearch}
+                  onChange={value => {
+                    setSearchParameters({
+                      ...searchParameters,
+                      name: value?.value ?? "",
+                    })
+                  }}
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="material-category">Должность в ТГЭМ</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"material-category"}
+                  placeholder={""}
+                  value={{ label: searchParameters.jobTitleInCompany, value: searchParameters.jobTitleInCompany }}
+                  options={allJobTitleInCompanyForSearch}
+                  onChange={value => {
+                    setSearchParameters({
+                      ...searchParameters,
+                      jobTitleInCompany: value?.value ?? "",
+                    })
+                  }}
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="material-code">ID Сотрудника</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"material-code"}
+                  placeholder={""}
+                  value={{ label: searchParameters.companyWorkerID, value: searchParameters.companyWorkerID }}
+                  options={allCompanyWorkerIDsForSearch}
+                  onChange={value => {
+                    setSearchParameters({
+                      ...searchParameters,
+                      companyWorkerID: value?.value ?? "",
+                    })
+                  }}
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="material-unit">Должность в Проекте</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"material-unit"}
+                  placeholder={""}
+                  value={{ label: searchParameters.jobTitleInProject, value: searchParameters.jobTitleInProject }}
+                  options={allJobTitleInProjectForSearch}
+                  onChange={value => {
+                    setSearchParameters({
+                      ...searchParameters,
+                      jobTitleInProject: value?.value ?? "",
+                    })
+                  }}
+                />
+              </div>
+              <div className="flex flex-col space-y-1">
+                <label htmlFor="material-unit">Номера</label>
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"material-unit"}
+                  placeholder={""}
+                  value={{ label: searchParameters.mobileNumber, value: searchParameters.mobileNumber }}
+                  options={allMobileNumberForSearch}
+                  onChange={value => {
+                    setSearchParameters({
+                      ...searchParameters,
+                      mobileNumber: value?.value ?? "",
+                    })
+                  }}
+                />
+              </div>
+            </div>
+          }
         </Modal>
       }
     </main>

@@ -27,10 +27,11 @@ export interface SubstationCellObjectSearchParameters {
   objectName: string
   teamID: number
   supervisorWorkerID: number
+  substationObjectID: number
 }
 
 export async function getPaginatedSubstationCellObjects({ pageParam = 1 }, searchParameters: SubstationCellObjectSearchParameters): Promise<ISubstationCellObjectGetAllResponse> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<ISubstationCellObjectGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&teamID=${searchParameters.teamID}&supervisorWorkerID=${searchParameters.supervisorWorkerID}&objectName=${searchParameters.objectName}`)
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<ISubstationCellObjectGetAllResponse>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&teamID=${searchParameters.teamID}&supervisorWorkerID=${searchParameters.supervisorWorkerID}&objectName=${searchParameters.objectName}&substationObjectID=${searchParameters.substationObjectID}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
     return { ...response.data, page: pageParam }
