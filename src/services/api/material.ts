@@ -7,16 +7,11 @@ const URL = "/material"
 
 export async function getMaterialTemplateDocument(): Promise<boolean> {
   const responseRaw = await axiosClient.get(`${URL}/document/template`, { responseType: "blob" })
-  if (isCorrectResponseFormat<null>(responseRaw.data)) {
-    const response = responseRaw.data as IAPIResposeFormat<null>
-    throw new Error(response.error)
+  if (responseRaw.status == 200) {
+    fileDownload(responseRaw.data, "Шаблон для импорта материалов.xlsx")
+    return true
   } else {
-    if (responseRaw.status == 200) {
-      fileDownload(responseRaw.data, "Шаблон для импорта материалов.xlsx")
-      return true
-    } else {
-      throw new Error(responseRaw.statusText)
-    }
+    throw new Error(responseRaw.statusText)
   }
 }
 
