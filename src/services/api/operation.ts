@@ -1,3 +1,4 @@
+import fileDownload from "js-file-download"
 import { IOperation } from "../interfaces/operation"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
@@ -98,6 +99,32 @@ export default async function updateOperation(data: OperationMutation): Promise<
   const response = responseRaw.data
   if (response.success) {
     return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export async function getOperationTemplateDocument(): Promise<boolean> {
+  const responseRaw = await axiosClient.get(`${URL}/document/template`, { responseType: "blob" })
+  if (responseRaw.status == 200) {
+    fileDownload(responseRaw.data, "Шаблон для импорта Услуг.xlsx")
+    return true
+  } else {
+    throw new Error(responseRaw.statusText)
+  }
+}
+
+export async function importOperations(data: File): Promise<boolean> {
+  const formData = new FormData()
+  formData.append("file", data)
+  const responseRaw = await axiosClient.post<IAPIResposeFormat<null>>(`${URL}/document/import`, formData, {
+    headers: {
+      "Content-Type": `multipart/form-data; boundary=WebAppBoundary`,
+    }
+  })
+  const response = responseRaw.data
+  if (response.success) {
+    return true
   } else {
     throw new Error(response.error)
   }

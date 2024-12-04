@@ -12,7 +12,7 @@ import toast from "react-hot-toast";
 import IReactSelectOptions from "../../services/interfaces/react-select";
 import Material from "../../services/interfaces/material";
 import getAllMaterials from "../../services/api/materials/getAll";
-import updateOperation, { OperationGetAllResponse, OperationMutation, OperationPaginated, OperationSearchParameters, createOperation, deleteOperation, getAllOperations, getPaginatedOperations } from "../../services/api/operation";
+import updateOperation, { OperationGetAllResponse, OperationMutation, OperationPaginated, OperationSearchParameters, createOperation, deleteOperation, getAllOperations, getOperationTemplateDocument, getPaginatedOperations, importOperations } from "../../services/api/operation";
 
 export default function Operatons() {
   //fetching data logic
@@ -198,6 +198,37 @@ export default function Operatons() {
 
   const [selectedMaterialForSearch, setSelectedMaterialForSearch] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
 
+  const [showImportModal, setShowImportModal] = useState(false)
+
+  const importTemplateFile = useQuery<boolean, Error, boolean>({
+    queryKey: ["material-import-template"],
+    queryFn: getOperationTemplateDocument,
+    enabled: false,
+    cacheTime: 0,
+  })
+
+  const importMutation = useMutation<boolean, Error, File>({
+    mutationFn: importOperations,
+    cacheTime: 0,
+  })
+
+  const acceptExcel = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files) return
+    importMutation.mutate(e.target.files[0], {
+      onSuccess: () => {
+        queryClient.invalidateQueries(["operations"])
+        setShowImportModal(false)
+        toast.success("Импортирование успешно")
+      },
+      onSettled: () => {
+        e.target.value = ""
+      },
+      onError: (error) => {
+        toast.error(`Импортированный файл имеет неправильные данные: ${error.message}`)
+      }
+    })
+  }
+
   return (
     <main>
       <div className="mt-2 pl-2 flex space-x-2">
@@ -211,6 +242,7 @@ export default function Operatons() {
         >
           Поиск
         </div>
+        <Button text="Импорт" onClick={() => setShowImportModal(true)} />
         <div
           onClick={() => {
             setSearchParameters({
@@ -403,13 +435,13 @@ export default function Operatons() {
               </div>
               <div className="flex flex-col space-y-1">
                 <div className="flex space-x-2 items-center">
-                  <input 
-                    type="checkbox" 
-                    id="showPlannedAmountInReport" 
-                    value={1} 
-                    name="showPlannedAmountInReport" 
+                  <input
+                    type="checkbox"
+                    id="showPlannedAmountInReport"
+                    value={1}
+                    name="showPlannedAmountInReport"
                     checked={operationMutationData.showPlannedAmountInReport}
-                    onChange={(e) => setOperationMutationData({...operationMutationData, showPlannedAmountInReport: e.target.checked})}
+                    onChange={(e) => setOperationMutationData({ ...operationMutationData, showPlannedAmountInReport: e.target.checked })}
                   />
                   <label htmlFor="showPlannedAmountInReport">Показать в отчете "Xод работы проекта"</label>
                 </div>
@@ -424,6 +456,42 @@ export default function Operatons() {
               </div>
             </div>
           </div>
+        </Modal>
+      }
+      {showImportModal &&
+        <Modal setShowModal={setShowImportModal}>
+          <span className="font-bold text-xl px-2 py-1">Импорт данных в Справочник - Услуг</span>
+          <div className="grid grid-cols-2 gap-2 items-center px-2 pt-2">
+            <div
+              onClick={() => importTemplateFile.refetch()}
+              className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer text-center"
+            >
+              {importTemplateFile.fetchStatus == "fetching" ? <LoadingDots height={20} /> : "Скачать шаблон"}
+            </div>
+            <div className="w-full">
+              {importMutation.status == "loading"
+                ?
+                <div className="text-white py-2.5 px-5 rounded-lg bg-gray-700 hover:bg-gray-800">
+                  <LoadingDots height={25} />
+                </div>
+                :
+                <label
+                  htmlFor="file"
+                  className="w-full text-white py-3 px-5 rounded-lg bg-gray-700 hover:bg-gray-800 hover:cursor-pointer text-center"
+                >
+                  Импортировать данные
+                </label>
+              }
+              <input
+                name="file"
+                type="file"
+                id="file"
+                onChange={(e) => acceptExcel(e)}
+                className="hidden"
+              />
+            </div>
+          </div>
+          <span className="text-sm italic px-2 w-full text-center">При импортировке система будет следовать правилам шаблона</span>
         </Modal>
       }
       {showSearchModal &&
