@@ -56,8 +56,8 @@ export interface WorkerPaginatedData {
   page: number
 }
 
-export async function getPaginatedWorker({ pageParam = 1 }): Promise<WorkerPaginatedData> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<WorkerPaginatedData>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
+export async function getPaginatedWorker({ pageParam = 1 }, searchParameters: WorkerSearchParameters): Promise<WorkerPaginatedData> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<WorkerPaginatedData>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&name=${searchParameters.name}&jobTitleInCompany=${searchParameters.jobTitleInCompany}&jobTitleInProject=${searchParameters.jobTitleInProject}&companyWorkerID=${searchParameters.companyWorkerID}&mobileNumber=${searchParameters.mobileNumber}`)
   const response = responseRaw.data
   if (response.success && response.permission) {
     return { ...response.data, page: pageParam }

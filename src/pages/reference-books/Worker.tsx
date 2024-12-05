@@ -23,8 +23,8 @@ export default function Worker() {
     mobileNumber: "",
   })
   const tableDataQuery = useInfiniteQuery<WorkerPaginatedData, Error>({
-    queryKey: ["workers"],
-    queryFn: ({ pageParam }) => getPaginatedWorker({ pageParam }),
+    queryKey: ["workers", searchParameters],
+    queryFn: ({ pageParam }) => getPaginatedWorker({ pageParam }, searchParameters),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
