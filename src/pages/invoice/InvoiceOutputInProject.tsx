@@ -79,17 +79,20 @@ export default function InvoiceOutputInProject() {
     e.target.value = ''
   }
 
-  const [deliveryCodeForDocumentDownload, setDeliveryCodeForDocumentDownload] = useState<string>("")
+  const [informationToGetDocument, setInformationToGetDocument] = useState({
+    deliveryCode: "",
+    confirmation: false,
+  })
   useQuery({
-    queryKey: ["invoice-output-document", deliveryCodeForDocumentDownload],
+    queryKey: ["invoice-output-document", informationToGetDocument],
     queryFn: async () => {
       const loadingToast = toast.loading("Идет скачка файла")
-      return getInvoiceOutputInProjectDocument(deliveryCodeForDocumentDownload)
+      return getInvoiceOutputInProjectDocument(informationToGetDocument.deliveryCode, informationToGetDocument.confirmation)
         .then(() => toast.success("Документ скачан"))
         .catch(err => toast.error(`Ошибка при скачке документа: ${err}`))
         .finally(() => toast.dismiss(loadingToast))
     },
-    enabled: deliveryCodeForDocumentDownload != "",
+    enabled: informationToGetDocument.deliveryCode != "",
   })
 
   //DELETE LOGIC
@@ -194,7 +197,7 @@ export default function InvoiceOutputInProject() {
                 {row.confirmation &&
                   <IconButton
                     icon={<FaDownload size="20px" title={`Скачать подтвержденный файл накладной ${row.deliveryCode}`} />}
-                    onClick={() => setDeliveryCodeForDocumentDownload(row.deliveryCode)}
+                    onClick={() => setInformationToGetDocument({deliveryCode: row.deliveryCode, confirmation: row.confirmation})}
                   />
                 }
                 {!row.confirmation &&
@@ -218,7 +221,7 @@ export default function InvoiceOutputInProject() {
                     />
                     <IconButton
                       icon={<FaDownload size="20px" title={`Скачать сгенерированный файл накладной ${row.deliveryCode}`} />}
-                      onClick={() => setDeliveryCodeForDocumentDownload(row.deliveryCode)}
+                      onClick={() => setInformationToGetDocument({deliveryCode: row.deliveryCode, confirmation: row.confirmation})}
                     />               {/* <IconButton */}
                     {/*   icon={<FaRegEdit size="20px" title={`Изменить данные накладной ${row.deliveryCode}`} />} */}
                     {/*   onClick={() => showDetails(index)} */}

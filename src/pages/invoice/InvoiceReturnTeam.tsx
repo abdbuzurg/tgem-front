@@ -73,20 +73,22 @@ export default function InvoiceReturnTeam() {
     e.target.value = ''
   }
 
-  const [deliveryCodeForDocumentDownload, setDeliveryCodeForDocumentDownload] = useState<string>("")
+  const [informationToGetDocument, setInformationToGetDocument] = useState({
+    deliveryCode: "",
+    confirmation: false,
+  })
   useQuery({
-    queryKey: ["invoice-return-document", deliveryCodeForDocumentDownload],
+    queryKey: ["invoice-return-document", informationToGetDocument],
     queryFn: async () => {
       const loadingToast = toast.loading("Идет скачка файла")
-      return getInvoiceReturnDocument(deliveryCodeForDocumentDownload)
+      return getInvoiceReturnDocument(informationToGetDocument.deliveryCode, informationToGetDocument.confirmation)
         .then(() => toast.success("Документ скачан"))
         .catch(err => toast.error(`Ошибка при скачке документа: ${err}`))
         .finally(() => {
           toast.dismiss(loadingToast)
-          setDeliveryCodeForDocumentDownload("")
         })
     },
-    enabled: deliveryCodeForDocumentDownload != "",
+    enabled: informationToGetDocument.deliveryCode != "",
   })
 
   //DELETE LOGIC
@@ -193,7 +195,7 @@ export default function InvoiceReturnTeam() {
                 {value.confirmation &&
                   <IconButton
                     icon={<FaDownload size="20px" title={`Скачать подтвержденный файл накладной ${value.deliveryCode}`} />}
-                    onClick={() => setDeliveryCodeForDocumentDownload(value.deliveryCode)}
+                    onClick={() => setInformationToGetDocument({ deliveryCode: value.deliveryCode, confirmation: value.confirmation })}
                   />
                 }
                 {!value.confirmation && <>
@@ -216,7 +218,7 @@ export default function InvoiceReturnTeam() {
                   />
                   <IconButton
                     icon={<FaDownload size="20px" title={`Скачать сгенерированный файл накладной ${value.deliveryCode}`} />}
-                    onClick={() => setDeliveryCodeForDocumentDownload(value.deliveryCode)}
+                    onClick={() => setInformationToGetDocument({ deliveryCode: value.deliveryCode, confirmation: value.confirmation })}
                   />               {/* <IconButton */}
                   {/*   icon={<FaRegEdit size="20px" title={`Изменить данные накладной ${row.deliveryCode}`} />} */}
                   {/*   onClick={() => showDetails(index)} */}

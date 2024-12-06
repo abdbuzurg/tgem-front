@@ -14,11 +14,11 @@ export interface InvoiceOutputInProjectPagianted {
   page: number
 }
 
-export async function getPaginatedInvoiceOutputInProject({ pageParam = 1}): Promise<InvoiceOutputInProjectPagianted> {
+export async function getPaginatedInvoiceOutputInProject({ pageParam = 1 }): Promise<InvoiceOutputInProjectPagianted> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceOutputInProjectPagianted>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
   const response = responseRaw.data
   if (response.success && response.permission) {
-    return {...response.data, page: pageParam}
+    return { ...response.data, page: pageParam }
   } else {
     throw new Error(response.error)
   }
@@ -55,7 +55,7 @@ export async function createInvoiceOutputInProject(data: InvoiceOutputInProjectM
   }
 }
 
-export async function updateInvoiceOutputInProject(data: InvoiceOutputInProjectMutation):Promise<InvoiceOutputInProjectMutation> {
+export async function updateInvoiceOutputInProject(data: InvoiceOutputInProjectMutation): Promise<InvoiceOutputInProjectMutation> {
   const responseRaw = await axiosClient.patch<IAPIResposeFormat<InvoiceOutputInProjectMutation>>(`${URL}/`, data)
   const response = responseRaw.data
   if (response.permission && response.success) {
@@ -65,10 +65,14 @@ export async function updateInvoiceOutputInProject(data: InvoiceOutputInProjectM
   }
 }
 
-export async function getInvoiceOutputInProjectDocument(deliveryCode: string):Promise<boolean>{
+export async function getInvoiceOutputInProjectDocument(deliveryCode: string, confirmation: boolean): Promise<boolean> {
   const responseRaw = await axiosClient.get(`${URL}/document/${deliveryCode}`, { responseType: "blob" })
   if (responseRaw.status == 200) {
-    fileDownload(responseRaw.data, `${deliveryCode}.xlsx`)
+    if (confirmation) {
+      fileDownload(responseRaw.data, `${deliveryCode}.pdf`)
+    } else {
+      fileDownload(responseRaw.data, `${deliveryCode}.xlsx`)
+    }
     return true
   } else {
     throw new Error(responseRaw.data)
@@ -129,7 +133,7 @@ export async function confirmationByObject(id: number): Promise<boolean> {
   } else {
     throw new Error(response.error)
   }
-} 
+}
 
 export async function getAllUniqueCode(): Promise<IReactSelectOptions<string>[]> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<IReactSelectOptions<string>[]>>(`${URL}/unique/code`)
@@ -203,7 +207,7 @@ export async function buildReport(filter: InvoiceOutputReportFilter): Promise<bo
   }
 }
 
-export async function getSerialNumberCodesByMaterialID(materialID: number):Promise<string[]> {
+export async function getSerialNumberCodesByMaterialID(materialID: number): Promise<string[]> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<string[]>>(`${URL}/serial-number/material/${materialID}`)
   const response = responseRaw.data
   if (response.permission && response.success) {
@@ -213,15 +217,15 @@ export async function getSerialNumberCodesByMaterialID(materialID: number):Promi
   }
 }
 
-export interface AvailableMaterial{
-	id: number
-	name: string
-	unit: string
-	hasSerialNumber: boolean
-	amount: number
+export interface AvailableMaterial {
+  id: number
+  name: string
+  unit: string
+  hasSerialNumber: boolean
+  amount: number
 }
 
-export async function getAvailableMaterialsInWarehouse():Promise<AvailableMaterial[]> {
+export async function getAvailableMaterialsInWarehouse(): Promise<AvailableMaterial[]> {
   const responseRaw = await axiosClient.get<IAPIResposeFormat<AvailableMaterial[]>>(`${URL}/material/available-in-warehouse`)
   const response = responseRaw.data
   if (response.permission && response.success) {

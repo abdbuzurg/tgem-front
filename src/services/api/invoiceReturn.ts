@@ -66,10 +66,14 @@ export async function updateInvoiceReturn(data: InvoiceReturnMutation): Promise<
   }
 }
 
-export async function getInvoiceReturnDocument(deliveryCode: string): Promise<boolean> {
+export async function getInvoiceReturnDocument(deliveryCode: string, confirmation: boolean): Promise<boolean> {
   const responseRaw = await axiosClient.get(`${URL}/document/${deliveryCode}`, { responseType: "blob", })
   if (responseRaw.status == 200) {
-    fileDownload(responseRaw.data, `${deliveryCode}.xlsx`)
+    if (confirmation) {
+      fileDownload(responseRaw.data, `${deliveryCode}.pdf`)
+    } else {
+      fileDownload(responseRaw.data, `${deliveryCode}.xlsx`)
+    }
     return true
   } else {
     throw new Error(responseRaw.data)
