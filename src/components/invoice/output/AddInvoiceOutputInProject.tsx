@@ -274,9 +274,11 @@ export default function AddInvoiceOutputInProject({ setShowAddModal }: Props) {
           materialID: value.materialID,
           amount: value.amount,
           serialNumbers: value.serialNumbers,
+          notes: value.notes,
         }))
       ],
     })
+
     return
   }
 

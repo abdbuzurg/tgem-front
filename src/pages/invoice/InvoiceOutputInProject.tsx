@@ -127,15 +127,21 @@ export default function InvoiceOutputInProject() {
   const [showDetailsModal, setShowDetailsModal] = useState(false)
   const [detailModalData, setDetailModalData] = useState<IInvoiceOutputInProjectView>({
     dateOfInvoice: new Date(),
+    projectID: 0,
     deliveryCode: "",
     id: 0,
     notes: "",
+    releasedWorkerID: 0,
     releasedName: "",
     warehouseManagerName: "",
+    warehouseManagerWorkerID: 0,
     teamName: "",
+    teamID: 0,
     confirmation: false,
     districtName: "",
+    districtID: 0,
     recipientName: "",
+    recipientWorkerID: 0,
   })
 
   const showDetails = (index: number) => {

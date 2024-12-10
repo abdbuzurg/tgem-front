@@ -191,6 +191,7 @@ export default function EditInvoiceOutputOutOfProject({
           materialID: value.materialID,
           amount: value.amount,
           serialNumbers: value.serialNumbers,
+          notes: value.notes,
         }))
       ],
     })

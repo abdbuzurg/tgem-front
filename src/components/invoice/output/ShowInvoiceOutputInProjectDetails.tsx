@@ -17,12 +17,12 @@ interface Props {
 export default function ShowInvoiceOutputInProjectDetails({ setShowModal, data }: Props) {
 
   const invoiceOutputMaterialsWithourSerialNumbersQuery = useQuery<InvoiceMaterialViewWithoutSerialNumbers[], Error>({
-    queryKey: ["invoice-input-materials-without-serial-numbers", data.id],
+    queryKey: ["invoice-output-materials-without-serial-numbers", data.id],
     queryFn: () => getInvoiceOutputMaterilsWithoutSerialNumbersByID(data.id)
   })
 
   const invoiceOutputMaterialsWithSerialNumbersQuery = useQuery<InvoiceMaterialViewWithSerialNumbers[], Error>({
-    queryKey: ["invoice-input-materials-with-serial-numbers", data.id],
+    queryKey: ["invoice-output-materials-with-serial-numbers", data.id],
     queryFn: () => getInvoiceOutputMaterilsWithSerialNumbersByID(data.id)
   })
 

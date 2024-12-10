@@ -23,14 +23,7 @@ export interface IInvoiceOutputMaterials {
   serialNumbers: string[]
 }
 
-export interface IInvoiceOutputInProjectView extends Omit<IInvoiceOutputInProject, 
-  "warehouseManagerWorkerID" | 
-  "releasedWorkerID" | 
-  "projectID" |
-  "districtID" |
-  "teamID" |
-  "recipientWorkerID"
-> {
+export interface IInvoiceOutputInProjectView extends IInvoiceOutputInProject {
   warehouseManagerName: string
   releasedName: string
   districtName: string

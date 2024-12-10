@@ -88,7 +88,7 @@ export default function EditInvoiceOutputInProject({
         value: val.id,
       })))
 
-      const alreadyWarehouseManager = warehouseManagerQuery.data.find((val) => val.name = invoiceOutputInProject.warehouseManagerName)!
+      const alreadyWarehouseManager = warehouseManagerQuery.data.find((val) => val.name == invoiceOutputInProject.warehouseManagerName)!
       setEditInvoiceOutputInProject(prev => ({
         ...prev,
         warehouseManagerWorkerID: alreadyWarehouseManager.id,
@@ -115,7 +115,7 @@ export default function EditInvoiceOutputInProject({
         value: val.id,
       })))
 
-      const alreadyRecipient = recipientsQuery.data.find((val) => val.name = invoiceOutputInProject.recipientName)!
+      const alreadyRecipient = recipientsQuery.data.find((val) => val.name == invoiceOutputInProject.recipientName)!
       setSelectedRecipient({
         label: alreadyRecipient.name,
         value: alreadyRecipient.id,
@@ -141,8 +141,7 @@ export default function EditInvoiceOutputInProject({
         value: val.id,
       })))
 
-      const alreadyTeam = allTeamsQuery.data.find((val) => val.teamNumber = invoiceOutputInProject.teamName)!
-      console.log(alreadyTeam, invoiceOutputInProject)
+      const alreadyTeam = allTeamsQuery.data.find((val) => val.id == invoiceOutputInProject.teamID)!
       setSelectedTeam({
         label: alreadyTeam.teamNumber + " (" + alreadyTeam.teamLeaderName + ")",
         value: alreadyTeam.id,
@@ -301,6 +300,9 @@ export default function EditInvoiceOutputInProject({
     mutationFn: updateInvoiceOutputInProject,
     onSuccess: () => {
       queryClient.invalidateQueries(["invoice-output-in-project"])
+      queryClient.invalidateQueries(["invoice-output-materials", invoiceOutputInProject.id])
+      queryClient.invalidateQueries(["invoice-output-materials-without-serial-numbers", invoiceOutputInProject.id])
+      queryClient.invalidateQueries(["invoice-output-materials-with-serial-numbers", invoiceOutputInProject.id])
       setShowEditModal(false)
     },
     onError: (err) => {
@@ -341,6 +343,7 @@ export default function EditInvoiceOutputInProject({
           materialID: value.materialID,
           amount: value.amount,
           serialNumbers: value.serialNumbers,
+          notes: value.notes,
         }))
       ],
     })

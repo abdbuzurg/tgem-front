@@ -65,7 +65,7 @@ export default function EditInvoiceReturnObject({
         value: val.id,
       })))
 
-      const district = allDistrictsQuery.data.find(val => val.name = invoiceReturnObject.districtName)!
+      const district = allDistrictsQuery.data.find(val => val.name == invoiceReturnObject.districtName)!
       setSelectedDistrictID({
         label: district.name,
         value: district.id,

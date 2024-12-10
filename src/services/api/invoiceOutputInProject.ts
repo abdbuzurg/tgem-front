@@ -38,6 +38,7 @@ export interface InvoiceOutputItem {
   materialID: number
   amount: number
   serialNumbers: string[]
+  notes: string
 }
 
 export interface InvoiceOutputInProjectMutation {
