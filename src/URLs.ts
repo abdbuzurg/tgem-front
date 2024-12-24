@@ -68,3 +68,6 @@ export const LOSS_OBJECT = "/invoice/loss/object"
 export const WRITEOFF_OBJECT = "/invoice/writeoff/object"
 
 export const HR_ATTENDANCE = "/hr/attendance"
+
+export const AUCTION_PUBLIC = "/auction/public"
+export const AUCTION_PRIVATE = "/auction/private"

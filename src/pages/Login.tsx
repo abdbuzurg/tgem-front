@@ -10,7 +10,7 @@ import IReactSelectOptions from "../services/interfaces/react-select"
 import Select from 'react-select'
 import Project from "../services/interfaces/project"
 import { GetAllProjects } from "../services/api/project"
-import { ADMINISTRATOR_HOME_PAGE, HOME } from "../URLs"
+import { ADMINISTRATOR_HOME_PAGE, AUCTION_PRIVATE, HOME } from "../URLs"
 
 export default function Login() {
   const navigate = useNavigate()
@@ -26,7 +26,7 @@ export default function Login() {
     projectID: 0,
   })
 
-  const [selectedProject, setSelectedProject] = useState<IReactSelectOptions<number>>({label: "", value: 0})
+  const [selectedProject, setSelectedProject] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
   const [allProjects, setAllProjects] = useState<IReactSelectOptions<number>[]>([])
   const projectQuery = useQuery<Project[], Error, Project[]>({
     queryKey: ["all-projects"],
@@ -34,21 +34,21 @@ export default function Login() {
   })
   useEffect(() => {
     if (projectQuery.isSuccess && projectQuery.data) {
-      setAllProjects(projectQuery.data.map<IReactSelectOptions<number>>((value) => ({label: value.name, value: value.id})))
+      setAllProjects(projectQuery.data.map<IReactSelectOptions<number>>((value) => ({ label: value.name, value: value.id })))
     }
   }, [projectQuery.data])
   const onSelectedProject = (value: null | IReactSelectOptions<number>) => {
     if (!value) {
-      setSelectedProject({label: "", value: 0})
-      setLoginData({...loginData, projectID: 0})
+      setSelectedProject({ label: "", value: 0 })
+      setLoginData({ ...loginData, projectID: 0 })
       return
     }
 
     setSelectedProject(value)
-    setLoginData({...loginData, projectID: value.value})
+    setLoginData({ ...loginData, projectID: value.value })
   }
 
-  const loginMutation = useMutation({ mutationFn: loginUser }) 
+  const loginMutation = useMutation({ mutationFn: loginUser })
   const login = () => {
 
     if (loginData.username == "") {
@@ -62,7 +62,7 @@ export default function Login() {
     }
 
     if (loginData.projectID == 0) {
-      toast.error("Не выбран проект") 
+      toast.error("Не выбран проект")
       return
     }
 
@@ -77,15 +77,28 @@ export default function Login() {
 
         toast.dismiss(loadingToast)
         const successToast = toast.success("Вход прошел успешно.")
-        
+
         // browser does not save token localStorage immediately
+        // so settimeout is required
         setTimeout(() => {
-          if (!data.admin) navigate(HOME)
-          else navigate(ADMINISTRATOR_HOME_PAGE)
+          switch (selectedProject.label) {
+            case "Администрирование":
+              if (data.admin) navigate(ADMINISTRATOR_HOME_PAGE)
+              else toast.error("Система не распознает вас как администратора")
+              break
+
+            case "Auction":
+              navigate(AUCTION_PRIVATE)
+              break
+            
+            default:
+              navigate(HOME)
+              break
+          }
           toast.dismiss(successToast)
         }, 1500)
 
-      }, 
+      },
       onSettled: () => {
         toast.dismiss(loadingToast)
       }
@@ -102,45 +115,45 @@ export default function Login() {
               <label className="inline-block font-bold text-lg mb-2">Имя пользователя</label>
               <Input
                 id="login_username"
-                type="text" 
+                type="text"
                 name="username"
-                value={loginData.username} 
-                onChange={(e) => setLoginData({...loginData, [e.target.name]: e.target.value})} 
+                value={loginData.username}
+                onChange={(e) => setLoginData({ ...loginData, [e.target.name]: e.target.value })}
               />
             </div>
             <div className="flex flex-col justify-start mb-3">
               <label className="inline-block font-bold text-lg mb-2">Пароль</label>
-              <Input 
+              <Input
                 id="login_password"
                 type="password"
-                name="password" 
-                value={loginData.password} 
-                onChange={(e) => setLoginData({...loginData, [e.target.name]: e.target.value})} 
+                name="password"
+                value={loginData.password}
+                onChange={(e) => setLoginData({ ...loginData, [e.target.name]: e.target.value })}
               />
             </div>
             <div className="flex flex-col justify-start mb-3">
               <label className="inline-block font-bold text-lg mb-2">Проект</label>
               <div>
-              <Select
-                className="basic-single"
-                classNamePrefix="select"
-                isSearchable={true}
-                isClearable={true}
-                name={"materials"}
-                placeholder={""}
-                value={selectedProject}
-                options={allProjects}
-                onChange={(value) => onSelectedProject(value)}
-              /> 
+                <Select
+                  className="basic-single"
+                  classNamePrefix="select"
+                  isSearchable={true}
+                  isClearable={true}
+                  name={"materials"}
+                  placeholder={""}
+                  value={selectedProject}
+                  options={allProjects}
+                  onChange={(value) => onSelectedProject(value)}
+                />
               </div>
             </div>
             <div className="flex justify-center">
-              <Button onClick={login} text="Войти"/>
+              <Button onClick={login} text="Войти" />
             </div>
           </div>
         </div>
       </div>
-      <Toaster/>
+      <Toaster />
     </div>
   )
 }

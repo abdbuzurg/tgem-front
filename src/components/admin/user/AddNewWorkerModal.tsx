@@ -23,21 +23,9 @@ export default function AddNewWorkerModal({ setShowModal }: Props) {
     mobileNumber: "",
     name: "",
   })
-  //Job Select logic
-  const [currentJobTitle, setCurrentJobTitle] = useState<IReactSelectOptions<string>>({ label: "", value: "" })
-  const onJobTitleSelect = (value: null | IReactSelectOptions<string>) => {
-    if (!value) {
-      setCurrentJobTitle({ value: "", label: "" })
-      setWorkerMutationData({ ...workerMutationData, jobTitleInCompany: "" })
-      return
-    }
-
-    setCurrentJobTitle(value)
-    setWorkerMutationData({ ...workerMutationData, jobTitleInCompany: value.value })
-  }
-
   //Submitting the worker repo
   const queryClient = useQueryClient()
+  const [isSelectedFromList, setIsSelectedForList] = useState(false)
 
   const createMaterialMutation = useMutation<IWorker, Error, IWorker>({
     mutationFn: createWorker,
@@ -48,18 +36,18 @@ export default function AddNewWorkerModal({ setShowModal }: Props) {
   })
 
   const onMutationSubmit = () => {
-    if (workerMutationData.jobTitleInCompany == "") {
-      toast.error("Не выбрана должность")
-      return
-    }
-
     if (workerMutationData.name == "") {
-      toast.error("Не указано имя сотрудника")
+      toast.error("Не указано имя работника")
       return
     }
 
-    if (workerMutationData.mobileNumber == "") {
-      toast.error("Не указан мобильный номер")
+    if (workerMutationData.jobTitleInCompany == "") {
+      toast.error("Не указано должность рабоника в ТГЭМ")
+      return
+    }
+
+    if (workerMutationData.jobTitleInProject == "") {
+      toast.error("Не указано должность рабоника в проекте")
       return
     }
 
@@ -80,13 +68,12 @@ export default function AddNewWorkerModal({ setShowModal }: Props) {
     <Modal setShowModal={setShowModal}>
       <div className="">
         <h3 className="text-xl font-medium text-gray-800">
-          Добавление матераила
+          Добавление сотрудника
         </h3>
         <div className="flex flex-col space-y-3 mt-2">
           <div className="flex flex-col space-y-1">
-            <label htmlFor="name">Фамилия Имя</label>
+            <label htmlFor="name">Фамилия Имя Отчество<span className="text-red-600">*</span></label>
             <Input
-              id="name"
               name="name"
               type="text"
               value={workerMutationData.name}
@@ -94,23 +81,79 @@ export default function AddNewWorkerModal({ setShowModal }: Props) {
             />
           </div>
           <div className="flex flex-col space-y-1">
-            <label htmlFor="jobTitle">Должность</label>
+            <label htmlFor="jobTitle">Должность в ТГЭМ<span className="text-red-600">*</span></label>
             <Select
               className="basic-single"
               classNamePrefix="select"
               isSearchable={true}
               isClearable={true}
-              name={"job-title-select"}
+              name={"job-title-in-company"}
               placeholder={""}
-              value={currentJobTitle}
-              options={JOB_TITLES.map<IReactSelectOptions<string>>((value: string) => ({ label: value, value: value }))}
-              onChange={(value) => onJobTitleSelect(value)}
+              value={{ label: workerMutationData.jobTitleInCompany, value: workerMutationData.jobTitleInCompany }}
+              options={JOB_TITLES.map<IReactSelectOptions<string>>((value) => ({ label: value, value: value }))}
+              onChange={(value) => {
+                setWorkerMutationData({
+                  ...workerMutationData,
+                  jobTitleInCompany: value?.value ?? "",
+                })
+              }}
             />
           </div>
           <div className="flex flex-col space-y-1">
-            <label htmlFor="mobileNumber">Номера телефона</label>
+            <label htmlFor="mobileNumber">ID сотрудника<span className="text-red-600">*</span></label>
             <Input
-              id="mobileNumber"
+              name="companyWorkerID"
+              type="text"
+              value={workerMutationData.companyWorkerID}
+              onChange={(e) => setWorkerMutationData({ ...workerMutationData, [e.target.name]: e.target.value })}
+            />
+          </div>
+          <div className="flex flex-col space-y-1">
+            <label htmlFor="jobTitle">Должность в Проекте<span className="text-red-600">*</span></label>
+            <div className="flex w-full space-x-2">
+              <Select
+                className="basic-single flex-1"
+                classNamePrefix="select"
+                isSearchable={true}
+                isClearable={true}
+                name={"job-title-in-project"}
+                placeholder={""}
+                value={{ label: workerMutationData.jobTitleInProject, value: workerMutationData.jobTitleInCompany }}
+                options={JOB_TITLES.map<IReactSelectOptions<string>>((value) => ({ label: value, value: value }))}
+                onChange={(value) => {
+                  setWorkerMutationData({
+                    ...workerMutationData,
+                    jobTitleInProject: value?.value ?? "",
+                  })
+                  if (!value) {
+                    setIsSelectedForList(false)
+                  } else {
+                    setIsSelectedForList(true)
+                  }
+                }}
+              />
+              <div className="flex-1">
+                <Input
+                  name="jobTitleInProject"
+                  type="text"
+                  value={workerMutationData.jobTitleInProject}
+                  onChange={(e) => {
+                    if (isSelectedFromList) {
+                      return
+                    }
+
+                    setWorkerMutationData({
+                      ...workerMutationData,
+                      jobTitleInProject: e.target.value,
+                    })
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+          <div className="flex flex-col space-y-1">
+            <label htmlFor="mobileNumber">Номера телефона<span className="text-red-600">*</span></label>
+            <Input
               name="mobileNumber"
               type="text"
               value={workerMutationData.mobileNumber}
