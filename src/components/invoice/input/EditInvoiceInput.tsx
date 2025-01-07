@@ -35,7 +35,7 @@ export default function EditInvoiceInput({
 
   const [editInvoiceInput, setEditInvoiceInput] = useState<IInvoiceInput>({
     projectID: 0,
-    dateOfInvoice: new Date(invoiceInput.dateOfInvoice),
+    dateOfInvoice: invoiceInput.dateOfInvoice,
     deliveryCode: invoiceInput.deliveryCode,
     id: invoiceInput.id,
     notes: invoiceInput.notes,

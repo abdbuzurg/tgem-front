@@ -437,7 +437,7 @@ export default function Materials() {
                 />
               </div>
               <div className="flex flex-col space-y-1">
-                <label htmlFor="code">Пункт BOQ контракта с закасчиком/УС</label>
+                <label htmlFor="code">Пункт BOQ контракта с заказчиком/УС</label>
                 <Input
                   name="article"
                   type="text"
