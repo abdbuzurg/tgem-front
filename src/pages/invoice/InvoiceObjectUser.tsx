@@ -2,25 +2,25 @@ import { useNavigate } from "react-router-dom";
 import Button from "../../components/UI/button";
 import { INVOICE_OBJECT_MUTATION_ADD } from "../../URLs";
 import { useInfiniteQuery } from "@tanstack/react-query";
-import { InvoiceObjectPaginated, InvoiceObjectPaginatedView, getInvoiceObjectPaginated } from "../../services/api/invoiceObject";
+import { InvoiceObject, InvoiceObjectView, getInvoiceObject } from "../../services/api/invoiceObject";
 import { ENTRY_LIMIT } from "../../services/api/constants";
 import { useEffect, useState } from "react";
 import LoadingDots from "../../components/UI/loadingDots";
 import { objectTypeIntoRus } from "../../services/lib/objectStatuses";
 
-export default function InvoiceObject() {
-  const tableDataQuery = useInfiniteQuery<InvoiceObjectPaginated, Error>({
-    queryKey: ["invoice-object"],
-    queryFn: ({ pageParam }) => getInvoiceObjectPaginated({ pageParam }),
+export default function InvoiceObjectUser() {
+  const tableDataQuery = useInfiniteQuery<InvoiceObject, Error>({
+    queryKey: ["invoice-object-user"],
+    queryFn: ({ pageParam }) => getInvoiceObject({ pageParam }),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
     }
   })
-  const [tableData, setTableData] = useState<InvoiceObjectPaginatedView[]>([])
+  const [tableData, setTableData] = useState<InvoiceObjectView[]>([])
   useEffect(() => {
     if (tableDataQuery.isSuccess && tableDataQuery.data) {
-      const data: InvoiceObjectPaginatedView[] = tableDataQuery.data.pages.reduce<InvoiceObjectPaginatedView[]>((acc, page) => [...acc, ...page.data], [])
+      const data: InvoiceObjectView[] = tableDataQuery.data.pages.reduce<InvoiceObjectView[]>((acc, page) => [...acc, ...page.data], [])
       setTableData(data)
     }
   }, [tableDataQuery.data])

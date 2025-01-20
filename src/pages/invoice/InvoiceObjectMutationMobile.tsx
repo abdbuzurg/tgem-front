@@ -10,7 +10,7 @@ import toast from "react-hot-toast"
 import { getAllObjects } from "../../services/api/object"
 import { InvoiceObjectCreateItems, InvoiceObjectOperations, InvoiceObjectOperationsCreate, InvoiceObjectTeamMaterialData, createInvoiceObject, getMaterialsDataFromTeam, getOperationsBasedOnTeamID, getSerialNumbersOfMaterial, getTeamsFromObjectID } from "../../services/api/invoiceObject"
 import { useNavigate } from "react-router-dom"
-import { INVOICE_OBJECT } from "../../URLs"
+import { INVOICE_OBJECT_USER } from "../../URLs"
 import { objectTypeIntoRus } from "../../services/lib/objectStatuses"
 import LoadingDots from "../../components/UI/loadingDots"
 
@@ -394,7 +394,7 @@ export default function InvoiceObjectMutationAdd() {
     }, {
       onSuccess: () => {
         queryClient.invalidateQueries(["invoice-objects-paginated"])
-        navigate(INVOICE_OBJECT)
+        navigate(INVOICE_OBJECT_USER)
       }
     })
   }

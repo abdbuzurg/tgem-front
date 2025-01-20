@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { HR_ATTENDANCE, INVOICE_CORRECTION, INVOICE_INPUT, INVOICE_OBJECT, INVOICE_OUTPUT_IN_PROJECT, INVOICE_OUTPUT_OUT_OF_PROJECT, INVOICE_RETURN_OBJECT, INVOICE_RETURN_TEAM, LOSS_OBJECT, LOSS_TEAM, LOSS_WAREHOUSE, WRITEOFF_OBJECT, WRITEOFF_WAREHOUSE, } from "../URLs";
+import { HR_ATTENDANCE, INVOICE_CORRECTION, INVOICE_INPUT, INVOICE_OBJECT_PAGINATED_PAGE, INVOICE_OBJECT_USER, INVOICE_OUTPUT_IN_PROJECT, INVOICE_OUTPUT_OUT_OF_PROJECT, INVOICE_RETURN_OBJECT, INVOICE_RETURN_TEAM, LOSS_OBJECT, LOSS_TEAM, LOSS_WAREHOUSE, WRITEOFF_OBJECT, WRITEOFF_WAREHOUSE, } from "../URLs";
 import MainReports from "../components/MainReports";
 
 const homePageCategorized = [
@@ -26,7 +26,8 @@ const homePageCategorized = [
   {
     category: "Объект",
     pages: [
-      { name: "Расход материала на объект", url: INVOICE_OBJECT },
+      { name: "Расходы Проекта", url: INVOICE_OBJECT_PAGINATED_PAGE },
+      { name: "Расход материала на объект", url: INVOICE_OBJECT_USER },
       { name: "Корректировка", url: INVOICE_CORRECTION },
     ]
   },

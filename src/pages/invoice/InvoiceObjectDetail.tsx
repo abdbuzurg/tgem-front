@@ -21,7 +21,7 @@ export default function InvoiceObjectDetails() {
       objectName: "",
       teamNumber: "",
       dateOfInvoice: new Date(),
-      ConfirmedByOperator: false,
+      confirmedByOperator: false,
     },
     materialsWithSN: [],
     materialsWithoutSN: [],
@@ -74,7 +74,7 @@ export default function InvoiceObjectDetails() {
                 <div className="font-bold">Дата поступления</div>
                 <div>{displayData.invoiceData.dateOfInvoice.toString().substring(0, 10)}</div>
                 <div className="font-bold">Подтверждено оператором</div>
-                <div>{displayData.invoiceData.ConfirmedByOperator ? "ДА" : "НЕТ"}</div>
+                <div>{displayData.invoiceData.confirmedByOperator ? "ДА" : "НЕТ"}</div>
               </div>
             </div>
           </div>

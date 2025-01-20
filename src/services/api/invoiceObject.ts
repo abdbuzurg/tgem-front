@@ -67,7 +67,7 @@ export async function getMaterialAmount(materialID: number, teamID: number): Pro
   }
 }
 
-export interface InvoiceObjectPaginatedView {
+export interface InvoiceObjectView {
   id: number
   deliveryCode: string
   supervisorName: string
@@ -75,17 +75,17 @@ export interface InvoiceObjectPaginatedView {
   objectType: string
   teamNumber: string
   dateOfInvoice: Date
-  ConfirmedByOperator: boolean
+  confirmedByOperator: boolean
 }
 
-export interface InvoiceObjectPaginated {
-  data: InvoiceObjectPaginatedView[]
+export interface InvoiceObject {
+  data: InvoiceObjectView[]
   count: number
   page: number
 }
 
-export async function getInvoiceObjectPaginated({ pageParam = 1 }): Promise<InvoiceObjectPaginated> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceObjectPaginated>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
+export async function getInvoiceObject({ pageParam = 1 }): Promise<InvoiceObject> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceObject>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
   const response = responseRaw.data
   if (response.success && response.permission) {
     return { ...response.data, page: pageParam }
@@ -102,12 +102,12 @@ export interface InvoiceObjectFullDataItem {
 }
 
 export interface InvoiceObjectFullData {
-  details: InvoiceObjectPaginatedView
+  details: InvoiceObjectView
   items: InvoiceObjectFullDataItem[]
 }
 
 export interface InvoiceObjectDescriptiveData {
-  invoiceData: InvoiceObjectPaginatedView
+  invoiceData: InvoiceObjectView
   materialsWithSN: InvoiceMaterialViewWithSerialNumbers[],
   materialsWithoutSN: InvoiceMaterialViewWithoutSerialNumbers[]
 }
