@@ -6,7 +6,7 @@ import LoadingDots from "../../components/UI/loadingDots";
 import DeleteModal from "../../components/deleteModal";
 import "react-datepicker/dist/react-datepicker.css";
 import ReportInvoiceInput from "../../components/invoice/input/ReportInvoiceInput";
-import { InvoiceInputConfirmationData, InvoiceInputPagianted, deleteInvoiceInput, getInvoiceInputDocument, getPaginatedInvoiceInput, sendInvoiceInputConfirmationExcel } from "../../services/api/invoiceInput";
+import { InvoiceInputConfirmationData, InvoiceInputPagianted, InvoiceInputSearchParameters, deleteInvoiceInput, getInvoiceInputDocument, getPaginatedInvoiceInput, sendInvoiceInputConfirmationExcel } from "../../services/api/invoiceInput";
 import { IInvoiceInputView } from "../../services/interfaces/invoiceInput";
 import { FaUpload, FaDownload, FaRegListAlt, FaRegTrashAlt, FaEdit } from "react-icons/fa";
 import IconButton from "../../components/IconButtons";
@@ -14,12 +14,24 @@ import ShowInvoiceInputDetails from "../../components/invoice/input/ShowInvoiceI
 import AddInvoiceInput from "../../components/invoice/input/AddInvoiceInput";
 import EditInvoiceInput from "../../components/invoice/input/EditInvoiceInput";
 import toast from "react-hot-toast";
+import SearchInvoiceInput from "../../components/invoice/input/SearchInvoiceInput";
 
 export default function InvoiceInput() {
+  //Search modal logic
+  const [showSearchModal, setShowSearchModal] = useState(false)
+  const [searchParameters, setSearchParameters] = useState<InvoiceInputSearchParameters>({
+    deliveryCode: "",
+    warehouseManagerWorkerID: 0,
+    releasedWorkerID: 0,
+    dateFrom: null,
+    dateTo: null,
+    materials: [],
+  })
+
   //FETCHING LOGIC
   const tableDataQuery = useInfiniteQuery<InvoiceInputPagianted, Error>({
-    queryKey: ["invoice-input"],
-    queryFn: ({ pageParam }) => getPaginatedInvoiceInput({ pageParam }),
+    queryKey: ["invoice-input", searchParameters],
+    queryFn: ({ pageParam }) => getPaginatedInvoiceInput({ pageParam }, searchParameters),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
@@ -58,7 +70,7 @@ export default function InvoiceInput() {
     if (fileName != "pdf") {
       toast.dismiss(confirmationFileToast)
       toast.error("Подтверждающий файл должен быть формата PDF")
-      return 
+      return
     }
 
     confirmationFileMutation.mutate({
@@ -145,7 +157,18 @@ export default function InvoiceInput() {
   return (
     <main>
       <div className="mt-2 px-2 flex justify-between">
-        <span className="text-3xl font-bold">Накладные приход</span>
+        <div className="flex space-x-2">
+          <span className="text-3xl font-bold">Накладные приход</span>
+          <Button onClick={() => setShowSearchModal(true)} text="Поиск" buttonType="default" />
+          <Button onClick={() => setSearchParameters({
+            deliveryCode: "",
+            warehouseManagerWorkerID: 0,
+            releasedWorkerID: 0,
+            dateFrom: null,
+            dateTo: null,
+            materials: [],
+          })} text="Сброс поиска" buttonType="delete" />
+        </div>
         <div>
           <Button onClick={() => setShowReportModal(true)} text="Отчет" buttonType="default" />
         </div>
@@ -271,6 +294,7 @@ export default function InvoiceInput() {
       {showAddModal && <AddInvoiceInput setShowAddModal={setShowAddModal} />}
       {showEditModal && <EditInvoiceInput setShowEditModal={setShowEditModal} invoiceInput={rowToEdit!} />}
       {showReportModal && <ReportInvoiceInput setShowReportModal={setShowReportModal} />}
+      {showSearchModal && <SearchInvoiceInput setShowModal={setShowSearchModal} searchParameters={searchParameters} setSearchParameters={setSearchParameters} />}
     </main>
   )
 }

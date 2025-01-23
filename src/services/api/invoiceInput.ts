@@ -15,8 +15,10 @@ export interface InvoiceInputPagianted {
   page: number
 }
 
-export async function getPaginatedInvoiceInput({ pageParam = 1 }): Promise<InvoiceInputPagianted> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceInputPagianted>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
+export async function getPaginatedInvoiceInput({ pageParam = 1 }, searchParameters: InvoiceInputSearchParameters): Promise<InvoiceInputPagianted> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceInputPagianted>>(
+  `${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&deliveryCode=${searchParameters.deliveryCode}&warehouseManagerWorkerID=${searchParameters.warehouseManagerWorkerID}&releasedWorkerID=${searchParameters.releasedWorkerID}&dateFrom=${searchParameters.dateFrom?.toString().substring(0, 24) ?? ""}&dateTo=${searchParameters.dateTo?.toString().substring(0, 24) ?? ""}&materials=${searchParameters.materials}`
+  )
   const response = responseRaw.data
   if (response.success && response.permission) {
     return { ...response.data, page: pageParam }
@@ -232,4 +234,28 @@ export async function importInvoiceInput(file: File): Promise<boolean> {
   }
 }
 
+export interface InvoiceInputSearchParametersData {
+  deliveryCodes: string[]
+  warehouseManagers: IReactSelectOptions<number>[]
+  releaseds: IReactSelectOptions<number>[]
+  materials: IReactSelectOptions<number>[]
+}
 
+export async function getInvoiceInputSearchParametersData(): Promise<InvoiceInputSearchParametersData> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceInputSearchParametersData>>(`${URL}/search-parameters`)
+  const response = responseRaw.data
+  if (response.success && response.permission) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}
+
+export interface InvoiceInputSearchParameters {
+  deliveryCode: string
+  warehouseManagerWorkerID: number
+  releasedWorkerID: number
+  dateFrom: null | Date
+  dateTo: null | Date
+  materials: number[]
+}
