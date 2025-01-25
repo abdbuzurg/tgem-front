@@ -86,6 +86,7 @@ export default function InvoiceReturnTeam() {
         .catch(err => toast.error(`Ошибка при скачке документа: ${err}`))
         .finally(() => {
           toast.dismiss(loadingToast)
+          setInformationToGetDocument({deliveryCode: "", confirmation: false})
         })
     },
     enabled: informationToGetDocument.deliveryCode != "",

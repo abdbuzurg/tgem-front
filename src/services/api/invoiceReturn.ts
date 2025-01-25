@@ -138,8 +138,8 @@ export interface InvoiceReturnReportFilter {
   dateTo: Date | null
 }
 
-export async function buildReport(filter: InvoiceReturnReportFilter): Promise<boolean> {
-  const responseRaw = await axiosClient.post(`http://127.0.0.1:8080${URL}/report`, filter, { responseType: "blob", })
+export async function buildInvoiceReturnReport(filter: InvoiceReturnReportFilter): Promise<boolean> {
+  const responseRaw = await axiosClient.post(`${URL}/report`, filter, { responseType: "blob", })
   if (responseRaw.status == 200) {
     const fileName = "Отчет"
     fileDownload(responseRaw.data, `${fileName}.xlsx`)
