@@ -108,7 +108,7 @@ export default function SIPObject() {
   }, [tpNamesQuery.data])
 
   const [selectedSupervisorsWorkerID, setselectedSupervisorsWorkerID] = useState<IReactSelectOptions<number>[]>([])
-  const [avaiableSupervisors, setAvailableSupervisors] = useState<IReactSelectOptions<number>[]>([])
+  const [availableSupervisors, setAvailableSupervisors] = useState<IReactSelectOptions<number>[]>([])
   const supervisorsQuery = useQuery<IWorker[], Error, IWorker[]>({
     queryKey: ["worker-supervisors"],
     queryFn: () => getWorkerByJobTitle("Супервайзер")
@@ -190,21 +190,16 @@ export default function SIPObject() {
 
   const onEditClick = (index: number) => {
 
-    console.log(tableData[index])
-    const supervisors = tableData[index].supervisors.map<IReactSelectOptions<number>>((value) => {
-      const subIndex = avaiableSupervisors.findIndex((val) => val.label == value)!
-      return avaiableSupervisors[subIndex]
-    }).filter((val) => val)!
+    const supervisors = availableSupervisors.filter(val => tableData[index].supervisors.includes(val.label))
 
-    const teams = tableData[index].teams.map<IReactSelectOptions<number>>((value) => {
-      const subIndex = availableTeams.findIndex((val) => val.label == value)!
-      return availableTeams[subIndex]
-    }).filter((val) => val)!
+    const teamNamesOnly = availableTeams.map<IReactSelectOptions<number>>(val => ({
+      ...val,
+      label: val.label.split(" ")[0]
+    }))
+    const teams = teamNamesOnly.filter(val => tableData[index].teams.includes(val.label))
+    const fullTeamNames = availableTeams.filter(val => teams.find(teamsVal => teamsVal.value == val.value))
 
-    const tps = tableData[index].tpNames.map<IReactSelectOptions<number>>((value) => {
-      const subIndex = availableTPs.findIndex((val) => val.label == value)!
-      return availableTPs[subIndex]
-    }).filter((val) => val)!
+    const tps = availableTPs.filter(val => tableData[index].tpNames.includes(val.label))
 
     setMutationData({
       baseInfo: {
@@ -224,7 +219,7 @@ export default function SIPObject() {
     })
 
     setselectedSupervisorsWorkerID(supervisors)
-    setSelectedTeamID(teams)
+    setSelectedTeamID(fullTeamNames)
 
     setShowMutationModal(true)
     setMutationType("update")
@@ -510,7 +505,7 @@ export default function SIPObject() {
                 name={"supervisors-select"}
                 placeholder={""}
                 value={selectedSupervisorsWorkerID}
-                options={avaiableSupervisors}
+                options={availableSupervisors}
                 onChange={(value) => {
                   setselectedSupervisorsWorkerID([...value])
                   setMutationData({

@@ -109,7 +109,7 @@ export default function SubstationCellObject() {
   }, [allSubstationsQuery.data])
 
   const [selectedSupervisorsWorkerID, setselectedSupervisorsWorkerID] = useState<IReactSelectOptions<number>[]>([])
-  const [avaiableSupervisors, setAvailableSupervisors] = useState<IReactSelectOptions<number>[]>([])
+  const [availableSupervisors, setAvailableSupervisors] = useState<IReactSelectOptions<number>[]>([])
   const supervisorsQuery = useQuery<IWorker[], Error, IWorker[]>({
     queryKey: ["worker-supervisors"],
     queryFn: () => getWorkerByJobTitle("Супервайзер")
@@ -177,18 +177,17 @@ export default function SubstationCellObject() {
 
   const onEditClick = (index: number) => {
 
-    console.log(tableData[index])
-    const supervisors = tableData[index].supervisors.map<IReactSelectOptions<number>>((value) => {
-      const subIndex = avaiableSupervisors.findIndex((val) => val.label == value)!
-      return avaiableSupervisors[subIndex]
-    }).filter((val) => val)!
+    const supervisors = availableSupervisors.filter(val => tableData[index].supervisors.includes(val.label))
 
-    const teams = tableData[index].teams.map<IReactSelectOptions<number>>((value) => {
-      const subIndex = availableTeams.findIndex((val) => val.label == value)!
-      return availableTeams[subIndex]
-    }).filter((val) => val)!
+    const teamNamesOnly = availableTeams.map<IReactSelectOptions<number>>(val => ({
+      ...val,
+      label: val.label.split(" ")[0]
+    }))
+    const teams = teamNamesOnly.filter(val => tableData[index].teams.includes(val.label))
+    const fullTeamNames = availableTeams.filter(val => teams.find(teamsVal => teamsVal.value == val.value))
 
     const substation = allSubstations.find((val) => val.label == tableData[index].substationName)
+    console.log(substation)
 
     setMutationData({
       baseInfo: {
@@ -207,7 +206,7 @@ export default function SubstationCellObject() {
     })
 
     setselectedSupervisorsWorkerID(supervisors)
-    setSelectedTeamID(teams)
+    setSelectedTeamID(fullTeamNames)
 
     setShowMutationModal(true)
     setMutationType("update")
@@ -357,6 +356,7 @@ export default function SubstationCellObject() {
                 setMutationType("create")
                 setShowMutationModal(true)
                 setselectedSupervisorsWorkerID([])
+                setSelectedTeamID([])
                 setMutationData({
                   baseInfo: {
                     id: 0,
@@ -490,7 +490,7 @@ export default function SubstationCellObject() {
                 name={"supervisors-select"}
                 placeholder={""}
                 value={selectedSupervisorsWorkerID}
-                options={avaiableSupervisors}
+                options={availableSupervisors}
                 onChange={(value) => {
                   setselectedSupervisorsWorkerID([...value])
                   setMutationData({

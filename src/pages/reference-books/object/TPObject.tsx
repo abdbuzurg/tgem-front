@@ -81,7 +81,7 @@ export default function TPObject() {
       id: 0,
       projectID: 0,
       objectDetailedID: 0,
-      type: "stvt_object",
+      type: "tp_object",
       name: "",
       status: "",
     },
@@ -95,7 +95,7 @@ export default function TPObject() {
   })
 
   const [selectedSupervisorsWorkerID, setselectedSupervisorsWorkerID] = useState<IReactSelectOptions<number>[]>([])
-  const [avaiableSupervisors, setAvailableSupervisors] = useState<IReactSelectOptions<number>[]>([])
+  const [availableSupervisors, setAvailableSupervisors] = useState<IReactSelectOptions<number>[]>([])
   const supervisorsQuery = useQuery<IWorker[], Error, IWorker[]>({
     queryKey: ["worker-supervisors"],
     queryFn: () => getWorkerByJobTitle("Супервайзер")
@@ -174,15 +174,14 @@ export default function TPObject() {
   }
 
   const onEditClick = (index: number) => {
-    const supervisors = tableData[index].supervisors.map<IReactSelectOptions<number>>((value) => {
-      const subIndex = avaiableSupervisors.findIndex((val) => val.label == value)!
-      return avaiableSupervisors[subIndex]
-    }).filter((val) => val)!
+    const supervisors = availableSupervisors.filter(val => tableData[index].supervisors.includes(val.label))
 
-    const teams = tableData[index].teams.map<IReactSelectOptions<number>>((value) => {
-      const subIndex = availableTeams.findIndex((val) => val.label == value)!
-      return availableTeams[subIndex]
-    }).filter((val) => val)!
+    const teamNamesOnly = availableTeams.map<IReactSelectOptions<number>>(val => ({
+      ...val,
+      label: val.label.split(" ")[0]
+    }))
+    const teams = teamNamesOnly.filter(val => tableData[index].teams.includes(val.label))
+    const fullTeamNames = availableTeams.filter(val => teams.find(teamsVal => teamsVal.value == val.value))
 
     setMutationData({
       baseInfo: {
@@ -191,7 +190,7 @@ export default function TPObject() {
         objectDetailedID: tableData[index].objectDetailedID,
         name: tableData[index].name,
         status: tableData[index].status,
-        type: "stvt_objects",
+        type: "tp_object",
       },
       detailedInfo: {
         model: tableData[index].model,
@@ -203,7 +202,7 @@ export default function TPObject() {
     })
 
     setselectedSupervisorsWorkerID(supervisors)
-    setSelectedTeamID(teams)
+    setSelectedTeamID(fullTeamNames)
 
     setShowMutationModal(true)
     setMutationType("update")
@@ -476,7 +475,7 @@ export default function TPObject() {
                 name={"supervisors-select"}
                 placeholder={""}
                 value={selectedSupervisorsWorkerID}
-                options={avaiableSupervisors}
+                options={availableSupervisors}
                 onChange={(value) => {
                   setselectedSupervisorsWorkerID([...value])
                   setMutationData({

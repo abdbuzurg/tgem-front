@@ -95,7 +95,7 @@ export default function SubstationObject() {
   })
 
   const [selectedSupervisorsWorkerID, setselectedSupervisorsWorkerID] = useState<IReactSelectOptions<number>[]>([])
-  const [avaiableSupervisors, setAvailableSupervisors] = useState<IReactSelectOptions<number>[]>([])
+  const [availableSupervisors, setAvailableSupervisors] = useState<IReactSelectOptions<number>[]>([])
   const supervisorsQuery = useQuery<IWorker[], Error, IWorker[]>({
     queryKey: ["worker-supervisors"],
     queryFn: () => getWorkerByJobTitle("Супервайзер")
@@ -172,15 +172,14 @@ export default function SubstationObject() {
   }
 
   const onEditClick = (index: number) => {
-    const supervisors = tableData[index].supervisors.map<IReactSelectOptions<number>>((value) => {
-      const subIndex = avaiableSupervisors.findIndex((val) => val.label == value)!
-      return avaiableSupervisors[subIndex]
-    }).filter((val) => val)!
+    const supervisors = availableSupervisors.filter(val => tableData[index].supervisors.includes(val.label))
 
-    const teams = tableData[index].teams.map<IReactSelectOptions<number>>((value) => {
-      const subIndex = availableTeams.findIndex((val) => val.label == value)!
-      return availableTeams[subIndex]
-    }).filter((val) => val)!
+    const teamNamesOnly = availableTeams.map<IReactSelectOptions<number>>(val => ({
+      ...val,
+      label: val.label.split(" ")[0]
+    }))
+    const teams = teamNamesOnly.filter(val => tableData[index].teams.includes(val.label))
+    const fullTeamNames = availableTeams.filter(val => teams.find(teamsVal => teamsVal.value == val.value))
 
     setMutationData({
       baseInfo: {
@@ -189,7 +188,7 @@ export default function SubstationObject() {
         objectDetailedID: tableData[index].objectDetailedID,
         name: tableData[index].name,
         status: tableData[index].status,
-        type: "stvt_objects",
+        type: "substation_object",
       },
       detailedInfo: {
         voltageClass: tableData[index].voltageClass,
@@ -200,7 +199,7 @@ export default function SubstationObject() {
     })
 
     setselectedSupervisorsWorkerID(supervisors)
-    setSelectedTeamID(teams)
+    setSelectedTeamID(fullTeamNames)
 
     setShowMutationModal(true)
     setMutationType("update")
@@ -472,7 +471,7 @@ export default function SubstationObject() {
                 name={"supervisors-select"}
                 placeholder={""}
                 value={selectedSupervisorsWorkerID}
-                options={avaiableSupervisors}
+                options={availableSupervisors}
                 onChange={(value) => {
                   setselectedSupervisorsWorkerID([...value])
                   setMutationData({
