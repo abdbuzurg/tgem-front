@@ -262,6 +262,7 @@ export default function EditWriteOffWarehouseWriteOff({
               </div>
             }
             <div className="px-4 py-3 flex items-center">{invoiceMaterial.unit}</div>
+            <div className="px-4 py-3">{invoiceMaterial.locationAmount}</div>
             <div className="px-4 py-3">
               <Input
                 name="amount"
@@ -270,7 +271,6 @@ export default function EditWriteOffWarehouseWriteOff({
                 onChange={(e) => setInvoiceMaterial((prev) => ({ ...prev, amount: e.target.valueAsNumber }))}
               />
             </div>
-            <div className="px-4 py-3">{invoiceMaterial.locationAmount}</div>
             <div className="px-4 py-3">
               <Input
                 name="notes"
