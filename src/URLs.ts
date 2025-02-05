@@ -72,3 +72,5 @@ export const HR_ATTENDANCE = "/hr/attendance"
 
 export const AUCTION_PUBLIC = "/auction/public"
 export const AUCTION_PRIVATE = "/auction/private"
+
+export const STATISTICS = "/statistics"
