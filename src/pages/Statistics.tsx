@@ -69,6 +69,7 @@ export default function Statistics() {
                     ],
                   },
                 ]}
+                slotProps={{ legend: { hidden: true } }}
                 width={400}
                 height={200}
               />
@@ -91,6 +92,7 @@ export default function Statistics() {
                     ],
                   },
                 ]}
+                slotProps={{ legend: { hidden: true } }}
                 width={400}
                 height={200}
               />
