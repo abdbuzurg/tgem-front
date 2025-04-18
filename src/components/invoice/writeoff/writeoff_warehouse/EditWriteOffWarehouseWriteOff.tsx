@@ -28,7 +28,7 @@ export default function EditWriteOffWarehouseWriteOff({
     id: invoiceWriteOff.id,
     projectID: invoiceWriteOff.projectID,
     releasedWorkerID: invoiceWriteOff.releasedWorkerID,
-    writeOffType: "loss-warehouse",
+    writeOffType: "writeoff-warehouse",
     writeOffLocationID: invoiceWriteOff.writeOffLocationID,
     dateOfInvoice: new Date(invoiceWriteOff.dateOfInvoice),
     confirmation: false,
