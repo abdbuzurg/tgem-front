@@ -3,6 +3,7 @@ import IWorker from "../interfaces/worker"
 import IAPIResposeFormat from "./IAPIResposeFormat"
 import axiosClient from "./axiosClient"
 import { ENTRY_LIMIT } from "./constants"
+import isCorrectResponseFormat from "../lib/typeGuardForResponse"
 
 const URL = "/worker"
 
@@ -111,25 +112,19 @@ export async function importWorker(data: File): Promise<boolean> {
 }
 
 export async function exportWorker(): Promise<boolean> {
-  const responseRaw = await axiosClient.get(`${URL}/document/export`, {
-    headers: {
-      "Content-Type": `multipart/form-data; boundary=WebAppBoundary`,
-    }
-  })
-  if (responseRaw.status == 200) {
-    if (typeof responseRaw.data == 'object') {
-      const response: IAPIResposeFormat<string> = responseRaw.data
-      if (!response.success) {
-        throw new Error(response.error)
-      } else {
-        return true
-      }
-    } else {
-      return true
-    }
+  const responseRaw = await axiosClient.get(`${URL}/document/export`, { responseType: "blob" })
+  if (isCorrectResponseFormat<null>(responseRaw.data)) {
+    const response = responseRaw.data as IAPIResposeFormat<null>
+    throw new Error(response.error)
   } else {
-    throw new Error(responseRaw.data)
+    if (responseRaw.status == 200) {
+      fileDownload(responseRaw.data, "Эспорт Рабочего Персонала.xlsx")
+      return true
+    } else {
+      throw new Error(responseRaw.statusText)
+    }
   }
+
 }
 
 export interface WorkerInformation {

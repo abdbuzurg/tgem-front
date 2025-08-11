@@ -143,7 +143,7 @@ export async function exportTeam(): Promise<boolean> {
     throw new Error(response.error)
   } else {
     if (responseRaw.status == 200) {
-      fileDownload(responseRaw.data, "Эспорт Материалов.xlsx")
+      fileDownload(responseRaw.data, "Эспорт Бригад.xlsx")
       return true
     } else {
       throw new Error(responseRaw.statusText)
