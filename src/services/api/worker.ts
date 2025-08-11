@@ -115,9 +115,11 @@ export async function exportWorker(): Promise<boolean> {
   const responseRaw = await axiosClient.get(`${URL}/document/export`, { responseType: "blob" })
   if (isCorrectResponseFormat<null>(responseRaw.data)) {
     const response = responseRaw.data as IAPIResposeFormat<null>
+    alert("error")
     throw new Error(response.error)
   } else {
     if (responseRaw.status == 200) {
+      alert("success")
       fileDownload(responseRaw.data, "Эспорт Рабочего Персонала.xlsx")
       return true
     } else {
