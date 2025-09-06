@@ -1,13 +1,15 @@
-import { useEffect,  useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "../components/UI/button";
 import MutationUserModal from "../components/admin/user/MutationUserModal";
 import { useInfiniteQuery } from "@tanstack/react-query";
 import { UserPaginated, UserView, getPaginatedUser } from "../services/api/user";
 import { ENTRY_LIMIT } from "../services/api/constants";
 import UserPermissionModal from "../components/admin/user/UserPermissionModal";
+import IconButton from "../components/IconButtons";
+import { FaEdit } from "react-icons/fa";
 
 export default function AdminUserPage() {
- //FETCHING LOGIC
+  //FETCHING LOGIC
   const tableDataQuery = useInfiniteQuery<UserPaginated, Error>({
     queryKey: ["users"],
     queryFn: ({ pageParam }) => getPaginatedUser({ pageParam }),
@@ -35,6 +37,14 @@ export default function AdminUserPage() {
 
   //Show Mutation Modal
   const [showMutationModal, setShowMutationModal] = useState(false)
+  const [mutationData, setMutationData] = useState<UserView>({
+    accessToProjects: [],
+    roleName: "",
+    username: "",
+    workerJobTitle: "",
+    workerMobileNumber: "",
+    workerName: "",
+  })
 
   //Show User Permission Modal
   const [showUserPermissionModal, setShowUserPermissionModal] = useState(false)
@@ -48,7 +58,7 @@ export default function AdminUserPage() {
       roleName,
     })
     setShowUserPermissionModal(true)
-  } 
+  }
 
   //Show User Logs Modal
   const [showUserLogsModal, setShowUserLogsModal] = useState(false)
@@ -57,7 +67,7 @@ export default function AdminUserPage() {
     <main>
       <div className="mt-2 px-2 flex justify-between">
         <span className="text-3xl font-bold">Администрирование пользователями</span>
-     </div>
+      </div>
       <div>
       </div>
       <table className="table-auto text-sm text-left mt-2 w-full border-box">
@@ -69,7 +79,7 @@ export default function AdminUserPage() {
             <th className="px-4 py-3">
               <span>ФИО</span>
             </th>
-             <th className="px-4 py-3">
+            <th className="px-4 py-3">
               <span>Должность</span>
             </th>
             <th className="px-4 py-3">
@@ -78,12 +88,26 @@ export default function AdminUserPage() {
             <th className="px-4 py-3">
               <span>Роль</span>
             </th>
-             <th className="px-4 py-3">
-                <Button 
-                  text="Добавить" 
-                  onClick = {() => setShowMutationModal(true)} 
-                />
-             </th>
+            <th className="px-4 py-3">
+              <span>Проекты</span>
+            </th>
+            <th className="px-4 py-3">
+              <Button
+                text="Добавить"
+                onClick={() => {
+                  setMutationData({
+                    id: 0,
+                    accessToProjects: [],
+                    roleName: "",
+                    username: "",
+                    workerJobTitle: "",
+                    workerMobileNumber: "",
+                    workerName: "",
+                  })
+                  setShowMutationModal(true)
+                }}
+              />
+            </th>
           </tr>
         </thead>
         <tbody>
@@ -94,8 +118,17 @@ export default function AdminUserPage() {
               <td className="px-4 py-3">{row.workerJobTitle}</td>
               <td className="px-4 py-3">{row.workerMobileNumber}</td>
               <td className="px-4 py-3">{row.roleName}</td>
+              <td className="px-4 py-3">{row.accessToProjects.join(", ")}</td>
               <td className="px-4 py-3 flex space-x-2">
-                <Button 
+                <IconButton
+                  type="delete"
+                  icon={<FaEdit size="20px" title={`Изменение данных пользователя`} />}
+                  onClick={() => {
+                    setMutationData(row)
+                    setShowMutationModal(true)
+                  }}
+                />
+                <Button
                   text="Доступы"
                   onClick={() => onShowUserPermissionButton(row.workerName, row.roleName)}
                 />
@@ -103,19 +136,24 @@ export default function AdminUserPage() {
                   text="Логи"
                   onClick={() => setShowUserLogsModal(true)}
                 />
-              </td> 
-            </tr>          
+              </td>
+            </tr>
           ))}
         </tbody>
       </table>
-      {showMutationModal && <MutationUserModal setShowModal={setShowMutationModal} />}
-      {showUserPermissionModal && <UserPermissionModal 
-          setShowModal={setShowUserPermissionModal}
-          roleName={userPermissionModalProps.roleName}
-          workerName={userPermissionModalProps.workerName}
+      {showMutationModal &&
+        <MutationUserModal
+          setShowModal={setShowMutationModal}
+          userData={mutationData}
         />
+      }
+      {showUserPermissionModal && <UserPermissionModal
+        setShowModal={setShowUserPermissionModal}
+        roleName={userPermissionModalProps.roleName}
+        workerName={userPermissionModalProps.workerName}
+      />
       }
       {showUserLogsModal}
     </main>
-  ) 
+  )
 }

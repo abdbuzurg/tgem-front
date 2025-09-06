@@ -10,17 +10,20 @@ import { getAllRoles } from "../../../services/api/role";
 import AddNewWorkerModal from "./AddNewWorkerModal";
 import AddNewRoleModal from "./AddNewRoleModal";
 import toast from "react-hot-toast";
-import { NewUserData, createUser } from "../../../services/api/user";
+import { NewUserData, UserView, createUser, updateUser } from "../../../services/api/user";
 import { GetAllProjects } from "../../../services/api/project";
 import Project from "../../../services/interfaces/project";
 import { getAllWorkers } from "../../../services/api/worker";
+import LoadingDots from "../../UI/loadingDots";
 
 interface Props {
-  setShowModal: React.Dispatch<React.SetStateAction<boolean>> 
+  setShowModal: React.Dispatch<React.SetStateAction<boolean>>
+  userData: UserView
 }
 
 export default function MutationUserModal({
-  setShowModal
+  setShowModal,
+  userData,
 }: Props) {
 
   //Worker Select logic
@@ -34,22 +37,26 @@ export default function MutationUserModal({
     queryFn: getAllWorkers,
   })
   useEffect(() => {
-
     if (allWorkersQuery.isSuccess && allWorkersQuery.data) {
-      setAvailableWorkers([
-        ...allWorkersQuery.data.map<IReactSelectOptions<number>>(value => ({
-          label: value.name,
-          value: value.id,
-        }))
-      ])
-    }
+      const workers = allWorkersQuery.data.map<IReactSelectOptions<number>>(value => ({
+        label: value.name,
+        value: value.id,
+      }))
 
+      setAvailableWorkers(workers)
+      if (userData.workerName != "") {
+        const curWorker = workers.find(v => v.label == userData.workerName)
+        if (curWorker) {
+          setSelectedWorkerID(curWorker)
+        }
+      }
+    }
   }, [allWorkersQuery.data])
   // Adding new worker modal logic
   const [showAddNewWorkerModal, setShowAddNewWorkerModal] = useState(false)
 
   //Username Logic
-  const [username, setUsername] = useState("")
+  const [username, setUsername] = useState(userData.username)
 
   //Password Logic
   const [password, setPassword] = useState("")
@@ -63,18 +70,23 @@ export default function MutationUserModal({
   const allRolesQuery = useQuery<IRole[], Error, IRole[]>({
     queryKey: ["all-roles"],
     queryFn: getAllRoles,
-  }) 
+  })
 
   useEffect(() => {
-
     if (allRolesQuery.isSuccess && allRolesQuery.data) {
+      const roles = allRolesQuery.data.map<IReactSelectOptions<number>>((value) => ({
+        value: value.id,
+        label: value.name,
+      }))
 
-      setAvailableRoles([
-        ...allRolesQuery.data.map<IReactSelectOptions<number>>((value) => ({
-          value: value.id,
-          label: value.name,
-        }))
-      ])
+      setAvailableRoles(roles)
+
+      if (userData.roleName != "") {
+        const curRoles = roles.find(v => v.label == userData.roleName)
+        if (curRoles) {
+          setSelectedRoleID(curRoles)
+        }
+      }
     }
 
   }, [allRolesQuery.data])
@@ -89,18 +101,29 @@ export default function MutationUserModal({
     queryKey: ["all-projects"],
     queryFn: GetAllProjects,
   })
-  
+
   useEffect(() => {
     if (allProjectsQuery.isSuccess && allProjectsQuery.data) {
-      setAvailableProjects([
-        ...allProjectsQuery.data.map<IReactSelectOptions<number>>((value) => ({
-          value: value.id,
-          label: value.name,
-        }))
-      ])
+      const projects = allProjectsQuery.data.map<IReactSelectOptions<number>>((value) => ({
+        value: value.id,
+        label: value.name,
+      }))
+
+      setAvailableProjects(projects)
+
+      if (userData.accessToProjects) {
+        const userInPorjects: IReactSelectOptions<number>[] = []
+        userData.accessToProjects.map(v => {
+          const curProject = projects.find(proj => proj.label == v)
+          if (curProject) {
+            userInPorjects.push(curProject)
+          }
+        })
+        setSelectedProjects(userInPorjects)
+      }
     }
   }, [allProjectsQuery.data])
-  
+
   const onProjectSelect = (value: MultiValue<IReactSelectOptions<number>>) => {
     setSelectedProjects([...value])
   }
@@ -110,6 +133,10 @@ export default function MutationUserModal({
 
   const createUserMutation = useMutation<boolean, Error, NewUserData>({
     mutationFn: createUser,
+  })
+
+  const updateUserMutation = useMutation<boolean, Error, NewUserData>({
+    mutationFn: updateUser,
   })
 
   const onSubmitUser = () => {
@@ -133,14 +160,15 @@ export default function MutationUserModal({
       toast.error("Не выбрана роль для пользователя")
       return
     }
-  
+
     if (selectedProjects.length == 0) {
       toast.error("Не выбран проект(-ы) для пользователя")
       return
     }
 
     const loadingToast = toast.loading("Сохранение новых данных...")
-    createUserMutation.mutate({
+    if (userData.id == 0) {
+      createUserMutation.mutate({
         userData: {
           id: 0,
           workerID: selectedWorkerID.value,
@@ -150,16 +178,38 @@ export default function MutationUserModal({
         },
         projects: [...selectedProjects.map<number>(value => value.value)],
       }, {
+        onSuccess: () => {
+          queryClient.invalidateQueries(["users"])
+          toast.success("Сохранение данных прошло успешно")
+          setShowModal(false)
+        },
+        onSettled: () => {
+          toast.dismiss(loadingToast)
+        }
+      })
+
+      return
+    }
+
+    updateUserMutation.mutate({
+      userData: {
+        id: userData.id,
+        workerID: selectedWorkerID.value,
+        roleID: selectedRoleID.value,
+        username: username,
+        password: password,
+      },
+      projects: [...selectedProjects.map<number>(value => value.value)]
+    }, {
       onSuccess: () => {
         queryClient.invalidateQueries(["users"])
         toast.success("Сохранение данных прошло успешно")
         setShowModal(false)
       },
       onSettled: () => {
-        toast.dismiss(loadingToast) 
+        toast.dismiss(loadingToast)
       }
     })
-
   }
 
   return (
@@ -198,22 +248,22 @@ export default function MutationUserModal({
           <div className="flex space-x-2 items-center">
             <div className="flex flex-col space-y-1">
               <label htmlFor="username">Логин пользователя</label>
-              <Input 
+              <Input
                 id="username"
                 value={username}
                 name="username"
                 type="text"
-                onChange={(e:React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setUsername(e.target.value)}
               />
             </div>
             <div className="flex flex-col space-y-1">
               <label htmlFor="password">Пароль</label>
-              <Input 
+              <Input
                 id="password"
                 value={password}
                 name="password"
                 type="password"
-                onChange={(e:React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
+                onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
               />
             </div>
           </div>
@@ -264,16 +314,21 @@ export default function MutationUserModal({
                 />
               </div>
             </div>
-         </div>
+          </div>
         </div>
         <div>
-          <Button 
-            text="Созать пользователя" 
-            onClick={() => onSubmitUser()}
-          />
+          {createUserMutation.isLoading
+            ?
+            <LoadingDots height={30} />
+            :
+            <Button
+              text="Созать пользователя"
+              onClick={() => onSubmitUser()}
+            />
+          }
         </div>
       </div>
-      {showAddNewWorkerModal && <AddNewWorkerModal setShowModal={setShowAddNewWorkerModal}/>}
+      {showAddNewWorkerModal && <AddNewWorkerModal setShowModal={setShowAddNewWorkerModal} />}
       {showAddNewRoleModal && <AddNewRoleModal setShowModal={setShowAddNewRoleModal} />}
     </Modal>
   )

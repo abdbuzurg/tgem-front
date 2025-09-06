@@ -9,6 +9,7 @@ import IWorker from "../../../services/interfaces/worker"
 import { useState } from "react"
 import { JOB_TITLES } from "../../../services/lib/jobTitles"
 import { createWorker } from "../../../services/api/worker"
+import LoadingDots from "../../UI/loadingDots"
 
 interface Props {
   setShowModal: React.Dispatch<React.SetStateAction<boolean>>
@@ -27,7 +28,7 @@ export default function AddNewWorkerModal({ setShowModal }: Props) {
   const queryClient = useQueryClient()
   const [isSelectedFromList, setIsSelectedForList] = useState(false)
 
-  const createMaterialMutation = useMutation<IWorker, Error, IWorker>({
+  const createWorkerMutation = useMutation<IWorker, Error, IWorker>({
     mutationFn: createWorker,
     onSettled: () => {
       queryClient.invalidateQueries(["workers"])
@@ -52,7 +53,7 @@ export default function AddNewWorkerModal({ setShowModal }: Props) {
     }
 
     const loadingToast = toast.loading("Сохранение новых данных...")
-    createMaterialMutation.mutate(workerMutationData, {
+    createWorkerMutation.mutate(workerMutationData, {
       onSuccess: () => {
         toast.success("Сохранение прошло успешно")
         queryClient.invalidateQueries(["all-workers"])
@@ -161,10 +162,15 @@ export default function AddNewWorkerModal({ setShowModal }: Props) {
             />
           </div>
           <div>
-            <Button
-              text="Добавить"
-              onClick={onMutationSubmit}
-            />
+            {createWorkerMutation.isLoading
+              ?
+              <LoadingDots height={30} />
+              :
+              <Button
+                text="Добавить"
+                onClick={onMutationSubmit}
+              />
+            }
           </div>
         </div>
       </div>
