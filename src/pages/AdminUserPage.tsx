@@ -38,6 +38,7 @@ export default function AdminUserPage() {
   //Show Mutation Modal
   const [showMutationModal, setShowMutationModal] = useState(false)
   const [mutationData, setMutationData] = useState<UserView>({
+    id: 0,
     accessToProjects: [],
     roleName: "",
     username: "",
