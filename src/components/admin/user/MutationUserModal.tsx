@@ -259,10 +259,12 @@ export default function MutationUserModal({
             <div className="flex flex-col space-y-1">
               <label htmlFor="password">Пароль</label>
               <Input
+                disabled={userData.id != 0}
                 id="password"
                 value={password}
                 name="password"
                 type="password"
+                className="bg-gray-500"
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
               />
             </div>

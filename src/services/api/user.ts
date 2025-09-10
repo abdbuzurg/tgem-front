@@ -47,7 +47,7 @@ export async function createUser(data: NewUserData): Promise<boolean> {
 }
 
 export async function updateUser(data: NewUserData): Promise<boolean> {
-  const responseRaw = await axiosClient.put<IAPIResposeFormat<boolean>>(`${URL}/`, data)
+  const responseRaw = await axiosClient.patch<IAPIResposeFormat<boolean>>(`${URL}/`, data)
   const response = responseRaw.data
   if (response.success && response.permission) {
     return true
