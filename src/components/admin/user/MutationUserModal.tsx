@@ -151,7 +151,7 @@ export default function MutationUserModal({
       return
     }
 
-    if (password == "") {
+    if (password == "" && userData.id == 0) {
       toast.error("Пароль не был указан")
       return
     }
@@ -259,16 +259,17 @@ export default function MutationUserModal({
             <div className="flex flex-col space-y-1">
               <label htmlFor="password">Пароль</label>
               <Input
-                disabled={userData.id != 0}
                 id="password"
                 value={password}
                 name="password"
                 type="password"
-                className="bg-gray-500"
                 onChange={(e: React.ChangeEvent<HTMLInputElement>) => setPassword(e.target.value)}
               />
             </div>
           </div>
+          {userData.id != 0 &&
+            <span className="italic text-sm text-gray-500">Пароль пользователя останется таким же если оставить пустым</span>
+          }
         </div>
         <div className="flex flex-col space-y-2">
           <span className="text-xl font-semibold">Доступы пользователя</span>
