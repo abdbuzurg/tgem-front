@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom"
-import { ADMINISTRATOR_PROJECT, ADMINISTRATOR_USERS } from "../URLs"
+import { ADMINISTRATOR_PROJECT, ADMINISTRATOR_USERS, ADMINISTRATOR_WORKERS } from "../URLs"
 
 const referenceBooksCategorized = [
   {
@@ -7,10 +7,11 @@ const referenceBooksCategorized = [
     pages: [
       { name: "Проекты", url: ADMINISTRATOR_PROJECT },
       { name: "Пользователи", url: ADMINISTRATOR_USERS },
+      { name: "Детализация Пользователей", url: ADMINISTRATOR_WORKERS }
     ]
   },
 ]
-export default function AdministatorHome(){
+export default function AdministatorHome() {
   return (
     <main>
       {referenceBooksCategorized.map((book, index) => (
@@ -21,9 +22,9 @@ export default function AdministatorHome(){
               <Link
                 key={index}
                 to={page.url}
-                className="bg-gray-800 text-white text-xl py-3 px-6 rounded cursor-pointer hover:bg-gray-900 text-center align-middle"
+                className="flex items-center text-center bg-gray-800 text-white text-xl py-3 px-6 rounded cursor-pointer hover:bg-gray-900 text-center align-middle"
               >
-                {page.name}
+                <span className="w-full">{page.name}</span>
               </Link>
             )}
           </div>

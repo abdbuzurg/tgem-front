@@ -58,6 +58,7 @@ export const REPORT_HR_ATTENDANCE = "/report/hr/morpho"
 export const ADMINISTRATOR_HOME_PAGE = "/admin/home"
 export const ADMINISTRATOR_PROJECT = "/admin/project"
 export const ADMINISTRATOR_USERS = "/admin/users"
+export const ADMINISTRATOR_WORKERS = "/admin/workers"
 
 export const IMPORT = "/import"
 export const MATERIAL_LOCATION_LIVE = "/material-location-live"
