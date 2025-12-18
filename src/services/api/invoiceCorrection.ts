@@ -21,15 +21,20 @@ export interface InvoiceCorrectionPaginatedView {
   objectName: string
   objectType: string
   teamID: number
-  teamNumber: string
+  teamLeaderName: string
   dateOfInvoice: Date
 }
 
-export async function getPaginatedInvoiceCorrection({pageParam = 1}): Promise<InvoiceCorrectionPaginated> {
-  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceCorrectionPaginated>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}`)
+export interface InvoiceCorrectionSearchParameters {
+  teamID: number
+  objectID: number
+}
+
+export async function getPaginatedInvoiceCorrection({ pageParam = 1 }, searchParamters: InvoiceCorrectionSearchParameters): Promise<InvoiceCorrectionPaginated> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceCorrectionPaginated>>(`${URL}/paginated?page=${pageParam}&limit=${ENTRY_LIMIT}&teamID=${searchParamters.teamID}&objectID=${searchParamters.objectID}`)
   const responseData = responseRaw.data
   if (responseData.success) {
-    return {...responseData.data, page: pageParam}
+    return { ...responseData.data, page: pageParam }
   } else {
     throw new Error(responseData.error)
   }
@@ -161,3 +166,17 @@ export async function getOperationsForCorrect(invoiceID: number): Promise<Invoic
   }
 }
 
+export interface InvoiceCorrectionSearchParametersData {
+  teams: IReactSelectOptions<number>[]
+  objects: IReactSelectOptions<number>[]
+}
+
+export async function getInvoiceCorrectionSearchParameters(): Promise<InvoiceCorrectionSearchParametersData> {
+  const responseRaw = await axiosClient.get<IAPIResposeFormat<InvoiceCorrectionSearchParametersData>>(`${URL}/search-parameters`)
+  const response = responseRaw.data
+  if (response.success && response.permission) {
+    return response.data
+  } else {
+    throw new Error(response.error)
+  }
+}

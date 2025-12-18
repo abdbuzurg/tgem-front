@@ -1,18 +1,25 @@
 import { useInfiniteQuery } from "@tanstack/react-query"
-import { InvoiceCorrectionPaginated, InvoiceCorrectionPaginatedView, getPaginatedInvoiceCorrection } from "../../services/api/invoiceCorrection"
+import { InvoiceCorrectionPaginated, InvoiceCorrectionPaginatedView, InvoiceCorrectionSearchParameters, getPaginatedInvoiceCorrection } from "../../services/api/invoiceCorrection"
 import { useEffect, useState } from "react"
 import LoadingDots from "../../components/UI/loadingDots"
 import Button from "../../components/UI/button"
 import CorrectionModal from "../../components/invoice/correction/CorrectionModal"
 import { ENTRY_LIMIT } from "../../services/api/constants"
 import { objectTypeIntoRus } from "../../services/lib/objectStatuses"
+import SearchInvoiceCorrection from "../../components/invoice/correction/SearchInvoiceCorrection"
 
 export default function InvoiceCorrection() {
+  //SearchModal Logic
+  const [showSearchModal, setShowSearchModal] = useState(false)
+  const [searchParameters, setSearchParameters] = useState<InvoiceCorrectionSearchParameters>({
+    objectID: 0,
+    teamID: 0,
+  })
 
   //FETCHING LOGIC
   const tableDataQuery = useInfiniteQuery<InvoiceCorrectionPaginated, Error>({
-    queryKey: ["invoice-correction"],
-    queryFn: ({ pageParam }) => getPaginatedInvoiceCorrection({ pageParam }),
+    queryKey: ["invoice-correction", searchParameters],
+    queryFn: ({ pageParam }) => getPaginatedInvoiceCorrection({ pageParam }, searchParameters),
     getNextPageParam: (lastPage) => {
       if (lastPage.page * ENTRY_LIMIT > lastPage.count) return undefined
       return lastPage.page + 1
@@ -30,7 +37,7 @@ export default function InvoiceCorrection() {
     if (window.innerHeight + document.documentElement.scrollTop !== document.documentElement.offsetHeight) return;
     tableDataQuery.fetchNextPage()
   }
-  
+
   useEffect(() => {
     window.addEventListener("scroll", loadDataOnScrollEnd)
     return () => window.removeEventListener("scroll", loadDataOnScrollEnd)
@@ -45,8 +52,13 @@ export default function InvoiceCorrection() {
 
   return (
     <main>
-      <div className="mt-2 px-2 flex justify-between">
+      <div className="mt-2 px-2 flex gap-x-2">
         <span className="font-bold text-3xl">Корректировка поступления</span>
+        <Button onClick={() => setShowSearchModal(true)} text="Поиск" buttonType="default" />
+        <Button onClick={() => setSearchParameters({
+          teamID: 0,
+          objectID: 0,
+        })} text="Сброс поиска" buttonType="delete" />
       </div>
       <table className="table-auto text-sm text-left mt-2 w-full border-box">
         <thead className="shadow-md border-t-2">
@@ -90,7 +102,7 @@ export default function InvoiceCorrection() {
                 <td className="px-4 py-3">{row.deliveryCode}</td>
                 <td className="px-4 py-3">{row.supervisorName}</td>
                 <td className="px-4 py-3">{row.objectName} ({objectTypeIntoRus(row.objectType)})</td>
-                <td className="px-4 py-3">{row.teamNumber}</td>
+                <td className="px-4 py-3">{row.teamLeaderName}</td>
                 <td className="px-4 py-3">{row.dateOfInvoice.toString().substring(0, 10)}</td>
                 <td className="px-4 py-3 border-box flex space-x-3">
                   <Button onClick={() => toggleModal(row)} text="Корректировать" />
@@ -120,6 +132,12 @@ export default function InvoiceCorrection() {
           setShowModal={setShowCorrectionModal}
           invoiceObject={modalData!}
         />
+      }
+      {showSearchModal && <SearchInvoiceCorrection
+        searchParameters={searchParameters}
+        setSearchParameters={setSearchParameters}
+        setShowModal={setShowSearchModal}
+      />
       }
     </main>
   )
