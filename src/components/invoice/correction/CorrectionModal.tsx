@@ -139,7 +139,7 @@ export default function CorrectionModal({
           </div>
           <div className="flex flex-col space-y-1">
             <span className="font-bold text-l">Бригада</span>
-            <span>{invoiceObject.teamNumber}</span>
+            <span>{invoiceObject.teamLeaderName}</span>
           </div>
           <div className="flex flex-col space-y-1">
             <span className="font-bold text-l">Дата накладной</span>
