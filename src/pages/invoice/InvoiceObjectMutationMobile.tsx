@@ -1,13 +1,17 @@
 import { Fragment, useEffect, useState } from "react"
 import IReactSelectOptions from "../../services/interfaces/react-select"
 import Select from 'react-select'
+import DatePicker from "react-datepicker";
+import "react-datepicker/dist/react-datepicker.css";
 import Button from "../../components/UI/button"
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query"
 import { TeamDataForSelect } from "../../services/interfaces/teams"
 import { IObject } from "../../services/interfaces/objects"
+import { IDistrict } from "../../services/interfaces/district";
 import { IInvoiceObjectMaterials, IInvoiceObjectOperations } from "../../services/interfaces/invoiceObject"
 import toast from "react-hot-toast"
 import { getAllObjects } from "../../services/api/object"
+import { getAllDistricts } from "../../services/api/district";
 import { InvoiceObjectCreateItems, InvoiceObjectOperations, InvoiceObjectOperationsCreate, InvoiceObjectTeamMaterialData, createInvoiceObject, getMaterialsDataFromTeam, getOperationsBasedOnTeamID, getSerialNumbersOfMaterial, getTeamsFromObjectID } from "../../services/api/invoiceObject"
 import { useNavigate } from "react-router-dom"
 import { INVOICE_OBJECT_USER } from "../../URLs"
@@ -15,6 +19,25 @@ import { objectTypeIntoRus } from "../../services/lib/objectStatuses"
 import LoadingDots from "../../components/UI/loadingDots"
 
 export default function InvoiceObjectMutationAdd() {
+  const [invoiceDate, setInvoiceDate] = useState<Date>(new Date())
+
+  // Select District Logic
+  const [selectedDistrict, setSelectedDistrict] = useState<IReactSelectOptions<number>>({ label: "", value: 0 })
+  const [availableDistricts, setAvailableDistricts] = useState<IReactSelectOptions<number>[]>([])
+  const allDistrictsQuery = useQuery<IDistrict[], Error, IDistrict[]>({
+    queryKey: ["all-districts"],
+    queryFn: getAllDistricts,
+  })
+  useEffect(() => {
+    if (allDistrictsQuery.isSuccess && allDistrictsQuery.data) {
+      setAvailableDistricts(
+        allDistrictsQuery.data.map<IReactSelectOptions<number>>((value) => ({
+          label: value.name,
+          value: value.id,
+        }))
+      )
+    }
+  }, [allDistrictsQuery.data])
 
   // Select Object Logic
   const [selectedObject, setSelectedObject] = useState<IReactSelectOptions<number>>({
@@ -352,6 +375,16 @@ export default function InvoiceObjectMutationAdd() {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
   const submitInvoice = () => {
+    if (selectedDistrict.value == 0) {
+      toast.error("Не выбран район")
+      return
+    }
+
+    if (!invoiceDate || Number.isNaN(invoiceDate.getTime())) {
+      toast.error("Не выбрана дата")
+      return
+    }
+
     if (selectedObject.value == 0) {
       toast.error("Не выбрана объект")
       return
@@ -371,6 +404,8 @@ export default function InvoiceObjectMutationAdd() {
       details: {
         objectID: selectedObject.value,
         teamID: selectedTeam.value,
+        districtid: selectedDistrict.value,
+        dateOfInvoice: invoiceDate,
         id: 0,
         deliveryCode: "",
         projectID: 0,
@@ -420,6 +455,44 @@ export default function InvoiceObjectMutationAdd() {
         </div>
         <span className="font-semibold text-lg">Основная информация</span>
         <div className="px-3 py-4 bg-gray-800 text-white rounded-md ">
+          {allDistrictsQuery.isLoading &&
+            <div className="flex items-center h-[40px]">
+              <LoadingDots height={40} />
+            </div>
+          }
+          {allDistrictsQuery.isSuccess &&
+            <div className="flex flex-col space-y-1 pb-2">
+              <span className="font-semibold">Район</span>
+              <Select
+                className="basic-single text-black"
+                classNamePrefix="select"
+                isSearchable={true}
+                isClearable={true}
+                name={"district-select"}
+                placeholder={""}
+                value={selectedDistrict}
+                options={availableDistricts}
+                onChange={(value) => {
+                  setSelectedDistrict({
+                    label: value?.label ?? "",
+                    value: value?.value ?? 0,
+                  })
+                }}
+              />
+            </div>
+          }
+          <div className="flex flex-col space-y-1 pb-2">
+            <span className="font-semibold">Дата накладной</span>
+            <div className="py-[4px] px-[8px] border-[#cccccc] border rounded-[4px] max-w-[220px]">
+              <DatePicker
+                name="dateOfInvoice"
+                className="outline-none w-full text-black"
+                dateFormat={"dd-MM-yyyy"}
+                selected={invoiceDate}
+                onChange={(date) => setInvoiceDate(date ?? new Date(+0))}
+              />
+            </div>
+          </div>
           {allObjectsQuery.isLoading &&
             <div className="flex items-center">
               <LoadingDots height={40} />

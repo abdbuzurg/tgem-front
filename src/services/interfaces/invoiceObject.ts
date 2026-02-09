@@ -1,8 +1,10 @@
 export interface IInvoiceObject {
 	id: number
 	deliveryCode: string 
+  districtid: number
 	projectID: number
 	supervisorWorkerID: number
+  dateOfInvoice: Date
 	objectID: number
 	teamID: number
 }
