@@ -132,9 +132,9 @@ export default function EditInvoiceReturnTeam({
   //Invoice material information
   const [invoiceMaterials, setInvoiceMaterials] = useState<IInvoiceReturnMaterials[]>([])
   const invoiceMaterialsForEditQuery = useQuery<IInvoiceReturnMaterials[], Error, IInvoiceReturnMaterials[]>({
-    queryKey: ["invoice-input-materials", invoiceReturnTeam.id],
-    queryFn: () => getInvoiceReturnMaterialsForEdit(invoiceReturnTeam.id, editInvoiceReturnTeamData.returnerType, selectedTeam.value),
-    enabled: selectedTeam.value != 0,
+    queryKey: ["invoice-return-materials-for-edit", invoiceReturnTeam.id, editInvoiceReturnTeamData.returnerType, editInvoiceReturnTeamData.returnerID],
+    queryFn: () => getInvoiceReturnMaterialsForEdit(invoiceReturnTeam.id, editInvoiceReturnTeamData.returnerType, editInvoiceReturnTeamData.returnerID),
+    enabled: editInvoiceReturnTeamData.returnerID != 0,
   })
   useEffect(() => {
     if (invoiceMaterialsForEditQuery.isSuccess && invoiceMaterialsForEditQuery.data) {

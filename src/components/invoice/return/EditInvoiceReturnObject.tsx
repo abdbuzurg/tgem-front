@@ -161,9 +161,9 @@ export default function EditInvoiceReturnObject({
   //Invoice material information
   const [invoiceMaterials, setInvoiceMaterials] = useState<IInvoiceReturnMaterials[]>([])
   const invoiceMaterialsForEditQuery = useQuery<IInvoiceReturnMaterials[], Error, IInvoiceReturnMaterials[]>({
-    queryKey: ["invoice-input-materials", invoiceReturnObject.id],
-    queryFn: () => getInvoiceReturnMaterialsForEdit(invoiceReturnObject.id, editInvoiceReturnObject.returnerType, selectedObject.value),
-    enabled: selectedObject.value != 0,
+    queryKey: ["invoice-return-materials-for-edit", invoiceReturnObject.id, editInvoiceReturnObject.returnerType, editInvoiceReturnObject.returnerID],
+    queryFn: () => getInvoiceReturnMaterialsForEdit(invoiceReturnObject.id, editInvoiceReturnObject.returnerType, editInvoiceReturnObject.returnerID),
+    enabled: editInvoiceReturnObject.returnerID != 0,
   })
   useEffect(() => {
     if (invoiceMaterialsForEditQuery.isSuccess && invoiceMaterialsForEditQuery.data) {
@@ -307,7 +307,7 @@ export default function EditInvoiceReturnObject({
   const updateInvoiceReturnMutation = useMutation<InvoiceReturnMutation, Error, InvoiceReturnMutation>({
     mutationFn: updateInvoiceReturn,
     onSuccess: () => {
-      queryClient.invalidateQueries(["invoice-return-team"])
+      queryClient.invalidateQueries(["invoice-return-object"])
       setShowMutationModal(false)
     }
   })
@@ -442,7 +442,7 @@ export default function EditInvoiceReturnObject({
                       setSelectedTeam(value ?? { label: "", value: 0 })
                       setEditInvoiceReturnObject({
                         ...editInvoiceReturnObject,
-                        returnerID: value?.value ?? 0,
+                        acceptorID: value?.value ?? 0,
                       })
                     }}
                   />
